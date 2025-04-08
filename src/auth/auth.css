@@ -1,0 +1,79 @@
+.dark-bg {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+input.landing {
+  border: 1px solid #ccc;
+  border-radius: 100px;
+  padding: 5px 30px;
+  color: white;
+}
+
+a.gradient-btn, button.gradient-btn {
+  background: linear-gradient(to right, #161647, #3535AD);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+a.gradient-btn:hover, button.gradient-btn:hover {
+  background: linear-gradient(to right, #303099, #4e4ef0);
+}
+
+/* FAQ Section */
+.faq-item {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #e0e7ff; /* Light blue background when hovered */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.faq-item:hover {
+  background-color: #e0e7ff; /* Light blue background when hovered */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Slightly stronger shadow on hover */
+}
+
+.faq-item h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.faq-item p {
+  font-size: 0.95rem;
+  color: #666;
+  padding-top: 8px;
+  padding-left: 15px;
+}
+
+.faq-item p:hover {
+  color: #333;
+}
+
+/* Additional styling for the FAQ section container */
+.faq-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Optional: Animation for FAQ answers */
+.faq-item p {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.faq-item:hover p {
+  opacity: 1;
+  transform: translateY(0);
+}

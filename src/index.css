@@ -1,0 +1,234 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: Poppins, sans-serif;
+  background-color: #f5f5f5;
+}
+
+
+
+h1 {
+  color: #161647;
+  font-weight: 500;
+}
+
+
+
+
+/******************************
+* Header *
+******************************/
+
+.header {
+  height: 60px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  color: rgb(87, 87, 87);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 20px;
+  position: fixed; /* Make the header fixed */
+  top: 0; /* Stick to the top */
+  left: 0;
+  width: 100%; /* Full width */
+  z-index: 5000; /* Ensure it stays above other elements */
+}
+
+.header i {
+  color: #334155;
+}
+
+.menu-icon {
+  font-size: 24px;
+  cursor: pointer;
+  color: #334155;
+}
+
+.logo img {
+  height: 40px;
+  margin-top: 5px;
+}
+
+/* Add this to your index.css or appropriate stylesheet */
+@media (max-width: 520px) {
+  .search-container {
+    display: none;
+  }
+}
+
+/******************************
+* Sidebar *
+******************************/
+
+.sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  height: calc(100% - 60px);
+  background-color: white;
+  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  width: 250px;
+  transition: transform 0.3s ease;
+  z-index: 2000;
+}
+
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 20px 0;
+  margin: 0;
+}
+
+.sidebar ul li {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  color: #333;
+  margin: 10px 20px;
+  margin-top: 15px;
+}
+
+.sidebar ul li i {
+  margin-right: 12px;
+  font-size: 18px;
+  color: #555;
+}
+
+.sidebar ul li:hover {
+  background: linear-gradient(to right, #161647, #3535AD);
+  color: #fff;
+  border-radius: 100px;
+}
+
+.sidebar ul li:hover i {
+  color: #fff;
+}
+
+/* Active state */
+.sidebar ul li.active {
+  background-color: #334155;
+  color: #fff;
+}
+
+.sidebar ul li.active i {
+  color: #fff;
+}
+
+/* Close sidebar by default on small screens */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Make the sidebar appear at the top of the content on smaller screens */
+  .content {
+    margin-left: 0;
+  }
+}
+
+/******************************
+* Content *
+******************************/
+
+.content {
+  margin-left: 250px;
+  margin-top: 60px;
+  transition: margin-left 0.3s ease;
+}
+
+.content.collapsed {
+  margin-left: 0;
+}
+
+@media (max-width: 768px) {
+  /* On smaller screens, no sliding of content, sidebar will overlay */
+  .content {
+    margin-left: 0;
+  }
+}
+
+
+.page-title {
+  margin-bottom: 20px;
+}
+
+.content-section {
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.learn button {
+  margin-top: 10px;
+  padding: 5px 30px;
+  background: linear-gradient(to right, #161647, #3535AD);
+  color: white;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.learn button:hover {
+  background: linear-gradient(to right, #2a2a83, #4343dd);
+}
+
+.courses-card {
+  padding: 30px 20px;
+  border-radius: 10px;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: left;
+  display: flex;
+    flex-direction: column;
+  background: linear-gradient(to right, #161647, #3535AD);
+  cursor: pointer;
+}
+
+button.prev-next-btn {
+  padding: 5px 50px;
+  background-color: #7075b9;
+  color: white;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+button.prev-next-btn:hover {
+  background-color: #5e5eb9;
+}
+
+/* Add this CSS to your stylesheet */
+.active-underline::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 5px;
+  border-top-right-radius: 5px;
+  border-top-left-radius: 5px;
+  bottom: 0;
+  left: 0;
+  background-color: blue; /* Change this to your desired color */
+  top: 27px; /* Adjust this value to add space between text and the underline */
+}
