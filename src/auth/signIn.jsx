@@ -64,6 +64,8 @@ export default function SignIn() {
           <a href="/signup" className="text-blue-500">Sign Up</a>
         </div>
       </div>
+      <div>
+      </div>
     </section>
   );
 }
