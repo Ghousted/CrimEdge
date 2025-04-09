@@ -12,5 +12,7 @@
  - npm install react-slick slick-carousel
  - npm install gsap
  - npm install @gsap/react
- - npm install lucide-react' 
+ - npm install lucide-react'
+ - npm install firebase
+   
 >>>>>>> master
