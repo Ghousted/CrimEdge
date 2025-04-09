@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { setDoc, doc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../../firebase";
 
 export default function SignUpPage() {
   const [firstName, setFirstName] = useState('');
@@ -7,6 +11,8 @@ export default function SignUpPage() {
   const [contactNumber, setContactNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set background color of body correctly here
@@ -24,7 +30,7 @@ export default function SignUpPage() {
     };
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Basic validation
@@ -39,7 +45,38 @@ export default function SignUpPage() {
     }
 
     // Handle sign-up logic here (e.g., API call)
-    alert('Form submitted successfully!');
+
+
+    try {
+      //Create the user credential in auth
+      const userCredentials = await createUserWithEmailAndPassword(auth, email, confirmPassword);
+      const createdUser = userCredentials.user;
+
+      // Store user credentials in firestore
+      const userDocRef = doc(db, "users", createdUser.uid);
+
+      await setDoc(userDocRef, {
+        uID: createdUser.uid,
+        firstName,
+        lastName,
+        email,
+        contactNumber,
+        createdAt: serverTimestamp(),
+      });
+
+      //navigate to sign in page
+      navigate("/signin");
+
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //  ANO YUNG ERROR PROTOCOL NATIN???? ganto alng ba notif natin kapag may error??
+        alert('This email is already registered. Please sign in.');
+        navigate("/signin");
+      } else {
+        console.error(err);
+      }
+    }
   };
 
   return (
@@ -118,7 +155,7 @@ export default function SignUpPage() {
           </button>
           <div className="text-center mt-4">
             <span>Already have an account? </span>
-            <a href="/sign-in" className="text-blue-500">Sign In</a>
+            <a href="/signIn" className="text-blue-500">Sign In</a>
           </div>
         </form>
       </div>

@@ -17,8 +17,8 @@ import Account from './pages/Account';
 
 // Auth
 import Landing from './auth/Landing'; 
-import SignIn from './auth/SignIn';
-import SignUp from './auth/SignUp';
+import SignIn from './auth/signIn';
+import SignUp from './auth/signUp';
 import ForgotPassword from './auth/ForgotPassword';
 
 // Subscriptions
@@ -31,48 +31,55 @@ import Payment from './subscription/Payment';
 import AdminDashboard from './pages/admin/adminDashboard';
 import InstructorDashboard from './pages/instructor/insDashboard';
 
+// Import AuthProvider, PrivateRoute, and PublicRoute
+import { AuthProvider } from './auth/components/authContext';
+import PrivateRoute from './auth/components/PrivateRoute';
+import PublicRoute from './auth/components/PublicRoute';
+
 const App = () => {
   return (
-    <Router>
-      <Routes>
+    <AuthProvider>
+      <Router>
+        <Routes>
 
-        {/* Redirect root path to landing */}
-        <Route path="/" element={<Navigate to="/landing" replace />} />
+          {/* Redirect root path to landing */}
+          <Route path="/" element={<Navigate to="/landing" replace />} />
 
-        {/* Auth routes */}
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/landing" element={<Landing />} />
-        <Route path="/signout" element={<Landing />} />
+          {/* Public routes: Prevent logged-in users from accessing these pages */}
+          <Route path="/signin" element={<PublicRoute element={<SignIn />} />} />
+          <Route path="/signup" element={<PublicRoute element={<SignUp />} />} />
+          <Route path="/forgot-password" element={<PublicRoute element={<ForgotPassword />} />} />
+          <Route path="/landing" element={<PublicRoute element={<Landing />} />} />
+          <Route path="/signout" element={<Landing />} />
 
-        {/* General user layout */}
-        <Route element={<Layout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/course/:id" element={<Course />} />
-          <Route path="/certification" element={<Certification />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/support" element={<Support />} />
-        </Route>
+          {/* General user layout */}
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+            <Route path="/course/:id" element={<PrivateRoute element={<Course />} />} />
+            <Route path="/certification" element={<PrivateRoute element={<Certification />} />} />
+            <Route path="/account" element={<PrivateRoute element={<Account />} />} />
+            <Route path="/support" element={<PrivateRoute element={<Support />} />} />
+          </Route>
 
-        {/* Subscription */}
-        <Route path="/creditdebit" element={<CreditDebit />} />
-        <Route path="/digitalwallet" element={<DigitalWallet />} />
-        <Route path="/membership" element={<Membership />} />
-        <Route path="/payment" element={<Payment />} />
+          {/* Subscription routes */}
+          <Route path="/creditdebit" element={<CreditDebit />} />
+          <Route path="/digitalwallet" element={<DigitalWallet />} />
+          <Route path="/membership" element={<Membership />} />
+          <Route path="/payment" element={<Payment />} />
 
-        {/* Admin-only layout */}
-        <Route element={<AdminLayout />}>
-          <Route path="/admindashboard" element={<AdminDashboard />} />
-        </Route>
+          {/* Admin-only layout */}
+          <Route element={<AdminLayout />}>
+            <Route path="/admindashboard" element={<PrivateRoute element={<AdminDashboard />} />} />
+          </Route>
 
-        {/* Instructor-only layout */}
-        <Route element={<InstructorLayout />}>
-          <Route path="/insdashboard" element={<InstructorDashboard />} />
-        </Route>
+          {/* Instructor-only layout */}
+          <Route element={<InstructorLayout />}>
+            <Route path="/insdashboard" element={<PrivateRoute element={<InstructorDashboard />} />} />
+          </Route>
 
-      </Routes>
-    </Router>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 };
 

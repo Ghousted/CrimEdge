@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../../firebase";
+import { useNavigate } from 'react-router-dom';
+
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     // Set background color of body correctly here
@@ -20,9 +27,25 @@ export default function SignIn() {
     };
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle sign-in logic
+    try {
+      // Attempt to sign in with Firebase Authentication
+      const userCredentials = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredentials.user;
+
+      navigate('/dashboard'); // Adjust route as necessary
+    } catch (err) {
+      // Handle errors (wrong credentials, network error, etc.)
+      if (err.code === 'auth/invalid-credential') {
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //  ANO YUNG ERROR PROTOCOL NATIN???? ganto alng ba notif natin kapag may error??
+        alert('Inccorrect Email or Password.');
+      } else {
+        console.error(err);
+
+      }
+    }
   };
 
   return (
