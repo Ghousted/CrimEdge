@@ -1,93 +1,107 @@
-import React, { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../../firebase";
+import React, { useState } from 'react';
+import { useAuth } from '../auth/components/authContext';
 import { useNavigate } from 'react-router-dom';
-
+import { FcGoogle } from 'react-icons/fc';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
+  const { signIn, signInWithGoogle, authError, setAuthError } = useAuth();
   const navigate = useNavigate();
-
-
-  useEffect(() => {
-    // Set background color of body correctly here
-    document.body.style.background = "radial-gradient(circle, rgba(225,238,254,1) 0%, rgba(90,110,201,1) 100%)";
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-    document.body.style.overflowX = "hidden";
-
-    // Cleanup on component unmount
-    return () => {
-      document.body.style.background = "";
-      document.body.style.margin = "";
-      document.body.style.padding = "";
-      document.body.style.overflowX = "";
-    };
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setAuthError(null);
     try {
-      // Attempt to sign in with Firebase Authentication
-      const userCredentials = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredentials.user;
+      await signIn(email, password);
+    } catch (error) {
+      console.error('Sign in error:', error);
+    }
+  };
 
-      navigate('/dashboard'); // Adjust route as necessary
-    } catch (err) {
-      // Handle errors (wrong credentials, network error, etc.)
-      if (err.code === 'auth/invalid-credential') {
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //  ANO YUNG ERROR PROTOCOL NATIN???? ganto alng ba notif natin kapag may error??
-        alert('Inccorrect Email or Password.');
-      } else {
-        console.error(err);
-
-      }
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Google sign in error:', error);
     }
   };
 
   return (
-    <section className="flex justify-center items-center h-screen p-4">
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4 text-center">Sign In</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-600">Email</label>
+    <section className="flex justify-center items-center min-h-screen p-4 bg-gray-50">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
+        <h2 className="text-2xl font-bold text-center mb-6">Sign In to CrimEdge</h2>
+        
+        {authError && (
+          <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
+            <p>{authError}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
             <input
               type="email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-600">Password</label>
+          
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button type="submit" className="w-full py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600">
+          
+          <button
+            type="submit"
+            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
             Sign In
           </button>
-          <div className="text-center mt-4">
-            <a href="/forgot-password" className="text-sm text-blue-500">Forgot Password?</a>
-          </div>
         </form>
-        <div className="text-center mt-4">
-          <span>Don't have an account? </span>
-          <a href="/signup" className="text-blue-500">Sign Up</a>
+
+        <div className="mt-6">
+          <button
+            onClick={handleGoogleSignIn}
+            className="w-full py-2 bg-white border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+          >
+            <FcGoogle className="text-xl mr-2" />
+            Sign in with Google
+          </button>
         </div>
-      </div>
-      <div>
+
+        <div className="mt-6 text-center text-sm">
+          <p className="text-gray-600">
+            Don't have an account?{' '}
+            <button 
+              onClick={() => navigate('/signup')}
+              className="text-blue-600 hover:underline"
+            >
+              Sign up
+            </button>
+          </p>
+          <button 
+            onClick={() => navigate('/forgot-password')}
+            className="mt-2 text-blue-600 hover:underline text-sm"
+          >
+            Forgot password?
+          </button>
+        </div>
       </div>
     </section>
   );

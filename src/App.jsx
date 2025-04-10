@@ -69,7 +69,16 @@ const App = () => {
 
           {/* Admin-only layout */}
           <Route element={<AdminLayout />}>
-            <Route path="/admindashboard" element={<PrivateRoute element={<AdminDashboard />} />} />
+                    <Route 
+            path="/admin/dashboard" 
+            element={
+              <PrivateRoute>
+                <RoleRoute allowedRoles={['admin']}>
+                  <AdminLayout />
+                </RoleRoute>
+              </PrivateRoute>
+            } 
+          />
           </Route>
 
           {/* Instructor-only layout */}
