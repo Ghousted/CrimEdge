@@ -5,12 +5,12 @@ import { useAuth } from '../auth/components/authContext';
 
 export default function Sidebar({ isOpen }) {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { logOut } = useAuth();
 
 
   const handleSignOut = async () => {
     try {
-      await signOut();  // Sign out user via the context method
+      await logOut();  // Sign out user via the context method
       navigate('/landing');  // Redirect user to landing page after sign out
     } catch (error) {
       console.error("Error signing out:", error.message);
