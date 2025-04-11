@@ -118,27 +118,48 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Get user data from Firestore
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         
         if (userDoc.exists()) {
           setUser(firebaseUser);
           setUserData(userDoc.data());
           
-          // Redirect based on role
-          if (userDoc.data().role === 'admin') {
-            navigate('/admin/dashboard');
-          } else {
-            navigate('/dashboard');
+          // Only redirect if coming from auth pages AND not already on a valid route
+          const isAuthRoute = ['/signin', '/signup', '/landing', '/'].includes(
+            window.location.pathname
+          );
+          
+          if (isAuthRoute) {
+            if (userDoc.data().role === 'admin') {
+              navigate('/admin/dashboard', { replace: true });
+            } else {
+              navigate('/dashboard', { replace: true });
+            }
           }
         }
       } else {
         setUser(null);
         setUserData(null);
+        
+        // Only redirect if on a protected route
+        const protectedRoutes = [
+          '/dashboard',
+          '/admin',
+          '/account',
+          '/support',
+          '/certification'
+        ];
+        const isProtectedRoute = protectedRoutes.some(route => 
+          window.location.pathname.startsWith(route)
+        );
+        
+        if (isProtectedRoute) {
+          navigate('/landing', { replace: true });
+        }
       }
       setLoading(false);
     });
-
+  
     return unsubscribe;
   }, [auth, navigate]);
 
