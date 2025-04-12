@@ -1,12 +1,17 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from './authContext'; // Make sure you have an auth context
+import { useAuth } from './authContext';
 
 const PublicRoute = ({ element }) => {
-  const { user } = useAuth(); // Get user from auth context
+  const { authRole } = useAuth();
 
-  // If user is authenticated, redirect to the dashboard (or any other page)
-  return user ? <Navigate to="/dashboard" replace /> : element;
+  // If the user is logged in (has a role), redirect to the appropriate dashboard
+  if (authRole) {
+    return <Navigate to={authRole === 'admin' ? '/admin/dashboard' : '/dashboard'} replace />;
+  }
+
+  // If not logged in, show the public route
+  return element;
 };
 
 export default PublicRoute;

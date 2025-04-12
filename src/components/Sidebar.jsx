@@ -1,16 +1,16 @@
 import '../index.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/components/authContext';
+import { authControl } from "../../src/auth/components/authControl";
 
 export default function Sidebar({ isOpen }) {
   const navigate = useNavigate();
-  const { logOut } = useAuth();
+  const { logout } = authControl();
 
 
   const handleSignOut = async () => {
     try {
-      await logOut();  // Sign out user via the context method
+      await logout();  // Sign out user via the context method
       navigate('/landing');  // Redirect user to landing page after sign out
     } catch (error) {
       console.error("Error signing out:", error.message);

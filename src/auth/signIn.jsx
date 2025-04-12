@@ -1,22 +1,17 @@
 import React, { useState } from 'react';
-import { useAuth } from '../auth/components/authContext';
+import { authControl } from './components/authControl';
 import { useNavigate } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signIn, signInWithGoogle, authError, setAuthError } = useAuth();
+  const { signIn, signInWithGoogle } = authControl();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setAuthError(null);
-    try {
-      await signIn(email, password);
-    } catch (error) {
-      console.error('Sign in error:', error);
-    }
+    await signIn({ email, password });
   };
 
   const handleGoogleSignIn = async () => {
@@ -31,12 +26,12 @@ export default function SignIn() {
     <section className="flex justify-center items-center min-h-screen p-4 bg-gray-50">
       <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
         <h2 className="text-2xl font-bold text-center mb-6">Sign In to CrimEdge</h2>
-        
-        {authError && (
+
+        {/* {authError && (
           <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
             <p>{authError}</p>
           </div>
-        )}
+        )} */}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -52,7 +47,7 @@ export default function SignIn() {
               required
             />
           </div>
-          
+
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               Password
@@ -66,7 +61,7 @@ export default function SignIn() {
               required
             />
           </div>
-          
+
           <button
             type="submit"
             className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -88,14 +83,14 @@ export default function SignIn() {
         <div className="mt-6 text-center text-sm">
           <p className="text-gray-600">
             Don't have an account?{' '}
-            <button 
+            <button
               onClick={() => navigate('/signup')}
               className="text-blue-600 hover:underline"
             >
               Sign up
             </button>
           </p>
-          <button 
+          <button
             onClick={() => navigate('/forgot-password')}
             className="mt-2 text-blue-600 hover:underline text-sm"
           >

@@ -1,12 +1,17 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from './authContext'; // Ensure you have an auth context
+import { useAuth } from './authContext';
 
-const PrivateRoute = ({ element }) => {
-  const { user } = useAuth(); // Get user from auth context
+const PrivateRoute = ({ element, requiredRole }) => {
+  const { authRole, loading } = useAuth();
 
-  // If user is authenticated, render the element, otherwise redirect to landing page
-  return user ? element : <Navigate to="/landing" replace />;
+  if (loading) return <div>Loading...</div>;
+
+  if (!authRole || (requiredRole && authRole !== requiredRole)) {
+    return <Navigate to="/landing" replace />;
+  }
+
+  return element;
 };
 
 export default PrivateRoute;

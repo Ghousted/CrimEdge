@@ -20,6 +20,8 @@ import Landing from './auth/Landing';
 import SignIn from './auth/signIn';
 import SignUp from './auth/signUp';
 import ForgotPassword from './auth/ForgotPassword';
+import VerifyEmailNotice from './auth/VerifyEmailNotice';
+
 
 // Subscriptions
 import CreditDebit from './subscription/CreditDebit';
@@ -31,15 +33,12 @@ import Payment from './subscription/Payment';
 import AdminDashboard from './pages/admin/adminDashboard';
 import InstructorDashboard from './pages/instructor/insDashboard';
 
-// Import AuthProvider, PrivateRoute, and PublicRoute
-import { AuthProvider } from './auth/components/authContext';
-import PrivateRoute from './auth/components/PrivateRoute';
-import PublicRoute from './auth/components/PublicRoute';
-import RoleRoute from './auth/components/RoleRoute';
+// Routes
+import PublicRoute from '../src/auth/components/PublicRoute';
+import PrivateRoute from '../src/auth/components/PrivateRoute';
 
 const App = () => {
   return (
-    <AuthProvider>
       <Routes>
         {/* Redirect root path to landing */}
         <Route path="/" element={<Navigate to="/landing" replace />} />
@@ -50,14 +49,16 @@ const App = () => {
         <Route path="/forgot-password" element={<PublicRoute element={<ForgotPassword />} />} />
         <Route path="/landing" element={<PublicRoute element={<Landing />} />} />
         <Route path="/signout" element={<Landing />} />
+        <Route path='/verify-email'  element={<PublicRoute element={<VerifyEmailNotice />} />} />
+
 
         {/* General user layout */}
         <Route element={<Layout />}>
-          <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
-          <Route path="/course/:id" element={<PrivateRoute element={<Course />} />} />
-          <Route path="/certification" element={<PrivateRoute element={<Certification />} />} />
-          <Route path="/account" element={<PrivateRoute element={<Account />} />} />
-          <Route path="/support" element={<PrivateRoute element={<Support />} />} />
+          <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} requiredRole="user" />} />
+          <Route path="/course/:id" element={<PrivateRoute element={<Course />} requiredRole="user" />} />
+          <Route path="/certification" element={<PrivateRoute element={<Certification />} requiredRole="user" />} />
+          <Route path="/account" element={<PrivateRoute element={<Account />} requiredRole="user" />} />
+          <Route path="/support" element={<PrivateRoute element={<Support />} requiredRole="user" />} />
         </Route>
 
         {/* Subscription routes */}
@@ -68,26 +69,14 @@ const App = () => {
 
         {/* Admin-only layout */}
         <Route element={<AdminLayout />}>
-          <Route
-            path="/admin/dashboard"
-            element={
-              <PrivateRoute>
-                <RoleRoute allowedRoles={['admin']}>
-                  <AdminLayout />
-                </RoleRoute>
-              </PrivateRoute>
-            }
-          />
+          <Route path="/admin/dashboard" element={<PrivateRoute element={<AdminDashboard />} requiredRole="admin" />} />
         </Route>
-
 
         {/* Instructor-only layout */}
         <Route element={<InstructorLayout />}>
-          <Route path="/insdashboard" element={<PrivateRoute element={<InstructorDashboard />} />} />
+          <Route path="/insdashboard" element={<PrivateRoute element={<InstructorDashboard />} requiredRole="instructor" />} />
         </Route>
-
       </Routes>
-    </AuthProvider>
   );
 };
 
