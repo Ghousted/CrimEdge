@@ -31,6 +31,7 @@ import Payment from './subscription/Payment';
 
 // Admin & Instructor
 import AdminDashboard from './pages/admin/adminDashboard';
+import AdminSetting from './pages/admin/adminSetting';
 import InstructorDashboard from './pages/instructor/insDashboard';
 
 // Routes
@@ -39,44 +40,46 @@ import PrivateRoute from '../src/auth/components/PrivateRoute';
 
 const App = () => {
   return (
-      <Routes>
-        {/* Redirect root path to landing */}
-        <Route path="/" element={<Navigate to="/landing" replace />} />
+    <Routes>
+      {/* Redirect root path to landing */}
+      <Route path="/" element={<Navigate to="/landing" replace />} />
 
-        {/* Public routes: Prevent logged-in users from accessing these pages */}
-        <Route path="/signin" element={<PublicRoute element={<SignIn />} />} />
-        <Route path="/signup" element={<PublicRoute element={<SignUp />} />} />
-        <Route path="/forgot-password" element={<PublicRoute element={<ForgotPassword />} />} />
-        <Route path="/landing" element={<PublicRoute element={<Landing />} />} />
-        <Route path="/signout" element={<Landing />} />
-        <Route path='/verify-email'  element={<PublicRoute element={<VerifyEmailNotice />} />} />
+      {/* Public routes: Prevent logged-in users from accessing these pages */}
+      <Route path="/signin" element={<PublicRoute element={<SignIn />} />} />
+      <Route path="/signup" element={<PublicRoute element={<SignUp />} />} />
+      <Route path="/forgot-password" element={<PublicRoute element={<ForgotPassword />} />} />
+      <Route path="/landing" element={<PublicRoute element={<Landing />} />} />
+      <Route path="/signout" element={<Landing />} />
+      <Route path='/verify-email' element={<PublicRoute element={<VerifyEmailNotice />} />} />
 
 
-        {/* General user layout */}
-        <Route element={<Layout />}>
-          <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} requiredRole="user" />} />
-          <Route path="/course/:id" element={<PrivateRoute element={<Course />} requiredRole="user" />} />
-          <Route path="/certification" element={<PrivateRoute element={<Certification />} requiredRole="user" />} />
-          <Route path="/account" element={<PrivateRoute element={<Account />} requiredRole="user" />} />
-          <Route path="/support" element={<PrivateRoute element={<Support />} requiredRole="user" />} />
-        </Route>
+      {/* General user layout */}
+      <Route element={<Layout />}>
+        <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} requiredRole="user" />} />
+        <Route path="/course/:id" element={<PrivateRoute element={<Course />} requiredRole="user" />} />
+        <Route path="/certification" element={<PrivateRoute element={<Certification />} requiredRole="user" />} />
+        <Route path="/account" element={<PrivateRoute element={<Account />} requiredRole="user" />} />
+        <Route path="/support" element={<PrivateRoute element={<Support />} requiredRole="user" />} />
+      </Route>
 
-        {/* Subscription routes */}
-        <Route path="/creditdebit" element={<CreditDebit />} />
-        <Route path="/digitalwallet" element={<DigitalWallet />} />
-        <Route path="/membership" element={<Membership />} />
-        <Route path="/payment" element={<Payment />} />
+      {/* Subscription routes */}
+      <Route path="/creditdebit" element={<PrivateRoute element={<CreditDebit />} requiredRole="user" />} />
+      <Route path="/digitalwallet" element={<PrivateRoute element={<DigitalWallet />} requiredRole="user" />} />
+      <Route path="/membership" element={<PrivateRoute element={<Membership />} requiredRole="user" />} />
+      <Route path="/payment" element={<PrivateRoute element={<Payment />} requiredRole="user" />} />
 
-        {/* Admin-only layout */}
-        <Route element={<AdminLayout />}>
-          <Route path="/admin/dashboard" element={<PrivateRoute element={<AdminDashboard />} requiredRole="admin" />} />
-        </Route>
+      {/* Admin-only layout */}
+      <Route element={<AdminLayout />}>
+        <Route path="/admin/dashboard" element={<PrivateRoute element={<AdminDashboard />} requiredRole="admin" />} />
+        <Route path="/admin/settings" element={<PrivateRoute element={<AdminSetting />} requiredRole="admin" />} />
 
-        {/* Instructor-only layout */}
-        <Route element={<InstructorLayout />}>
-          <Route path="/insdashboard" element={<PrivateRoute element={<InstructorDashboard />} requiredRole="instructor" />} />
-        </Route>
-      </Routes>
+      </Route>
+
+      {/* Instructor-only layout */}
+      <Route element={<InstructorLayout />}>
+        <Route path="/insdashboard" element={<PrivateRoute element={<InstructorDashboard />} requiredRole="instructor" />} />
+      </Route>
+    </Routes>
   );
 };
 

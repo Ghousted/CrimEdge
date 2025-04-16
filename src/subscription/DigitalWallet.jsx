@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { useEditAdminSettings } from '../hooks/useEditAdminSettings';
+import { useHandleUserMembership } from './components/handleUserSubscription';
 
 export default function DigitalWallet() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { subscriptionPlans } = useEditAdminSettings();
+  const { subscriptionStatus } = useHandleUserMembership();
 
   const [plan, setPlan] = useState('');
   const [price, setPrice] = useState('');
+  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     // Set the background styling
@@ -17,18 +22,17 @@ export default function DigitalWallet() {
     document.body.style.overflowX = "hidden";
 
     const queryParams = new URLSearchParams(location.search);
-    const selectedPlan = queryParams.get('plan');
+    const planId = queryParams.get('plan');
     const paymentMethod = queryParams.get('method');
 
-    if (selectedPlan === 'Basic Tier') {
-      setPlan('Basic Tier');
-      setPrice('₱2,000/month');
-    } else if (selectedPlan === 'Premium Tier') {
-      setPlan('Premium Tier');
-      setPrice('₱5,000/month');
+    const selectedPlan = subscriptionPlans ? subscriptionPlans.find((p) => p.id === planId) : null;
+
+    if (selectedPlan) {
+      setPlan(selectedPlan.plan);
+      setPrice(selectedPlan.price === 0 ? 'Free' : `₱${selectedPlan.price}/month`);
     } else {
-      setPlan('Free Tier');
-      setPrice('Free');
+      setPlan('Unknown Plan');
+      setPrice('Unknown Price');
     }
 
     console.log(`Selected payment method: ${paymentMethod}`);
@@ -40,11 +44,12 @@ export default function DigitalWallet() {
       document.body.style.padding = '';
       document.body.style.overflowX = '';
     };
-  }, [location.search]);
+  }, [location.search, subscriptionPlans]);
 
   const handleStartMembership = () => {
+    subscriptionStatus(true);
     console.log(`Starting ${plan} membership with payment of ${price}`);
-    navigate('/confirmation');
+    navigate('/dashboard');
   };
 
   return (
@@ -60,8 +65,8 @@ export default function DigitalWallet() {
         <h2 className="text-2xl font-semibold mb-4 text-center">Set up your digital wallet</h2>
         <div className="flex flex-col items-center mb-6">
           <div className="flex justify-center items-center">
-          <img src="src/assets/gcash.png" alt="GCash" className="w-10 h-10 mb-4" />
-          <img src="src/assets/paypal.png" alt="Paypal" className="w-10 h-10 mb-4" />
+            <img src="src/assets/gcash.png" alt="GCash" className="w-10 h-10 mb-4" />
+            <img src="src/assets/paypal.png" alt="Paypal" className="w-10 h-10 mb-4" />
           </div>
           <input
             type="tel"
@@ -77,17 +82,23 @@ export default function DigitalWallet() {
         <p className="text-center mb-4">{plan}</p>
 
         <div className="mb-4 text-justify">
-  <input type="checkbox" id="agree" className="mr-2" />
-  <label htmlFor="agree" className="text-sm">
-    By checking the checkbox below, you agree to CrimEdge's Terms of Use, Privacy Policy, and that you are over 18. CrimEdge will automatically renew your subscription ({price}) to your payment method until you cancel.
-    You may cancel anytime to avoid future charges.
-  </label>
-</div>
-
+          <input
+            type="checkbox"
+            id="agree"
+            className="mr-2"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+          />
+          <label htmlFor="agree" className="text-sm">
+            By checking the checkbox below, you agree to CrimEdge's Terms of Use, Privacy Policy, and that you are over 18. CrimEdge will automatically renew your subscription ({price}) to your payment method until you cancel.
+            You may cancel anytime to avoid future charges.
+          </label>
+        </div>
 
         <button
           onClick={handleStartMembership}
-          className="w-full py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          disabled={!agreed}
+          className={`w-full py-2 text-white rounded-md ${agreed ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
         >
           Start Membership
         </button>

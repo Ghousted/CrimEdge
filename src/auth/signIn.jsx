@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { authControl } from './components/authControl';
 import { useNavigate } from 'react-router-dom';
-import { FcGoogle } from 'react-icons/fc';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signIn, signInWithGoogle } = authControl();
+  const { signIn } = authControl();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -14,13 +13,6 @@ export default function SignIn() {
     await signIn({ email, password });
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error('Google sign in error:', error);
-    }
-  };
 
   return (
     <section className="flex justify-center items-center min-h-screen p-4 bg-gray-50">
@@ -70,15 +62,7 @@ export default function SignIn() {
           </button>
         </form>
 
-        <div className="mt-6">
-          <button
-            onClick={handleGoogleSignIn}
-            className="w-full py-2 bg-white border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-          >
-            <FcGoogle className="text-xl mr-2" />
-            Sign in with Google
-          </button>
-        </div>
+
 
         <div className="mt-6 text-center text-sm">
           <p className="text-gray-600">

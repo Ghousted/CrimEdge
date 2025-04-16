@@ -7,17 +7,27 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [authRole, setAuthRole] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [membershipPlan, setMembershipPlan] = useState(null);
+  const [membershipStatus, setMembershipStatus] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user); // 👈 Set current user
+
       if (user) {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
-          console.log(userDoc.data().role);
           if (userDoc.exists()) {
-            setAuthRole(userDoc.data().role);
+            const role = userDoc.data().role;
+            const membership = userDoc.data().membership;
+            const membershipStatus = userDoc.data().membershipStatus;
+            setAuthRole(role || null);
+            setMembershipPlan(membership || null);
+            setMembershipStatus(membershipStatus || false)
           } else {
+            console.warn('User document not found in Firestore');
             setAuthRole(null);
           }
         } catch (error) {
@@ -27,6 +37,7 @@ export const AuthProvider = ({ children }) => {
       } else {
         setAuthRole(null);
       }
+
       setLoading(false);
     });
 
@@ -34,7 +45,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ authRole, loading }}>
+    <AuthContext.Provider value={{ authRole, currentUser, loading, membershipPlan, membershipStatus }}>
       {children}
     </AuthContext.Provider>
   );

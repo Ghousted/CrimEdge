@@ -1,10 +1,13 @@
-// Payment Component
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../auth/components/authContext'; // Replace with your actual auth context
+import { useEditAdminSettings } from '../hooks/useEditAdminSettings';
 
 export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { membershipPlan } = useAuth();
+  const { subscriptionPlans } = useEditAdminSettings();
 
   useEffect(() => {
     document.body.style.background = "radial-gradient(circle, rgba(225,238,254,1) 0%, rgba(90,110,201,1) 100%)";
@@ -14,18 +17,15 @@ export default function Payment() {
   }, []);
 
   const queryParams = new URLSearchParams(location.search);
-  const plan = queryParams.get('plan');
-  
-  const planPricing = {
-    "Free Tier": "Free",
-    "Basic Tier": "₱2,000 / month",
-    "Premium Tier": "₱5,000 / month"
-  };
+  const planId = queryParams.get('plan');
 
-  const price = planPricing[plan] || "Unknown Plan";
+  const selectedPlan = subscriptionPlans ? subscriptionPlans.find((plan) => plan.id === planId) : null;
 
-  const navigateToPayment = (plan, method) => {
-    navigate(`/${method}?plan=${encodeURIComponent(plan)}&method=${encodeURIComponent(method)}`);
+  const price = selectedPlan ? (selectedPlan.price === 0 ? 'Free' : `₱${selectedPlan.price} / month`) : 'Unknown Plan';
+  const planName = selectedPlan ? selectedPlan.plan : 'Unknown Plan';
+
+  const navigateToPayment = (membershipPlan, method) => {
+    navigate(`/${method}?plan=${encodeURIComponent(membershipPlan)}&method=${encodeURIComponent(method)}`);
   };
 
   return (
@@ -38,7 +38,7 @@ export default function Payment() {
       </div>
 
       <div className="text-center mb-5">
-        <h2 className="text-2xl font-semibold mb-2">You have selected the {plan} plan</h2>
+        <h2 className="text-2xl font-semibold mb-2">You have selected the {planName}</h2>
         <p className="mb-2">Payment Amount: <span className="font-bold">{price}</span></p>
         <p className="mb-5">Your payment is encrypted, and you can change how you pay anytime.</p>
       </div>
@@ -47,7 +47,7 @@ export default function Payment() {
         <h2 className="text-3xl font-semibold mb-5 text-center">Choose how to pay</h2>
 
         <button
-          onClick={() => navigateToPayment(plan, 'creditdebit')}
+          onClick={() => navigateToPayment(planId, 'creditdebit')}
           className="flex items-center justify-between w-full p-4 mb-2 bg-gray-100 rounded-lg hover:bg-gray-200"
         >
           <span className="text-lg font-medium">Credit or Debit Card</span>
@@ -58,7 +58,7 @@ export default function Payment() {
         </button>
 
         <button
-          onClick={() => navigateToPayment(plan, 'digitalwallet')}
+          onClick={() => navigateToPayment(planId, 'digitalwallet')}
           className="flex items-center justify-between w-full p-4 mb-2 bg-gray-100 rounded-lg hover:bg-gray-200"
         >
           <span className="text-lg font-medium">Digital Wallet</span>

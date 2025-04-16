@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { auth, db } from "../../../firebase";
 import {
     signInWithEmailAndPassword,
@@ -19,10 +19,8 @@ import { useNavigate } from "react-router-dom";
 
 export const authControl = () => {
     const navigate = useNavigate();
-    const [authRole, setAuthRole] = useState(null);
     const googleProvider = new GoogleAuthProvider();
 
-    // 🔁 Centralized role fetching + navigation logic
     const handleUserLogin = async (user) => {
         try {
             const userDocRef = doc(db, "users", user.uid);
@@ -37,16 +35,14 @@ export const authControl = () => {
             }
 
             const { role, emailVerified } = userSnapshot.data();
-            setAuthRole(role);
 
-            // 🔀 Navigate by role
+            // Navigate by role
             const routes = {
                 admin: "/admin/dashboard",
                 instructor: "/insdashboard",
-                user: "/dashboard",
+                user: "/membership",
             };
 
-            // Check if email is verified
             if (!emailVerified) {
                 navigate("/verify-email");
                 return;
@@ -55,8 +51,6 @@ export const authControl = () => {
             navigate(routes[role] || "/dashboard");
 
         } catch (error) {
-            if (error === 'FirebaseError: Missing or insufficient permissions.') {
-            }
             console.error("Error fetching user role:", error);
             alert("There was an error signing in. Please try again.");
         }
@@ -67,10 +61,8 @@ export const authControl = () => {
             const userCredentials = await createUserWithEmailAndPassword(auth, email, confirmPassword);
             const user = userCredentials.user;
 
-            // ✅ Send email verification
             await sendEmailVerification(user);
 
-            // ✅ Save user data in Firestore with verification status
             const userDocRef = doc(db, "users", user.uid);
             await setDoc(userDocRef, {
                 firstName,
@@ -78,11 +70,10 @@ export const authControl = () => {
                 email,
                 contactNumber,
                 role: "user",
-                emailVerified: false, // Initially set to false
+                emailVerified: false,
                 createdAt: serverTimestamp(),
             });
 
-            // ✅ Redirect to verification notice page
             navigate("/verify-email");
         } catch (err) {
             if (err.code === "auth/email-already-in-use") {
@@ -99,63 +90,35 @@ export const authControl = () => {
         try {
             const { user } = await signInWithEmailAndPassword(auth, email, password);
 
-            // If email is not verified, prompt user to verify email
-            if (!user.emailVerified && email != 'admin@crimedge.com') {
+            if (!user.emailVerified && email !== 'admin@crimedge.com') {
                 alert("Please verify your email before signing in.");
                 await signOut(auth);
                 return;
             }
 
-            // Update Firestore to reflect verified email (in case the user verified after sign-up)
-            if (email != 'admin@crimedge.com') {
+            if (email !== 'admin@crimedge.com') {
                 await updateDoc(doc(db, "users", user.uid), {
                     emailVerified: true,
                 });
             }
 
-            // Proceed with user login and navigation
             await handleUserLogin(user);
         } catch (err) {
             console.error("Email/password sign-in error:", err);
             alert("Invalid credentials or user does not exist.");
         }
     };
-    const signInWithGoogle = async () => {
-        try {
 
-            const { user } = await signInWithPopup(auth, googleProvider);
-            const userDocRef = doc(db, "users", user.uid);
-            const userSnapshot = await getDoc(userDocRef);
+   
 
-            if (!userSnapshot.exists()) {
-                // If no user doc exists, create one
-                await setDoc(userDocRef, {
-                    firstName: user.displayName?.split(" ")[0] || "",
-                    lastName: user.displayName?.split(" ")[1] || "",
-                    email: user.email,
-                    contactNumber: "", // Optional - or pull from custom claim if needed
-                    role: "user", // Default role
-                    emailVerified: true,
-                    createdAt: serverTimestamp(),
-                });
-            }
-
-            await handleUserLogin(user);
-
-        } catch (err) {
-            console.error("Google sign-in error:", err);
-            alert("Google sign-in failed.");
-        }
-    };
     const logout = async () => {
         try {
             await signOut(auth);
-            setAuthRole(null);
             navigate("/");
         } catch (err) {
             console.error("Logout error:", err);
         }
     };
 
-    return { signUp, signIn, signInWithGoogle, logout, authRole };
+    return { signUp, signIn, logout };
 };
