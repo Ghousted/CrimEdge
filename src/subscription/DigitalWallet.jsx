@@ -46,8 +46,8 @@ export default function DigitalWallet() {
     };
   }, [location.search, subscriptionPlans]);
 
-  const handleStartMembership = () => {
-    subscriptionStatus(true);
+  const handleStartMembership = async () => {
+    await subscriptionStatus(true);
     console.log(`Starting ${plan} membership with payment of ${price}`);
     navigate('/dashboard');
   };

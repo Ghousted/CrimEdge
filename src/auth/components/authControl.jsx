@@ -40,7 +40,7 @@ export const authControl = () => {
             const routes = {
                 admin: "/admin/dashboard",
                 instructor: "/insdashboard",
-                user: "/membership",
+                user: "/dashboard",
             };
 
             if (!emailVerified) {
@@ -56,7 +56,7 @@ export const authControl = () => {
         }
     };
 
-    const signUp = async ({ email, confirmPassword, firstName, lastName, contactNumber }) => {
+    const signUp = async ({ email, confirmPassword, firstName, lastName, contactNumber }, setAuthRole) => {
         try {
             const userCredentials = await createUserWithEmailAndPassword(auth, email, confirmPassword);
             const user = userCredentials.user;
@@ -71,10 +71,12 @@ export const authControl = () => {
                 contactNumber,
                 role: "user",
                 emailVerified: false,
+                membershipStatus: false,
                 createdAt: serverTimestamp(),
             });
 
             navigate("/verify-email");
+            
         } catch (err) {
             if (err.code === "auth/email-already-in-use") {
                 alert("This email is already registered. Please sign in.");
