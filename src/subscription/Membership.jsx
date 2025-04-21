@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useHandleUserMembership } from './components/handleUserSubscription';
+import { useHandleUserMembership } from '../hooks/handleUserSubscription';
 import { useEditAdminSettings } from '../hooks/useEditAdminSettings';
 
 export default function Membership() {

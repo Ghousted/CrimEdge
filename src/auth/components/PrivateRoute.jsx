@@ -7,24 +7,25 @@ const PrivateRoute = ({ element, requiredRole }) => {
   const location = useLocation();
 
   if (loading) return <div>Loading...</div>;
-  
-  if (!authRole || (requiredRole && authRole !== requiredRole)) {
-    console.log(authRole, membershipStatus);
+
+  // Redirect to landing if authRole is null or undefined
+  if (!authRole) {
     return <Navigate to="/landing" replace />;
   }
 
-  // Allow access to membership and payment-related pages even if membershipStatus is false
-  const allowedPaths = ['/membership', '/payment', '/digitalwallet', '/creditdebit'];
-  if (!membershipStatus && allowedPaths.includes(location.pathname.toLowerCase())) {
-    return element;
+
+  // For 'user' role, apply membership status checks
+  if (authRole === 'user') {
+    const allowedPaths = ['/membership', '/payment', '/digitalwallet', '/creditdebit', '/signin'];
+
+    if (!membershipStatus && allowedPaths.includes(location.pathname.toLowerCase())) {
+      return element;
+    }
+
+    if (!membershipStatus && !location.pathname.toLowerCase().includes('/verify-email')) {
+      return <Navigate to="/membership" replace />;
+    }
   }
-
-  // If membership status is false and not on allowed paths, redirect to membership page
-  if (!membershipStatus) {
-    return <Navigate to="/membership" replace />;
-  }
-
-
 
   return element;
 };

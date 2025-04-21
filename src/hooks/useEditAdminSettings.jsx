@@ -18,17 +18,6 @@ export const useEditAdminSettings = () => {
         return () => unsubscribe();
     }, []);
 
-    // const addNewPlan = async (plan, price) => {
-    //     try {
-    //         await addDoc(subscriptionPlansRef, {
-    //             plan,
-    //             price,
-    //             createdAt: serverTimestamp()
-    //         });
-    //     } catch (err) {
-    //         console.error("Error adding new plan: ", err);
-    //     }
-    // };
 
     const editCurrentPlan = async (id, plan, price) => {
         try {

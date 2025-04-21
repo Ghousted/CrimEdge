@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useAuth } from '../auth/components/authContext';
 
 export default function Account() {
   const [activeTab, setActiveTab] = useState('profile'); // Default tab is 'profile'
+  const { userData, membershipPlan } = useAuth();
+  console.log(membershipPlan);
 
   // Content for each tab
   const content = {
@@ -12,15 +15,15 @@ export default function Account() {
         <div className="mt-4">
           <div className="flex justify-between">
             <span className="font-medium">Name:</span>
-            <span>John Doe</span>
+            <span>{userData ? `${userData.firstName} ${userData.lastName}` : 'Loading...'}</span>
           </div>
           <div className="flex justify-between mt-2">
             <span className="font-medium">Email:</span>
-            <span>johndoe@example.com</span>
+            <span>{userData ? userData.email : 'Loading...'}</span>
           </div>
           <div className="flex justify-between mt-2">
             <span className="font-medium">Phone:</span>
-            <span>(123) 456-7890</span>
+            <span>{userData ? userData.contactNumber : 'Loading...'}</span>
           </div>
         </div>
       </div>
@@ -51,20 +54,12 @@ export default function Account() {
         <p className="text-gray-700">View and manage your billing details below.</p>
         <div className="mt-4">
           <div className="flex justify-between">
-            <span className="font-medium">Billing Address:</span>
-            <span>123 Main St, City, Country</span>
+            <span className="font-medium">Membership Plan:</span>
+            <span>{membershipPlan ? membershipPlan.plan : 'No plan selected'}</span>
           </div>
           <div className="flex justify-between mt-2">
-            <span className="font-medium">Payment Method:</span>
-            <span>Visa **** 1234</span>
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="font-medium">Last Payment:</span>
-            <span>$99.99 - March 25, 2025</span>
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="font-medium">Upcoming Payment:</span>
-            <span>$99.99 - April 25, 2025</span>
+            <span className="font-medium">Price:</span>
+            <span>{membershipPlan && membershipPlan.price ? `₱ ${membershipPlan.price}` : 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -89,22 +84,13 @@ export default function Account() {
         </div>
       </div>
     ),
-    logout: (
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Logout</h2>
-        <p className="text-gray-700">Are you sure you want to log out?</p>
-        <button className="mt-4 py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200">
-          Log Out
-        </button>
-      </div>
-    ),
   };
 
   return (
     <section className='p-6 flex'>
       <div className="w-1/4 bg-white shadow-md rounded-lg p-4 mr-6">
         <div className="page-title mb-4 text-2xl">Account</div>
-        
+
         {/* Account Navigation Links */}
         <div className="flex flex-col gap-4">
           <a
@@ -135,13 +121,7 @@ export default function Account() {
           >
             Security
           </a>
-          <a
-            href="#"
-            onClick={() => setActiveTab('logout')}
-            className={`text-lg ${activeTab === 'logout' ? 'text-blue-500' : 'text-red-500'} hover:text-red-700 transition duration-200`}
-          >
-            Logout
-          </a>
+        
         </div>
       </div>
 

@@ -4,6 +4,12 @@ import { useAuth } from './authContext';
 
 const PublicRoute = ({ element }) => {
   const { authRole } = useAuth();
+  const location = window.location.pathname;
+
+  // Allow access to verify-email page even if logged in
+  if (location === '/verify-email') {
+    return element;
+  }
 
   // If the user is logged in (has a role), redirect to the appropriate dashboard
   if (authRole) {

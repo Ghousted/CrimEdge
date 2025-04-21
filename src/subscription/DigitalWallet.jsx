@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useEditAdminSettings } from '../hooks/useEditAdminSettings';
-import { useHandleUserMembership } from './components/handleUserSubscription';
+import { useHandleUserMembership } from '../hooks/handleUserSubscription';
 
 export default function DigitalWallet() {
   const location = useLocation();

@@ -1,9 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FiMail, FiArrowRight } from "react-icons/fi";
+import { authControl } from "./components/authControl";
 
 const VerifyEmailNotice = () => {
   const navigate = useNavigate();
+  const { logout } = authControl();
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
@@ -21,7 +23,11 @@ const VerifyEmailNotice = () => {
         </p>
 
         <button
-          onClick={() => navigate("/signin")}
+          onClick={async () => {
+            await logout();
+            navigate("/signin");
+          }}
+
           className="flex items-center gap-2 justify-center bg-blue-600 text-white px-5 py-2 rounded-md hover:bg-blue-700 transition-all"
         >
           Go to Sign In <FiArrowRight />
