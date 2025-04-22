@@ -3,10 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useEditAdminSettings } from '../hooks/useEditAdminSettings';
 import { useHandleUserMembership } from '../hooks/handleUserSubscription';
+import { useAuth } from '../auth/components/authContext';
 
 export default function DigitalWallet() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { refreshUserData } = useAuth();
   const { subscriptionPlans } = useEditAdminSettings();
   const { subscriptionStatus } = useHandleUserMembership();
 
@@ -48,6 +50,7 @@ export default function DigitalWallet() {
 
   const handleStartMembership = async () => {
     await subscriptionStatus(true);
+    await refreshUserData(); // Refresh user data after updating membership status
     console.log(`Starting ${plan} membership with payment of ${price}`);
     navigate('/dashboard');
   };

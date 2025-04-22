@@ -54,28 +54,6 @@ export const authControl = () => {
                 return;
             }
 
-            await setAuthRole(role);
-            await setUserData(userSnapshot.data());
-            const plan = membership;
-
-            if (plan) {
-                const q = query(
-                    collection(db, 'subscription-plans'),
-                    where('plan', '==', plan) // change 'name' to your actual field name
-                );
-
-                const querySnapshot = await getDocs(q);
-
-                if (!querySnapshot.empty) {
-                    const planDoc = querySnapshot.docs[0]; // since there's only one match
-                    setMembershipPlan(planDoc.data());
-                } else {
-                    setMembershipPlan(null);
-                }
-            } else {
-                setMembershipPlan(null);
-            }
-
             navigate(routes[role] || "/dashboard");
 
         } catch (error) {

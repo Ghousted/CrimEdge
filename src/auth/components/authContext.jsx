@@ -1,7 +1,14 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { auth, db } from '../../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  query,
+  collection,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -14,70 +21,85 @@ export const AuthProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUserData = async (user) => {
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            const membership = data.membership;
-            const membershipStatus = data.membershipStatus;
-            const emailVerified = data.emailVerified;
-            const role = data.role;
-            setUserData(data);
-            setAuthRole(role || null);
-            setMembershipStatus(membershipStatus || false);
-            setEmailVerification(emailVerified || false);
-            // Fetch subscription plan details from subscription-plans collectiom
-           
-            if (membership) {
-              const planDoc = await getDoc(doc(db, 'subscription-plans', membership));
-              if (planDoc.exists()) {
-                setMembershipPlan(planDoc.data());
-                console.log('member setq');
-              } else {
-                setMembershipPlan(null);
-              }
-            } else {q 
+  const fetchUserData = useCallback(async (user) => {
+    if (user) {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          const membership = data.membership;
+          const membershipStatus = data.membershipStatus;
+          const emailVerified = data.emailVerified;
+          const role = data.role;
+          setUserData(data);
+          setAuthRole(role || null);
+          setMembershipStatus(membershipStatus || false);
+          setEmailVerification(emailVerified || false);
+
+          if (membership) {
+            const q = query(
+              collection(db, 'subscription-plans'),
+              where('plan', '==', membership)
+            );
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+              const planDoc = querySnapshot.docs[0];
+              setMembershipPlan(planDoc.data());
+              console.log('membershipPlan:', planDoc.data());
+            } else {
               setMembershipPlan(null);
             }
           } else {
-            console.warn('User document not found in Firestore');
-            setAuthRole(null);
-            setUserData(null);
             setMembershipPlan(null);
-            setEmailVerification(false);
           }
-        } catch (error) {
-          console.error('Error fetching user role:', error);
+        } else {
+          console.warn('User document not found in Firestore');
           setAuthRole(null);
           setUserData(null);
           setMembershipPlan(null);
           setEmailVerification(false);
         }
-      } else {
+      } catch (error) {
+        console.error('Error fetching user role:', error);
         setAuthRole(null);
         setUserData(null);
         setMembershipPlan(null);
         setEmailVerification(false);
       }
-      setLoading(false);
-    };
+    } else {
+      setAuthRole(null);
+      setUserData(null);
+      setMembershipPlan(null);
+      setEmailVerification(false);
+    }
+    setLoading(false);
+  }, []);
 
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       fetchUserData(user);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [fetchUserData]);
+
+  const refreshUserData = async () => {
+    if (currentUser) {
+      setLoading(true);
+      await fetchUserData(currentUser);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider value={{
       authRole, currentUser, loading, membershipPlan, membershipStatus,
       setAuthRole, setMembershipStatus, emailVerification, setEmailVerification,
-      userData, setUserData, setMembershipPlan
+      userData, setUserData, setMembershipPlan, refreshUserData
     }}>
       {children}
     </AuthContext.Provider>
