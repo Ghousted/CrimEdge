@@ -97,23 +97,7 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Reasons to Join Section */}
-        <div className="w-full py-3 mt-5 flex flex-col md:items-start space-y-10 md:space-x-20" ref={joinSectionRef}>
-          <h1 className="text-2xl sm:text-3xl font-semibold mb-3 text-left">Reasons to Join Crim Edge</h1>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full text-left">
-            {['All-in-One Learning Platform', 'Expert Support & Guidance', 'Career-Boosting Opportunities', 'Personalized Learning Path'].map((title, i) => (
-              <div key={i} className="p-4 dark-bg text-white rounded-lg shadow-lg">
-                <h2 className="text-lg font-semibold">{title}</h2>
-                <p className='text-sm mt-2'>
-                  {["Access review materials, video lectures, and practice exams for all criminology board exam topics.", 
-                    "Get insights through live Q&A, mentorship, and performance tracking.", 
-                    "Earn a certificate, explore job listings, and internships.", 
-                    "Personalized learning path based on your strengths and weaknesses."][i]}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+       
 
         {/* FAQ Section */}
         <div className="w-full mt-5 py-3 flex flex-col md:items-start space-y-10 md:space-x-20" ref={faqRef}>
