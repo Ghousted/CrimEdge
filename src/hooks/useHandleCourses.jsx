@@ -13,7 +13,6 @@ export const useHandleCourses = () => {
         try {
             const coursesRef = collection(db, "courses");
             await addDoc(coursesRef, {
-                uID,
                 course,
                 createdBy: currentUser ? currentUser.uid : '', // Use user ID
                 createdByName: userData ? `${userData.firstName} ${userData.lastName}` : '', // Also store instructor name
