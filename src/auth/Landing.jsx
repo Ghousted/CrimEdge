@@ -27,7 +27,6 @@ export default function Landing() {
   const getStartedRef = useRef(null);
   const aboutSectionRef = useRef(null);
   const aboutImageRef = useRef(null);
-  const joinSectionRef = useRef(null);
   const faqRef = useRef(null);
 
   useGSAP(() => {
@@ -38,8 +37,7 @@ export default function Landing() {
     gsap.from(aboutSectionRef.current, { x: -50, opacity: 0, duration: 1, delay: 0.5, ease: 'power2.out' });
     gsap.from(aboutImageRef.current, { x: 50, opacity: 0, duration: 1, delay: 0.6, ease: 'power2.out' });
 
-    gsap.from(joinSectionRef.current.children, { opacity: 0, y: 20, stagger: 0.2, duration: 1, delay: 0.7, ease: 'power2.out' });
-    gsap.from(faqRef.current, { y: 30, opacity: 0, duration: 1, delay: 0.9, ease: 'power2.out' });
+    gsap.from(faqRef.current, { y: 30, opacity: 0, duration: 1, delay: 0.7, ease: 'power2.out' });
   }, []);
 
   console.log()
@@ -48,7 +46,7 @@ export default function Landing() {
     <div className="min-h-screen flex flex-col">
       {/* Main Content */}
       <div className="flex-grow flex flex-col items-center justify-center px-4 sm:px-8 xl:px-30 py-10">
-        
+
         {/* Header */}
         <div className="flex justify-between items-center w-full rounded-lg mb-10" ref={headerRef}>
           <img src="src/assets/CrimEdge.png" alt="" className="w-35 h-12" />
@@ -68,10 +66,10 @@ export default function Landing() {
           <p className="text-sm sm:text-base md:text-lg">
             Ready to get started? Enter your email to create or resume your Crim Edge membership.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-">
-            <input 
-              type="email" 
-              placeholder="Email address" 
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+            <input
+              type="email"
+              placeholder="Email address"
               className="w-full sm:w-3/4 md:w-1/2 lg:w-1/3 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <Link to="/signUp" className="gradient-btn rounded-full text-white px-8 py-2 sm:px-10 sm:py-3">
@@ -85,47 +83,45 @@ export default function Landing() {
           <div className="w-full  space-y-6" ref={aboutSectionRef}>
             <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">About Crim Edge</h1>
             <p className="text-gray-700 text-lg leading-relaxed text-justify">
-              Our Criminology Review Platform offers a comprehensive and flexible learning experience for 
-              aspiring criminologists, featuring expertly designed modules on key topics like Criminal 
-              Jurisprudence, Criminalistics, and Law Enforcement. Students can access video lectures, 
-              live classes, and downloadable materials, with interactive quizzes and AI-monitored mock 
-              exams to ensure thorough preparation. With a variety of subscription plans, including free 
-              and premium options, we also provide mentorship, live Q&A sessions, and career assistance 
-              such as certification, job listings, and internship opportunities. Join us today and take 
+              Our Criminology Review Platform offers a comprehensive and flexible learning experience for
+              aspiring criminologists, featuring expertly designed modules on key topics like Criminal
+              Jurisprudence, Criminalistics, and Law Enforcement. Students can access video lectures,
+              live classes, and downloadable materials, with interactive quizzes and AI-monitored mock
+              exams to ensure thorough preparation. With a variety of subscription plans, including free
+              and premium options, we also provide mentorship, live Q&A sessions, and career assistance
+              such as certification, job listings, and internship opportunities. Join us today and take
               the next step toward acing your criminology board exam!
             </p>
           </div>
         </div>
-
-       
 
         {/* FAQ Section */}
         <div className="w-full mt-5 py-3 flex flex-col md:items-start space-y-10 md:space-x-20" ref={faqRef}>
           <h1 className="text-2xl sm:text-3xl font-semibold mb-3 text-left">Frequently Asked Questions</h1>
           <div className="w-full gap-6 grid grid-cols-1 lg:grid-cols-2">
             {[
-              { 
-                question: "What are the different subscription tiers available?", 
+              {
+                question: "What are the different subscription tiers available?",
                 answer: "We offer three subscription tiers:\n\nFree Tier: Limited access to sample quizzes and trial lessons.\n\nBasic Plan: Access to pre-recorded lectures and practice exams.\n\nPremium Plan: Full access to live coaching, mentorship, and mock exams."
               },
-              { 
-                question: "What payment methods do you accept?", 
+              {
+                question: "What payment methods do you accept?",
                 answer: "We accept payments through PayPal, credit/debit cards, GCash, PayMaya, and bank transfers."
               },
-              { 
-                question: "What happens if my subscription expires?", 
+              {
+                question: "What happens if my subscription expires?",
                 answer: "If your subscription expires, access to certain content will be auto-locked. You will also receive notifications before the expiration date, and you can easily upgrade or renew your subscription."
               },
-              { 
-                question: "What topics do the review modules cover?", 
+              {
+                question: "What topics do the review modules cover?",
                 answer: "The review modules cover criminology board exam topics, including:\n\n- Criminal Jurisprudence & Procedure\n- Law Enforcement Administration\n- Criminalistics\n- Crime Detection & Investigation\n- Sociology of Crimes & Ethics."
               },
-              { 
-                question: "Can I access downloadable study materials?", 
+              {
+                question: "Can I access downloadable study materials?",
                 answer: "Yes, downloadable materials such as PDF handouts, case studies, and e-books are available depending on your subscription plan."
               },
-              { 
-                question: "Are there practice exams available?", 
+              {
+                question: "Are there practice exams available?",
                 answer: "Yes, we offer practice exams categorized by topics and difficulty levels to help you prepare."
               }
             ].map((faq, i) => (
@@ -150,7 +146,7 @@ export default function Landing() {
   <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
     {/* Contact Info */}
     <div className="space-y-4">
-     
+
       <div className="flex items-center gap-3">
         <FaPhone className="text-xl text-gray-300" />
         <p className="font-medium text-base">+63 969 045 6744</p>
@@ -167,8 +163,8 @@ export default function Landing() {
     <div>
       <h3 className="text-white font-semibold mb-3">Crim Edge</h3>
       <p className="text-sm text-gray-400 mb-5">
-      Sharpen your mind and conquer the Criminology Licensure Exam with expert coaching, 
-      top-notch materials, and a results-driven approach. Stay sharp, stay ahead—Get 
+      Sharpen your mind and conquer the Criminology Licensure Exam with expert coaching,
+      top-notch materials, and a results-driven approach. Stay sharp, stay ahead—Get
       the EDGE with CRIM EDGE!
       </p>
       <div className="flex space-x-4">
