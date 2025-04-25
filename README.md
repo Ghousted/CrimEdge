@@ -10,3 +10,4 @@
  - npm install gsap
  - npm install @gsap/react
  - npm install lucide-react' 
+ - npm i @zegocloud/zego-uikit-prebuilt --save

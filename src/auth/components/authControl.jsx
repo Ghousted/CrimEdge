@@ -54,8 +54,8 @@ export const authControl = () => {
                 return;
             }
 
-            navigate(routes[role] || "/dashboard");
-
+            console.log(role);
+            navigate(routes[role]);
         } catch (error) {
             console.error("Error fetching user role:", error);
             alert("There was an error signing in. Please try again.");
@@ -87,7 +87,8 @@ export const authControl = () => {
             if (err.code === "auth/email-already-in-use") {
                 alert("This email is already registered. Please sign in.");
                 navigate("/signin");
-            } else {7
+            } else {
+                7
                 console.error("Sign up error:", err);
                 alert("There was an issue with your registration. Please try again.");
             }
@@ -111,6 +112,7 @@ export const authControl = () => {
             }
 
             await handleUserLogin(user);
+
         } catch (err) {
             console.error("Email/password sign-in error:", err);
             alert("Invalid credentials or user does not exist.");

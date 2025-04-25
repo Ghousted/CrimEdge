@@ -52,6 +52,8 @@ export const AuthProvider = ({ children }) => {
           } else {
             setMembershipPlan(null);
           }
+          console.log("User role:", role);
+
         } else {
           console.warn('User document not found in Firestore');
           setAuthRole(null);

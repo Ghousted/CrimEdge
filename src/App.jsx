@@ -22,7 +22,6 @@ import SignUp from './auth/signUp';
 import ForgotPassword from './auth/ForgotPassword';
 import VerifyEmailNotice from './auth/VerifyEmailNotice';
 
-
 // Subscriptions
 import CreditDebit from './subscription/CreditDebit';
 import DigitalWallet from './subscription/DigitalWallet';
@@ -33,6 +32,7 @@ import Payment from './subscription/Payment';
 import AdminDashboard from './pages/admin/adminDashboard';
 import AdminSetting from './pages/admin/adminSetting';
 import InstructorDashboard from './pages/instructor/insDashboard';
+import CoursePage from './pages/instructor/CoursePage';
 
 // Routes
 import PublicRoute from '../src/auth/components/PublicRoute';
@@ -51,7 +51,6 @@ const App = () => {
       <Route path="/landing" element={<PublicRoute element={<Landing />} />} />
       <Route path="/signout" element={<Landing />} />
       <Route path='/verify-email' element={<PublicRoute element={<VerifyEmailNotice />} />} />
-
 
       {/* General user layout */}
       <Route element={<Layout />}>
@@ -72,12 +71,12 @@ const App = () => {
       <Route element={<AdminLayout />}>
         <Route path="/admin/dashboard" element={<PrivateRoute element={<AdminDashboard />} requiredRole="admin" />} />
         <Route path="/admin/settings" element={<PrivateRoute element={<AdminSetting />} requiredRole="admin" />} />
-
       </Route>
 
       {/* Instructor-only layout */}
       <Route element={<InstructorLayout />}>
         <Route path="/insdashboard" element={<PrivateRoute element={<InstructorDashboard />} requiredRole="instructor" />} />
+        <Route path="/course-page/:id" element={<PrivateRoute element={<CoursePage />} requiredRole="instructor" />} />
       </Route>
     </Routes>
   );

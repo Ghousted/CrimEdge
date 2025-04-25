@@ -13,7 +13,16 @@ const PublicRoute = ({ element }) => {
 
   // If the user is logged in (has a role), redirect to the appropriate dashboard
   if (authRole) {
-    return <Navigate to={authRole === 'admin' ? '/admin/dashboard' : '/dashboard'} replace />;
+    <Navigate
+      to={
+        authRole === 'admin'
+          ? '/admin/dashboard'
+          : authRole === 'instructor'
+            ? '/insdashboard'
+            : '/dashboard'
+      }
+      replace
+    />
   }
 
   // If not logged in, show the public route

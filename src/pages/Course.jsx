@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useHandleCourses } from '../hooks/useHandleCourses';
+import { useHandleAnnouncements } from '../hooks/useHandleAnnouncements'; // Import your hook
 
-const courses = [
-  { id: 1, name: 'Course 1', lessons: 2, instructor: 'John Doe', description: 'Introduction to Course 1 with basic principles.' },
-  { id: 2, name: 'Course 2', lessons: 4, instructor: 'Jane Smith', description: 'Intermediate concepts covered in Course 2.' },
-  { id: 3, name: 'Course 3', lessons: 6, instructor: 'Bob Johnson', description: 'Advanced techniques and methodologies in Course 3.' },
-  { id: 4, name: 'Course 4', lessons: 8, instructor: 'Alice Brown', description: 'Comprehensive coverage of all modules in Course 4.' },
-  { id: 5, name: 'Course 5', lessons: 10, instructor: 'Mike Davis', description: 'Expert-level discussions and projects in Course 5.' },
-];
 
 const Course = () => {
   const { id } = useParams();
-  const course = courses.find(course => course.id === parseInt(id));
+  const { createAnnouncement, announcements, createdAnnouncements } = useHandleAnnouncements(id);
+  const { courses } = useHandleCourses(); // Get courses from hook
+
+  const course = courses.find(c => c.id === id) || null;
+
   const [activeSection, setActiveSection] = useState('lessons');
 
   if (!course) {
@@ -68,6 +67,25 @@ const Course = () => {
           <p>Workload section content here.</p>
         </div>
       )}
+
+      {/* Announcements Section */}
+      <div className="announcements-section mt-6 p-4 bg-white rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-3">Announcements for {course.course}</h2>
+        <p className="mb-2 text-sm text-gray-600">Instructor: {course.createdByName}</p>
+        {announcements.length === 0 ? (
+          <p className="text-gray-500">No announcements for this course yet.</p>
+        ) : (
+          announcements.map((announcement) => (
+            <div key={announcement.id} className="p-2 border rounded-md bg-gray-50 mb-2">
+              <p className="text-sm">{announcement.announcement}</p>
+              <p className="text-xs text-gray-500 mt-1">Target: {announcement.target}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Date: {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleString() : ''}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
     </section>
   );
 };
