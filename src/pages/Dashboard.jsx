@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useHandleAnnouncements } from '../hooks/useHandleAnnouncements'; // Import your hook
-import { useHandleCourses } from '../hooks/useHandleCourses'; // Import your hook
+import { useHandleAnnouncements } from '../hooks/useHandleAnnouncements';
+import { useHandleCourses } from '../hooks/useHandleCourses';
+import { auth, db } from '../../firebase'; // Import Firebase configuration
+import { onAuthStateChanged } from 'firebase/auth'; // Import Firebase Auth functions
+import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
 
 const Dashboard = () => {
-  const { courses } = useHandleCourses(); // Get courses from hook
+  const { courses } = useHandleCourses();
+  const { announcements, loading } = useHandleAnnouncements();
 
   const upcomingEvents = [
     { id: 1, title: 'Cybersecurity Webinar', date: 'April 10, 2025' },
@@ -19,15 +23,7 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [cardsPerRow, setCardsPerRow] = useState(4);
   const [direction, setDirection] = useState(null);
-
-  const { announcements, loading } = useHandleAnnouncements(); // Get announcements from hook
-
-  const getCardsPerRow = () => {
-    if (window.innerWidth >= 1024) return 4;
-    if (window.innerWidth >= 768) return 3;
-    if (window.innerWidth >= 640) return 2;
-    return 1;
-  };
+  const [user, setUser] = useState(null); // State to store user data
 
   useEffect(() => {
     const handleResize = () => {
@@ -37,8 +33,32 @@ const Dashboard = () => {
     setCardsPerRow(getCardsPerRow());
     window.addEventListener('resize', handleResize);
 
-    return () => window.removeEventListener('resize', handleResize);
+    // Firebase Auth state change listener
+    const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
+      if (userAuth) {
+        // Fetch user data from Firestore
+        const userDocRef = doc(db, 'users', userAuth.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setUser(userDocSnap.data());
+        }
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      unsubscribe(); // Unsubscribe from the auth state change listener
+    };
   }, []);
+
+  const getCardsPerRow = () => {
+    if (window.innerWidth >= 1024) return 4;
+    if (window.innerWidth >= 768) return 3;
+    if (window.innerWidth >= 640) return 2;
+    return 1;
+  };
 
   const handleNext = () => {
     if ((currentPage + 1) * cardsPerRow < courses.length) {
@@ -77,20 +97,21 @@ const Dashboard = () => {
     <section className="p-6">
       <div className="flex flex-col lg:flex-row gap-5">
         <div className="flex flex-col gap-7 w-full lg:w-5/7">
-          <div className="content-section px-10 py-5 mb-5">
-            <h2 className="text-3xl font-semibold mb-2">Welcome to Crim Edge, Aiah!</h2>
-            <p className="text-base italic font-medium">Crim Edge: Where your insights shape the next top student.</p>
-            <div className="learn"><button>Learn More</button></div>
+          <div className="content-section px-10 py-7 mb-5">
+            <h2 className="text-3xl mb-2">
+              Welcome to Crim Edge, {user ? `${user.firstName} ${user.lastName}` : 'Guest'}!
+            </h2>
+            <p className="text-base font-medium">Crim Edge: Where your insights shape the next top student.</p>
           </div>
 
           <h1 className='-mb-5 -mt-5 text-2xl'>Courses</h1>
           <div className="course-container">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {courses.map((course) => (
+              {currentCourses.map((course) => (
                 <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
                   <h2 className="text-xl">{course.course}</h2>
-                  <p className="text-sm">{course.lesson || 'none'}</p>
-                  <p className="text-sm">{course.createdByName}</p>
+                  <p className="text-base">{course.description || '-------'}</p>
+                  <p className="text-sm">{course.createdByName || 'none'}</p>
                 </Link>
               ))}
             </div>
@@ -136,7 +157,6 @@ const Dashboard = () => {
               ))}
             </div>
           </div>
-
 
           <div className="content-section p-5 mt-6 border-t border-gray-300">
             <h1 className='mb-5 text-xl'><i className='bi bi-megaphone mr-2'></i>Instructor Announcements</h1>

@@ -30,15 +30,15 @@ export default function CoursePage() {
   }
 
   return (
-    <section className="p-6 max-w-lg mx-auto">
-      <h1 className="text-3xl font-bold mb-4">{course.course}</h1>
-      <p className="mb-6">Created by: {course.createdByName}</p>
+    <section className="max-w-7xl mx-auto py-5 px-4">
+      <h1 className="text-2xl font-bold mb-2">{course.course}</h1>
+      <p className="mb-4 text-gray-600 text-lg">Created by: {course.createdByName}</p>
 
       {/* Add Announcement */}
-      <div className="announcement-section p-4 border rounded-md bg-white shadow-sm">
-        <h2 className="text-xl font-semibold mb-3">Add Announcement for this Course</h2>
+      <div className="announcement-section p-4 rounded-md bg-white shadow-sm">
+        <h2 className="text-lg mb-2">Add Announcement for this Course</h2>
         <textarea
-          className="w-full p-2 border rounded-md resize-none mb-3"
+          className="w-full p-2 border border-gray-300 h-24 rounded-md resize-none mb-3"
           rows={4}
           placeholder="Write your announcement here..."
           value={announcement}
@@ -54,21 +54,34 @@ export default function CoursePage() {
 
       {/* Announcements List */}
       <div className="announcements-list mt-6">
-        <h2 className="text-xl font-semibold mb-3">Announcements</h2>
+        <h2 className="text-xl mb-2">Announcements</h2>
         {createdAnnouncements.length === 0 ? (
           <p className="text-gray-500">No announcements for this course yet.</p>
         ) : (
-          createdAnnouncements.map((announcement) => (
-            <div key={announcement.id} className="p-2 border rounded-md bg-gray-50 mb-2">
-              <p className="text-sm">{announcement.announcement}</p>
-              <p className="text-xs text-gray-500 mt-1">Target: {announcement.target}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Date: {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleString() : ''}
-              </p>
-            </div>
-          ))
-        )}
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {createdAnnouncements.map((announcement) => (
+              <div key={announcement.id} className="p-4 bg-white rounded-md bg-gray-50 shadow-sm ">
+                <div className="flex flex-row justify-between items-center mb-2 border-b border-gray-300 pb-1">
+                <p className="text-lg">{announcement.announcement}</p>
+                <p className="text-xs text-gray-500">
+                  {announcement.createdAt
+                    ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })
+                    : ''}
+                </p>
+                </div>
+
+                <p className="text-sm text-gray-700 mt-2">Target: {announcement.target}</p>
+                
+              </div>
+            ))}
+          </div>
+  )}
+</div>
+
     </section>
   );
 }
