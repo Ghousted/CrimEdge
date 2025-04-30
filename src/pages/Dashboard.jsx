@@ -12,7 +12,6 @@ const Dashboard = () => {
 
   console.log("Enrolled Courses: ", enrolledCourses);
 
-
   const upcomingEvents = [
     { id: 1, title: 'Cybersecurity Webinar', date: 'April 10, 2025' },
     { id: 2, title: 'AI in Criminal Justice', date: 'April 15, 2025' },
@@ -24,9 +23,9 @@ const Dashboard = () => {
   ];
 
   const [currentPage, setCurrentPage] = useState(0);
-  const [cardsPerRow, setCardsPerRow] = useState(4);
-  const [direction, setDirection] = useState(null);
+  const [cardsPerRow, setCardsPerRow] = useState(3);
   const [user, setUser] = useState(null); // State to store user data
+  const [activeSection, setActiveSection] = useState('enrolled'); // State to manage active section
 
   useEffect(() => {
     const handleResize = () => {
@@ -57,33 +56,24 @@ const Dashboard = () => {
   }, []);
 
   const getCardsPerRow = () => {
-    if (window.innerWidth >= 1024) return 4;
-    if (window.innerWidth >= 768) return 3;
+    if (window.innerWidth >= 1024) return 3;
     if (window.innerWidth >= 640) return 2;
     return 1;
   };
 
-  const handleNext = () => {
-    if ((currentPage + 1) * cardsPerRow < courses.length) {
-      setDirection('next');
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentPage > 0) {
-      setDirection('prev');
-      setCurrentPage(currentPage - 1);
-    }
+  const handleDotClick = (index) => {
+    setCurrentPage(index);
   };
 
   const startIdx = currentPage * cardsPerRow;
   const endIdx = startIdx + cardsPerRow;
-  const currentCourses = courses.slice(startIdx, endIdx);
 
   // Separate enrolled and other courses
   const enrolledCoursesList = courses.filter(course => enrolledCourses.includes(course.id));
   const otherCoursesList = courses.filter(course => !enrolledCourses.includes(course.id));
+
+  // Pagination for enrolled courses
+  const currentEnrolledCourses = enrolledCoursesList.slice(startIdx, endIdx);
 
   // Pagination for other courses
   const otherStartIdx = currentPage * cardsPerRow;
@@ -116,13 +106,62 @@ const Dashboard = () => {
             <p className="text-base font-medium">Crim Edge: Where your insights shape the next top student.</p>
           </div>
 
-          <h1 className='-mb-5 -mt-5 text-2xl'>Enrolled Courses</h1>
-          <div className="course-container mb-8">
-            {enrolledCoursesList.length === 0 ? (
-              <p className="text-gray-500">You are not enrolled in any courses yet.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {enrolledCoursesList.map((course) => (
+          <div className="flex gap-5">
+            <button
+              onClick={() => setActiveSection('enrolled')}
+              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                activeSection === 'enrolled'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Enrolled Courses
+            </button>
+            <button
+              onClick={() => setActiveSection('other')}
+              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                activeSection === 'other'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Other Courses
+            </button>
+          </div>
+
+          {activeSection === 'enrolled' && (
+            <div className="course-container mb-8">
+              {enrolledCoursesList.length === 0 ? (
+                <p className="text-gray-500">You are not enrolled in any courses yet.</p>
+              ) : (
+                <div className={`grid grid-cols-1 sm:grid-cols-${cardsPerRow >= 2 ? 2 : 1} md:grid-cols-${cardsPerRow} gap-5`}>
+                  {currentEnrolledCourses.map((course) => (
+                    <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
+                      <h2 className="text-xl">{course.course}</h2>
+                      <p className="text-base">{course.description || '-------'}</p>
+                      <p className="text-sm">{course.createdByName || 'none'}</p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+              <div className="flex mt-4 justify-center gap-2">
+                {Array.from({ length: Math.ceil(enrolledCoursesList.length / cardsPerRow) }, (_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleDotClick(index)}
+                    className={`h-2 w-2 rounded-full transition-all duration-300 ${
+                      currentPage === index ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                  ></button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'other' && (
+            <div className="course-container">
+              <div className={`grid grid-cols-1 sm:grid-cols-${cardsPerRow >= 2 ? 2 : 1} md:grid-cols-${cardsPerRow} gap-5`}>
+                {currentOtherCourses.map((course) => (
                   <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
                     <h2 className="text-xl">{course.course}</h2>
                     <p className="text-base">{course.description || '-------'}</p>
@@ -130,30 +169,19 @@ const Dashboard = () => {
                   </Link>
                 ))}
               </div>
-            )}
-          </div>
-
-          <h1 className='-mb-5 -mt-5 text-2xl'>Other Courses</h1>
-          <div className="course-container">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {currentOtherCourses.map((course) => (
-                <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
-                  <h2 className="text-xl">{course.course}</h2>
-                  <p className="text-base">{course.description || '-------'}</p>
-                  <p className="text-sm">{course.createdByName || 'none'}</p>
-                </Link>
-              ))}
+              <div className="flex mt-4 justify-center gap-2">
+                {Array.from({ length: Math.ceil(otherCoursesList.length / cardsPerRow) }, (_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleDotClick(index)}
+                    className={`h-2 w-2 rounded-full transition-all duration-300 ${
+                      currentPage === index ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                  ></button>
+                ))}
+              </div>
             </div>
-            <div className="flex mt-4 justify-between gap-5">
-              <button onClick={handlePrev} disabled={currentPage === 0} className="prev-next-btn">Prev</button>
-              <button onClick={handleNext} disabled={(currentPage + 1) * cardsPerRow >= otherCoursesList.length} className="prev-next-btn">Next</button>
-            </div>
-          </div>
-
-          <div className="content-section p-5">
-            <h2 className="text-xl font-medium mb-2">Progress</h2>
-            <p className="text-lg">$5,000</p>
-          </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-6 w-full lg:w-2/7">
