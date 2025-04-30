@@ -1,6 +1,6 @@
 import { db } from '../../firebase';
 import { useState, useEffect } from 'react';
-import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { addDoc, collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../auth/components/authContext';
 
 export const useHandleAnnouncements = (courseId = null) => {
@@ -8,12 +8,12 @@ export const useHandleAnnouncements = (courseId = null) => {
     const [announcements, setAnnouncements] = useState([]);
     const [createdAnnouncements, setCreatedAnnouncements] = useState([]);
     const [loading, setLoading] = useState(false);
-
+    const announcementsRef = collection(db, "announcements");
     // Function to create an announcement
     const createAnnouncement = async (announcement, target, id) => {
         try {
             // Use collection instead of doc for announcements
-            const announcementsRef = collection(db, "announcements");
+
 
             await addDoc(announcementsRef, {
                 announcement,
@@ -30,33 +30,41 @@ export const useHandleAnnouncements = (courseId = null) => {
         }
     };
 
+    const deleteAnnouncement = async (announcementId) => {
+        try {
+            const announcementDocRef = doc(db, "announcements", announcementId);
+            await deleteDoc(announcementDocRef);
+            console.log(`Announcement deleted: ${announcementId}`);
+        } catch (error) {
+            console.error("Error deleting announcement: ", error);
+        }
+    }
+
     // Function to get announcements based on user's membership and target field
-    const getAnnouncements = async () => {
+    const getAnnouncements = () => {
         setLoading(true);
 
-        try {
-            const announcementsRef = collection(db, "announcements");
+        const announcementsRef = collection(db, "announcements");
 
-            // Use authRole and userData.membership instead of currentUser.role and currentUser.membership
-            const userRole = authRole;  // Role from context
-            const userMembership = userData ? userData.membership : null;  // Membership from userData
-            console.log("User Role: ", userRole);
-            console.log("User Membership: ", userMembership);
-            let q = query(announcementsRef);
+        // Use authRole and userData.membership instead of currentUser.role and currentUser.membership
+        const userRole = authRole;  // Role from context
+        const userMembership = userData ? userData.membership : null;  // Membership from userData
+        console.log("User Role: ", userRole);
+        console.log("User Membership: ", userMembership);
+        let q = query(announcementsRef);
 
-            if (userRole === 'user' && courseId) {
-                // For users with a courseId, fetch announcements created by this user and filtered by courseId
-                q = query(announcementsRef, where("courseId", "==", courseId));
-            } else if (userRole === 'user' && userMembership) {
-                // For users without courseId, filter announcements based on membership or 'All'
-                q = query(announcementsRef, where("target", "in", [userMembership, "All"]));  // Match the target field to the membership level or 'All'
-            } 
-            
-            console.log('course id', courseId);
-            // Get the data from the announcements collection
-            const querySnapshot = await getDocs(q);
+        if (userRole === 'user' && courseId) {
+            // For users with a courseId, fetch announcements created by this user and filtered by courseId
+            q = query(announcementsRef, where("courseId", "==", courseId));
+        } else if (userRole === 'user' && userMembership) {
+            // For users without courseId, filter announcements based on membership or 'All'
+            q = query(announcementsRef, where("target", "in", [userMembership, "All"]));  // Match the target field to the membership level or 'All'
+        }
+
+        console.log('course id', courseId);
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const fetchedAnnouncements = [];
-
             querySnapshot.forEach((doc) => {
                 fetchedAnnouncements.push({ ...doc.data(), id: doc.id });
             });
@@ -73,15 +81,13 @@ export const useHandleAnnouncements = (courseId = null) => {
                 setCreatedAnnouncements([]);
             }
 
-            console.log("Fetched Announcements: ", fetchedAnnouncements);
-            if (userRole === 'instructor') {
-                console.log("Created Announcements: ", createdAnnouncements);
-            }
-        } catch (error) {
-            console.error("Error fetching announcements: ", error);
-        } finally {
             setLoading(false);
-        }
+        }, (error) => {
+            console.error("Error fetching announcements: ", error);
+            setLoading(false);
+        });
+
+        return unsubscribe;
     };
 
     useEffect(() => {
@@ -90,5 +96,5 @@ export const useHandleAnnouncements = (courseId = null) => {
         }
     }, [currentUser, authRole, userData, courseId]);
 
-    return { createAnnouncement, announcements, createdAnnouncements, loading };
+    return { createAnnouncement, deleteAnnouncement, getAnnouncements, announcements, createdAnnouncements, loading };
 };

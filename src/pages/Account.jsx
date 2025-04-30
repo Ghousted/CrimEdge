@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../auth/components/authContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Account() {
   const [activeTab, setActiveTab] = useState('profile'); // Default tab is 'profile'
   const { userData, membershipPlan } = useAuth();
+  const navigate = useNavigate();
   console.log(membershipPlan);
 
   // Content for each tab
@@ -59,7 +61,15 @@ export default function Account() {
           </div>
           <div className="flex justify-between mt-2">
             <span className="font-medium">Price:</span>
-            <span>{membershipPlan && membershipPlan.price ? `₱ ${membershipPlan.price}` : 'N/A'}</span>
+            <span>{membershipPlan && membershipPlan.price ? `₱ ${membershipPlan.price}` : 'Free'}</span>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={() => navigate('/upgrade-plan')}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Edit Plan
+            </button>
           </div>
         </div>
       </div>

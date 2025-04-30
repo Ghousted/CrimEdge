@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }) => {
           setAuthRole(role || null);
           setMembershipStatus(membershipStatus || false);
           setEmailVerification(emailVerified || false);
+          setMembershipPlan(membership); 
 
           if (membership) {
             const q = query(

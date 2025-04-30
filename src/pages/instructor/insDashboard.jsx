@@ -5,21 +5,29 @@ import { useHandleCourses } from '../../hooks/useHandleCourses';
 
 export default function InstructorDashboard() {
   const [activeTab, setActiveTab] = useState('courses');
-  const [target, setTarget] = useState('All');
+  const [target, setTarget] = useState('');
   const [announcement, setAnnouncement] = useState('');
   const [courseName, setCourseName] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
   const { id } = useParams();
   const courseId = id;
 
-  const { createAnnouncement, announcements, createdAnnouncements, loading } = useHandleAnnouncements(courseId);
+  const { createAnnouncement, deleteAnnouncement, announcements, createdAnnouncements, loading, getAnnouncements } = useHandleAnnouncements(courseId);
   const { addNewCourse, courses, loading: coursesLoading } = useHandleCourses();
 
   const handleAddAnnouncement = () => {
     createAnnouncement(announcement, target);
     setAnnouncement('');
-    setTarget('All');
+    setTarget('');
   };
+
+  const handleDeleteAnnouncement = async (announcementId) => {
+    await deleteAnnouncement(announcementId);
+    // Refresh announcements after deletion
+    if (courseId) {
+      getAnnouncements();
+    }
+  }
 
   const handleAddCourse = () => {
     addNewCourse(courseName, courseDescription);
@@ -55,7 +63,7 @@ export default function InstructorDashboard() {
                 <input
                   type="text"
                   required
-                  placeholder="Enter course name"
+                  placeholder="Enter course code"
                   className="flex-1 p-2 border rounded-md"
                   value={courseName}
                   onChange={(e) => setCourseName(e.target.value)}
@@ -104,7 +112,7 @@ export default function InstructorDashboard() {
                       </div>
                       <p className="text-base text-gray-700 mt-2">{course.description}</p>
                       <p className="text-sm text-gray-700 mt-1">By: {course.createdByName}</p>
-                      
+
                     </Link>
                   ))}
                 </div>
@@ -171,6 +179,12 @@ export default function InstructorDashboard() {
                       </div>
                       <p className="text-sm text-gray-700 mt-2">For: {announcement.target}</p>
                       <p className="text-sm text-gray-700 mt-1">By: {announcement.createdByName}</p>
+                      <button
+                        onClick={() => handleDeleteAnnouncement(announcement.id)}
+                        className="mt-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -198,7 +212,7 @@ export default function InstructorDashboard() {
                           </p>
                         </div>
                         <p className="text-sm text-gray-700 mt-2">Target: {announcement.target}</p>
-                        <p className="text-sm text-gray-700 mt-1">By: {announcement.createdBy}</p>
+                        <p className="text-sm text-gray-700 mt-1">By: {announcement.createdByName}</p>
                       </div>
                     ))}
                 </div>

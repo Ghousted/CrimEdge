@@ -7,8 +7,11 @@ import { onAuthStateChanged } from 'firebase/auth'; // Import Firebase Auth func
 import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
 
 const Dashboard = () => {
-  const { courses } = useHandleCourses();
+  const { courses, enrolledCourses } = useHandleCourses();
   const { announcements, loading } = useHandleAnnouncements();
+
+  console.log("Enrolled Courses: ", enrolledCourses);
+
 
   const upcomingEvents = [
     { id: 1, title: 'Cybersecurity Webinar', date: 'April 10, 2025' },
@@ -78,6 +81,15 @@ const Dashboard = () => {
   const endIdx = startIdx + cardsPerRow;
   const currentCourses = courses.slice(startIdx, endIdx);
 
+  // Separate enrolled and other courses
+  const enrolledCoursesList = courses.filter(course => enrolledCourses.includes(course.id));
+  const otherCoursesList = courses.filter(course => !enrolledCourses.includes(course.id));
+
+  // Pagination for other courses
+  const otherStartIdx = currentPage * cardsPerRow;
+  const otherEndIdx = otherStartIdx + cardsPerRow;
+  const currentOtherCourses = otherCoursesList.slice(otherStartIdx, otherEndIdx);
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'new':
@@ -104,10 +116,27 @@ const Dashboard = () => {
             <p className="text-base font-medium">Crim Edge: Where your insights shape the next top student.</p>
           </div>
 
-          <h1 className='-mb-5 -mt-5 text-2xl'>Courses</h1>
+          <h1 className='-mb-5 -mt-5 text-2xl'>Enrolled Courses</h1>
+          <div className="course-container mb-8">
+            {enrolledCoursesList.length === 0 ? (
+              <p className="text-gray-500">You are not enrolled in any courses yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {enrolledCoursesList.map((course) => (
+                  <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
+                    <h2 className="text-xl">{course.course}</h2>
+                    <p className="text-base">{course.description || '-------'}</p>
+                    <p className="text-sm">{course.createdByName || 'none'}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <h1 className='-mb-5 -mt-5 text-2xl'>Other Courses</h1>
           <div className="course-container">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {currentCourses.map((course) => (
+              {currentOtherCourses.map((course) => (
                 <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
                   <h2 className="text-xl">{course.course}</h2>
                   <p className="text-base">{course.description || '-------'}</p>
@@ -117,7 +146,7 @@ const Dashboard = () => {
             </div>
             <div className="flex mt-4 justify-between gap-5">
               <button onClick={handlePrev} disabled={currentPage === 0} className="prev-next-btn">Prev</button>
-              <button onClick={handleNext} disabled={(currentPage + 1) * cardsPerRow >= courses.length} className="prev-next-btn">Next</button>
+              <button onClick={handleNext} disabled={(currentPage + 1) * cardsPerRow >= otherCoursesList.length} className="prev-next-btn">Next</button>
             </div>
           </div>
 

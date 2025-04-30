@@ -1,16 +1,22 @@
 import { db } from '../../firebase';
 import { useState, useEffect } from 'react';
-import { addDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { addDoc, collection, query, where, getDocs, orderBy, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { useAuth } from '../auth/components/authContext';
 
 export const useHandleCourses = () => {
   const { currentUser, authRole, userData } = useAuth(); // Get authRole and userData from context
   const [courses, setCourses] = useState([]);
+  const [courseLimit, setCourseLimit] = useState(false);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const coursesRef = collection(db, "courses");
+
+
+  const userDocRef = doc(db, 'users', currentUser.uid);
 
   const addNewCourse = async (courseName, courseDescription) => {
     try {
-      const coursesRef = collection(db, "courses");
       await addDoc(coursesRef, {
         course: courseName,
         description: courseDescription,
@@ -24,6 +30,64 @@ export const useHandleCourses = () => {
       console.error("Error creating course: ", error);
     }
   };
+
+
+  const enrollStudentInCourse = async (courseId) => {
+    try {
+      if (!currentUser || !currentUser.uid) {
+        throw new Error("No user is currently logged in.");
+      }
+
+      // Reset course limit state
+      setCourseLimit(false);
+
+      // Check membership rules 
+      const userDocSnap = await getDoc(userDocRef);
+
+      const data = userDocSnap.data();
+      const membership = data.membership; // 🔥 Access single field
+
+      if (membership === 'Free') {
+        const courses = data.courses || []; // safety fallback if courses field is missing
+        if (courses.length >= 2) {
+          console.log('Course limit reached for Free membership');
+          setCourseLimit(true);
+          return;
+        }
+      }
+
+      await updateDoc(userDocRef, {
+        courses: arrayUnion(courseId),
+      });
+
+      // Update local state
+      setEnrolledCourses(prev => [...prev, courseId]);
+
+      console.log(`✅ Enrolled in course: ${courseId}`);
+    } catch (error) {
+      console.error("❌ Error enrolling in course: ", error);
+    }
+  };
+
+  const getEnrolledCourses = async () => {
+    try {
+      if (!currentUser || !currentUser.uid) {
+        throw new Error("No user is currently logged in.");
+      }
+
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const enrolledCourses = userDoc.data().courses || [];
+        setEnrolledCourses(enrolledCourses);
+      } else {
+        console.log("No such document!");
+      }
+    } catch (error) {
+      console.error("Error fetching enrolled courses: ", error);
+    }
+  }
+
 
   const getCourses = async () => {
     setLoading(true);
@@ -43,7 +107,6 @@ export const useHandleCourses = () => {
       });
       setCourses(fetchedCourses);
 
-      console.log("Fetched Courses: ", fetchedCourses);
     } catch (error) {
       console.error("Error fetching courses: ", error);
     } finally {
@@ -54,12 +117,16 @@ export const useHandleCourses = () => {
   useEffect(() => {
     if (currentUser) {
       getCourses();
+      getEnrolledCourses(); // Fetch enrolled courses when user is logged in
     }
   }, [currentUser, authRole]);
 
   return {
     addNewCourse,
+    enrollStudentInCourse,
     courses,
+    enrolledCourses,
+    courseLimit,
     loading,
   };
 };
