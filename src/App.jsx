@@ -27,12 +27,11 @@ import CreditDebit from './subscription/CreditDebit';
 import DigitalWallet from './subscription/DigitalWallet';
 import Membership from './subscription/Membership';
 import Payment from './subscription/Payment';
-import UpgradePlan from './subscription/UpgradePlan';
-
 
 // Admin & Instructor
 import AdminDashboard from './pages/admin/adminDashboard';
 import AdminSetting from './pages/admin/adminSetting';
+import UserManagement from './pages/admin/UserManagement';
 import InstructorDashboard from './pages/instructor/insDashboard';
 import CoursePage from './pages/instructor/CoursePage';
 
@@ -68,12 +67,12 @@ const App = () => {
       <Route path="/digitalwallet" element={<PrivateRoute element={<DigitalWallet />} requiredRole="user" />} />
       <Route path="/membership" element={<PrivateRoute element={<Membership />} requiredRole="user" />} />
       <Route path="/payment" element={<PrivateRoute element={<Payment />} requiredRole="user" />} />
-      <Route path="/upgrade-plan" element={<PrivateRoute element={<UpgradePlan />} requiredRole="user" />} />
 
       {/* Admin-only layout */}
       <Route element={<AdminLayout />}>
         <Route path="/admin/dashboard" element={<PrivateRoute element={<AdminDashboard />} requiredRole="admin" />} />
         <Route path="/admin/settings" element={<PrivateRoute element={<AdminSetting />} requiredRole="admin" />} />
+        <Route path="/admin/users" element={<PrivateRoute element={<UserManagement />} requiredRole="admin" />} />
       </Route>
 
       {/* Instructor-only layout */}
