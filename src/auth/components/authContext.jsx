@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
 
           if (membership) {
             const q = query(
-              collection(db, 'subscription-plans'),
+              collection(db, 'plans'),
               where('plan', '==', membership)
             );
             const querySnapshot = await getDocs(q);

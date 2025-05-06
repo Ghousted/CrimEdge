@@ -3,7 +3,7 @@ import { addDoc, collection, serverTimestamp, query, onSnapshot, deleteDoc, doc,
 import { useState, useEffect } from "react";
 
 export const useEditAdminSettings = () => {
-    const subscriptionPlansRef = collection(db, 'subscription-plans');
+    const subscriptionPlansRef = collection(db, 'plans');
     const [subscriptionPlans, setSubscriptionPlans] = useState([]);
 
     useEffect(() => {

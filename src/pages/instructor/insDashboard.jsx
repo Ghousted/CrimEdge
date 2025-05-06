@@ -5,7 +5,7 @@ import { useHandleCourses } from '../../hooks/useHandleCourses';
 
 export default function InstructorDashboard() {
   const [activeTab, setActiveTab] = useState('courses');
-  const [target, setTarget] = useState('');
+  const [target, setTarget] = useState('All  ');
   const [announcement, setAnnouncement] = useState('');
   const [courseName, setCourseName] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
