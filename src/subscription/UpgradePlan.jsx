@@ -1,94 +1,95 @@
 import React, { useState } from 'react';
 import { useAuth } from '../auth/components/authContext';
-import { useEditAdminSettings } from '../hooks/useEditAdminSettings';
 import { useNavigate } from 'react-router-dom';
-import { useHandleUserMembership } from '../hooks/handleUserSubscription';
+import { User, Settings, CreditCard, Shield } from 'lucide-react';
 
-
-const UpgradePlan = () => {
-  // Placeholder current plan - this will be dynamic later
-
-  const { userData, membershipPlan, } = useAuth();
-  const { subscriptionPlans } = useEditAdminSettings();
+export default function Account() {
+  const [activeTab, setActiveTab] = useState('profile');
+  const { userData, membershipPlan } = useAuth();
   const navigate = useNavigate();
-  const { updateMembershipPlan } = useHandleUserMembership();
 
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const tabs = [
+    { id: 'profile', label: 'Profile', icon: <User className="w-5 h-5 mr-2" /> },
+    { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5 mr-2" /> },
+    { id: 'billing', label: 'Billing', icon: <CreditCard className="w-5 h-5 mr-2" /> },
+    { id: 'security', label: 'Security', icon: <Shield className="w-5 h-5 mr-2" /> },
+  ];
 
-  const otherPlans = subscriptionPlans.filter(plan => plan.plan !== membershipPlan.plan);
-
-  const handleUpdatePlan = async () => {
-    console.log('Selected Plan:', selectedPlan);
-    const plan = selectedPlan?.plan || 'Free';
-    await updateMembershipPlan(plan);
-    setSelectedPlan(null);
-  }
+  const content = {
+    profile: (
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Profile Information</h2>
+        <div className="space-y-2 text-gray-700">
+          <p><strong>Name:</strong> {userData ? `${userData.firstName} ${userData.lastName}` : 'Loading...'}</p>
+          <p><strong>Email:</strong> {userData ? userData.email : 'Loading...'}</p>
+          <p><strong>Phone:</strong> {userData ? userData.contactNumber : 'Loading...'}</p>
+        </div>
+      </div>
+    ),
+    settings: (
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Settings</h2>
+        <ul className="text-gray-700 space-y-2">
+          <li><strong>Email Notifications:</strong> Enabled</li>
+          <li><strong>Dark Mode:</strong> Off</li>
+          <li><strong>Language:</strong> English</li>
+        </ul>
+      </div>
+    ),
+    billing: (
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Billing Information</h2>
+        <ul className="text-gray-700 space-y-2">
+          <li><strong>Membership Plan:</strong> {membershipPlan?.plan || 'No plan selected'}</li>
+          <li><strong>Price:</strong> {membershipPlan?.price ? `₱ ${membershipPlan.price}` : 'Free'}</li>
+        </ul>
+        <button
+          onClick={() => navigate('/upgrade-plan')}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Edit Plan
+        </button>
+      </div>
+    ),
+    security: (
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Security Settings</h2>
+        <ul className="text-gray-700 space-y-2">
+          <li><strong>Two-Factor Authentication:</strong> Enabled</li>
+          <li><strong>Last Login:</strong> March 30, 2025, 10:30 AM</li>
+          <li><strong>Password:</strong> Updated March 25, 2025</li>
+        </ul>
+      </div>
+    ),
+  };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded shadow-md">
-      <h1 className="text-3xl font-bold mb-6">Upgrade Your Plan</h1>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Current Plan</h2>
-        <div className="p-4 bg-blue-100 rounded">
-          <p className="text-lg font-medium">{membershipPlan.plan}</p>
-          <ul className="list-disc list-inside text-gray-600 mt-2">
-            {subscriptionPlans.find(plan => plan.plan === membershipPlan.plan)?.features.map((feature, index) => (
-              <li key={index}>{feature}</li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Other Plans</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {otherPlans.filter(plan => plan.plan).map((plan) => (
-            <div
-              key={plan.plan}
-              className={`border rounded p-4 cursor-pointer hover:shadow-lg transition-shadow ${selectedPlan?.plan === plan.plan ? 'border-blue-600 shadow-lg' : ''
-                }`}
-              onClick={() => setSelectedPlan(plan)}
+    <section className="p-6 flex gap-6">
+      {/* Sidebar Navigation */}
+      <div className="w-1/4 bg-white shadow-md rounded-xl p-4">
+        <h1 className="text-2xl font-bold mb-6">Account</h1>
+        <nav className="space-y-3">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center w-full px-4 py-2 rounded-lg transition ${
+                activeTab === tab.id
+                  ? 'bg-blue-100 text-blue-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
             >
-              <h3 className="text-lg font-bold mb-2">
-                {plan.plan === 'Free' ? 'Cancel Membership' : plan.plan}
-              </h3>
-              {plan.plan !== 'Free' && (
-                <p className="text-gray-700 mb-2">{plan.price}</p>
-              )}
-            </div>
+              {tab.icon}
+              {tab.label}
+            </button>
           ))}
-        </div>
+        </nav>
+      </div>
 
-
-
-
-        <button
-          className="ml-4 px-6 py-3 bg-gray-400 text-white rounded hover:bg-gray-500"
-          onClick={() => navigate('/dashboard')}
-        >
-          Back to Dashboard
-        </button>
-      </section>
-
-      {selectedPlan && (
-        <section className="mt-8 p-4 border rounded bg-green-50">
-          <h2 className="text-xl font-semibold mb-2">Selected Plan: {selectedPlan.plan}</h2>
-          <ul className="list-disc list-inside text-gray-700 mb-4">
-            {selectedPlan.features.map((feature, index) => (
-              <li key={index}>{feature}</li>
-            ))}
-          </ul>
-          <button
-            className="px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700"
-            onClick={() => handleUpdatePlan()}
-          >
-            Confirm Update Payment
-          </button>
-        </section>
-      )}
-    </div>
+      {/* Tab Content */}
+      <div className="w-3/4 bg-white shadow-md rounded-xl p-6 transition-all duration-300">
+        {content[activeTab]}
+      </div>
+    </section>
   );
-};
-
-export default UpgradePlan;
+}

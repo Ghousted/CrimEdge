@@ -119,9 +119,9 @@ const Course = () => {
 
   return (
     <>
-      <section className="p-6">
+      <section className="">
         {/* Header with section buttons */}
-        <div className="w-full flex gap-5 bg-white shadow-md py-2 px-4 rounded-lg justify-start mb-4">
+        <div className="w-full flex gap-5 bg-white shadow-md py-2 px-4  justify-start mb-4">
           <div
             className={`cursor-pointer relative ${activeSection === 'lessons' ? 'active-underline' : ''}`}
             onClick={() => handleSectionClick('lessons')}
@@ -150,46 +150,65 @@ const Course = () => {
 
         {/* Render sections based on active state */}
         {activeSection === 'lessons' && (
-          <div className="bg-gray-100 p-4 rounded-lg">
+          <div className='w-full max-w-7xl mx-auto p-2 flex flex-col gap-4'>
+            <div className="bg-white shadow-md p-4 rounded-lg">
             <h2 className="font-bold text-lg">Lessons</h2>
             <p>{course.description}</p>
             <p>Number of lessons: {course.lessons}</p>
           </div>
+          </div>
         )}
 
         {activeSection === 'quizzes' && (
-          <div className="bg-gray-100 p-4 rounded-lg">
+          <div className='w-full max-w-7xl mx-auto p-2 flex flex-col gap-4'>
+            <div className="bg-white shadow-md p-4 rounded-lg">
             <h2 className="font-bold text-lg">Quizzes</h2>
             <p>Quizzes section content here.</p>
+          </div>
           </div>
         )}
 
         {activeSection === 'workload' && (
-          <div className="bg-gray-100 p-4 rounded-lg">
+          <div className='w-full max-w-7xl mx-auto p-2 flex flex-col gap-4'>
+            <div className="bg-white shadow-md p-4 rounded-lg">
             <h2 className="font-bold text-lg">Workload</h2>
             <p>Workload section content here.</p>
           </div>
-        )}
-
-        {activeSection === 'announcements' && (
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <h2 className="text-xl font-semibold mb-3">Announcements for {course.course}</h2>
-            <p className="mb-2 text-sm text-gray-600">Instructor: {course.createdByName}</p>
-            {announcements.length === 0 ? (
-              <p className="text-gray-500">No announcements for this course yet.</p>
-            ) : (
-              announcements.map((announcement) => (
-                <div key={announcement.id} className="p-2 border rounded-md bg-gray-50 mb-2">
-                  <p className="text-sm">{announcement.announcement}</p>
-                  <p className="text-xs text-gray-500 mt-1">Target: {announcement.target}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Date: {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleString() : ''}
-                  </p>
-                </div>
-              ))
-            )}
           </div>
         )}
+
+{activeSection === 'announcements' && (
+  <div className="w-full max-w-7xl mx-auto p-2 flex flex-col bg-white shadow-md p-4 rounded-lg">
+    <h1 className='mb-3 text-xl'>
+      <i className='bi bi-megaphone mr-5 text-lg'></i>Announcement for {course.course}
+    </h1>
+    <div className='grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'>
+      {announcements.length === 0 ? (
+        <p className="text-gray-500 col-span-full">No announcements for this course yet.</p>
+      ) : (
+        announcements.map(announcement => (
+          <div key={announcement.id} className="p-5 border border-gray-200 rounded-md bg-gray-50">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-600">{announcement.createdByName}</p>
+              <p className="text-sm text-gray-500">
+                {announcement.createdAt
+                  ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : ''}
+              </p>
+            </div>
+            <p className="text-sm mt-2">{announcement.announcement}</p>
+            <p className="text-xs text-gray-500 mt-1">Target: {announcement.target}</p>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+)}
+
       </section>
 
 

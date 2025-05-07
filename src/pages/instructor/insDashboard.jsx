@@ -75,7 +75,6 @@ export default function InstructorDashboard() {
     // Refresh courses list after adding
     window.location.reload(); // Reload the page to fetch new data
 
-
     setCourseName('');
     setCourseDescription('');
     setCourseImage(null);
@@ -114,6 +113,10 @@ export default function InstructorDashboard() {
     }
   };
 
+  const handleRemoveFile = () => {
+    setCourseImage(null);
+  };
+
   const openDeleteModal = (item, type) => {
     setDeleteTarget(item);
     setDeleteType(type);
@@ -145,22 +148,27 @@ export default function InstructorDashboard() {
   };
 
   return (
-    <section className="max-w-7xl mx-auto py-5 px-4">
+    <section className="max-w-5xl mx-auto py-5 px-4">
       {/* Tabs */}
-      <div className="flex flex-wrap gap-4 mb-4 justify-center sm:justify-start">
-        <button
-          className={`px-4 py-2 rounded-md ${activeTab === 'courses' ? 'bg-blue-600 text-white' : 'bg-gray-200'} transition`}
-          onClick={() => setActiveTab('courses')}
-        >
-          Courses
-        </button>
-        <button
-          className={`px-4 py-2 rounded-md ${activeTab === 'announcements' ? 'bg-blue-600 text-white' : 'bg-gray-200'} transition`}
-          onClick={() => setActiveTab('announcements')}
-        >
-          Announcements
-        </button>
-      </div>
+      <div className="w-full flex gap-5 bg-white shadow-md py-2 px-4 rounded-lg justify-start mb-4">
+  <div
+    className={`cursor-pointer relative py-2 px-4 rounded-md ${
+      activeTab === 'courses' ? 'bg-blue-600 text-white' : 'text-blue-600'
+    }`}
+    onClick={() => setActiveTab('courses')}
+  >
+    Courses
+  </div>
+  <div
+    className={`cursor-pointer relative py-2 px-4 rounded-md ${
+      activeTab === 'announcements' ? 'bg-blue-600 text-white' : 'text-blue-600'
+    }`}
+    onClick={() => setActiveTab('announcements')}
+  >
+    Announcements
+  </div>
+</div>
+
 
       {/* Courses Section */}
       {activeTab === 'courses' && (
@@ -168,41 +176,61 @@ export default function InstructorDashboard() {
           {/* Add Course */}
           <div className="flex-1 p-5 rounded-md bg-white shadow-sm">
             <h2 className="text-xl mb-3">Add Course</h2>
-            <div className="flex flex-col sm:flex-row gap-4 mb-3">
-              <input
-                type="text"
-                required
-                placeholder="Enter course code"
-                className="flex-1 p-2 border border-gray-400 rounded-md"
-                value={courseName}
-                onChange={(e) => setCourseName(e.target.value)}
-              />
-              <input
-                type="text"
-                required
-                placeholder="Enter course description"
-                className="flex-1 p-2 border border-gray-400 rounded-md"
-                value={courseDescription}
-                onChange={(e) => setCourseDescription(e.target.value)}
-              />
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="courseImage"
-                  className="cursor-pointer bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 transition"
-                >
-                  Upload Image
-                </label>
+            <div className="flex flex-col gap-4 mb-3">
+              <div className="flex flex-col md:flex-row gap-2">
                 <input
-                  id="courseImage"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => setCourseImage(e.target.files[0])}
+                  type="text"
+                  required
+                  placeholder="Enter course code"
+                  className="flex-1 p-2 border border-gray-400 rounded-md"
+                  value={courseName}
+                  onChange={(e) => setCourseName(e.target.value)}
                 />
-                {courseImage && (
-                  <span className="text-gray-700 text-sm">{courseImage.name}</span>
-                )}
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter course description"
+                  className="flex-1 p-2 border border-gray-400 rounded-md"
+                  value={courseDescription}
+                  onChange={(e) => setCourseDescription(e.target.value)}
+                />
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="courseImage"
+                    className="cursor-pointer border border-blue-600 text-blue-600 hover:text-white px-3 py-2 rounded-md hover:bg-blue-700 transition"
+                  >
+                    <div className="flex items-center gap-2">
+                      <i className='bi bi-card-image text-lg'></i><span>Upload Image</span>
+                    </div>
+                  </label>
+                  <input
+                    id="courseImage"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setCourseImage(e.target.files[0])}
+                  />
+                </div>
               </div>
+
+              {courseImage && (
+                <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-md shadow-lg">
+                  <div className='flex justify-between w-full items-center'>
+                    <div className='flex items-center gap-5'>
+                      <img
+                        src={URL.createObjectURL(courseImage)}
+                        alt="Preview"
+                        className="w-30 h-20 object-cover rounded-l-md"
+                      />
+                      <span className="text-gray-700 text-lg">{courseImage.name}</span>
+                    </div>
+                    <span
+                      className='text-red-600 cursor-pointer hover:text-red-800 transition mr-5'
+                      onClick={handleRemoveFile}
+                    >Remove</span>
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={handleAddCourse}
@@ -224,13 +252,30 @@ export default function InstructorDashboard() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {coursesWithImages.map((course, index) => (
-                  <div key={course.id} className="bg-white p-5 shadow-md rounded-md relative">
-                    <div className="absolute top-2 right-2">
+                  <div key={course.id} className="bg-white shadow-md rounded-md relative">
+                    <Link to={`/course-page/${course.id}`} className="block">
+                      {course.imageUrl ? (
+                        <img
+                          src={course.imageUrl}
+                          alt={course.course}
+                          className="w-full h-32 object-cover rounded-t-md mb-2"
+                        />
+                      ) : (
+                        <div className="w-full h-32 bg-gray-200 rounded-t-md mb-2 flex items-center justify-center text-gray-500">
+                          No Image
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <p className="text-lg">{course.course}</p>
+                        <p className="text-sm text-gray-600">{course.description}</p>
+                      </div>
+                    </Link>
+                    <div className="absolute bottom-2 right-2">
                       <button className="text-gray-500 hover:text-gray-700" onClick={() => toggleDropdown(index)}>
                         <i className="bi bi-three-dots-vertical"></i>
                       </button>
                       {dropdownOpen === index && (
-                        <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                        <div className="absolute right-0 w-40 bg-white rounded shadow-lg z-1 border border-gray-300">
                           <button
                             className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                             onClick={() => console.log('Edit course', course.id)}
@@ -246,21 +291,6 @@ export default function InstructorDashboard() {
                         </div>
                       )}
                     </div>
-                    <Link to={`/course-page/${course.id}`} className="block">
-                      {course.imageUrl ? (
-                        <img
-                          src={course.imageUrl}
-                          alt={course.course}
-                          className="w-full h-32 object-cover rounded-md mb-2"
-                        />
-                      ) : (
-                        <div className="w-full h-32 bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500">
-                          No Image
-                        </div>
-                      )}
-                      <p className="text-lg">{course.course}</p>
-                      <p className="text-sm text-gray-600">{course.description}</p>
-                    </Link>
                   </div>
                 ))}
               </div>

@@ -131,59 +131,56 @@ const Dashboard = () => {
   return (
     <section className="p-6">
       <div className="flex flex-col lg:flex-row gap-5">
-        <div className="flex flex-col gap-7 w-full lg:w-5/7">
-          <div className="content-section px-10 py-7 mb-5">
+        <div className="flex flex-col gap-5 w-full lg:w-5/7">
+          <div className="content-section px-10 py-7  grd-bg2 text-white">
             <h2 className="text-3xl mb-2">
-              Welcome to Crim Edge, {user ? `${user.firstName} ${user.lastName}` : 'Guest'}!
-            </h2>
-            <p className="text-base font-medium">Crim Edge: Where your insights shape the next top student.</p>
+                Welcome to Crim Edge, {user ? `${user.firstName} ${user.lastName}` : 'Guest'}!
+              </h2>
+              <p className="text-base font-medium">Crim Edge: Where your insights shape the next top student.</p>   
           </div>
 
-          <div className="flex gap-5">
-            <button
+          <div className="w-full flex gap-7 bg-white shadow-md py-2 px-4 rounded-lg justify-start ">
+            <div
+              className={`cursor-pointer relative ${activeSection === 'enrolled' ? 'active-underline' : ''}`}
               onClick={() => setActiveSection('enrolled')}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 ${
-                activeSection === 'enrolled'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
             >
               Enrolled Courses
-            </button>
-            <button
+            </div>
+            <div
+              className={`cursor-pointer relative ${activeSection === 'other' ? 'active-underline' : ''}`}
               onClick={() => setActiveSection('other')}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 ${
-                activeSection === 'other'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
             >
               Other Courses
-            </button>
+            </div>
           </div>
 
+
           {activeSection === 'enrolled' && (
-            <div className="course-container mb-8">
+            <div className="course-container mb-4">
               {enrolledCoursesList.length === 0 ? (
                 <p className="text-gray-500">You are not enrolled in any courses yet.</p>
               ) : (
                 <div className={`grid grid-cols-1 sm:grid-cols-${cardsPerRow >= 2 ? 2 : 1} md:grid-cols-${cardsPerRow} gap-5`}>
                   {currentEnrolledCourses.map((course) => (
-                    <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
+                    <Link key={course.id} to={`/course/${course.id}`} className="bg-white shadow-md rounded-md">
                       {course.imageUrl ? (
                         <img
                           src={course.imageUrl}
                           alt={course.course}
-                          className="w-full h-32 object-cover rounded-md mb-2"
+                          className="w-full h-35 object-cover rounded-t-md"
                         />
                       ) : (
-                        <div className="w-full h-32 bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500">
-                          No Image
+                        <div className="w-full h-35 bg-gray-200 rounded-t-md flex items-center justify-center text-gray-500">
+                          <div className="text-3xl">
+                          <i className='bi bi-image '></i>
+                        </div>
                         </div>
                       )}
-                      <h2 className="text-xl">{course.course}</h2>
-                      <p className="text-base">{course.description || '-------'}</p>
-                      <p className="text-sm">{course.createdByName || 'none'}</p>
+                      <div className="p-4">
+                        <h2 className="text-lg">{course.course}</h2>
+                        <p className="text-base">{course.description || '-------'}</p>
+                        <p className="text-sm">{course.createdByName || 'none'}</p>
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -206,21 +203,25 @@ const Dashboard = () => {
             <div className="course-container">
               <div className={`grid grid-cols-1 sm:grid-cols-${cardsPerRow >= 2 ? 2 : 1} md:grid-cols-${cardsPerRow} gap-5`}>
                 {currentOtherCourses.map((course) => (
-                  <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
+                  <Link key={course.id} to={`/course/${course.id}`} className="bg-white shadow-md rounded-md">
                     {course.imageUrl ? (
                       <img
                         src={course.imageUrl}
                         alt={course.course}
-                        className="w-full h-32 object-cover rounded-md mb-2"
+                        className="w-full h-35 object-cover rounded-t-md "
                       />
                     ) : (
-                      <div className="w-full h-32 bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500">
-                        No Image
+                      <div className="w-full h-35 bg-gray-200 rrounded-t-md flex items-center justify-center text-gray-500">
+                        <div className="text-3xl">
+                          <i className='bi bi-image '></i>
+                        </div>
                       </div>
                     )}
-                    <h2 className="text-xl">{course.course}</h2>
-                    <p className="text-base">{course.description || '-------'}</p>
-                    <p className="text-sm">{course.createdByName || 'none'}</p>
+                    <div className="p-4">
+                      <h2 className="text-xl">{course.course}</h2>
+                      <p className="text-base">{course.description || '-------'}</p>
+                      <p className="text-sm">{course.createdByName || 'none'}</p>
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -239,10 +240,10 @@ const Dashboard = () => {
           )}
         </div>
 
-        <div className="flex flex-col gap-6 w-full lg:w-2/7">
-          <div className="content-section p-5">
-            <h1 className='mb-5 text-xl'><i className='bi bi-calendar-check mr-2'></i>Upcoming Events</h1>
-            <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4 w-full lg:w-2/7">
+          <div className="bg-white p-4 rounded-md shadow-md">
+            <h1 className='mb-3 text-xl'><i className='bi bi-calendar-check mr-2'></i>Upcoming Events</h1>
+            <div className="flex flex-col gap-2">
               {upcomingEvents.map(event => (
                 <div key={event.id} className="p-1 flex items-start gap-3">
                   <i className='bi bi-bell'></i>
@@ -255,9 +256,9 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="content-section p-5">
-            <h1 className='mb-5 text-xl'><i className='bi bi-clock mr-2'></i>Recent Activity</h1>
-            <div className='flex flex-col gap-3'>
+          <div className="bg-white p-4 rounded-md shadow-md">
+            <h1 className='mb-3 text-xl'><i className='bi bi-clock mr-2'></i>Recent Activity</h1>
+            <div className='flex flex-col gap-2'>
               {recentActivity.map(activity => (
                 <div key={activity.id} className="p-1 flex items-start gap-3">
                   <i className='bi bi-bell'></i>
@@ -270,16 +271,24 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="content-section p-5 mt-6 border-t border-gray-300">
-            <h1 className='mb-5 text-xl'><i className='bi bi-megaphone mr-2'></i>Instructor Announcements</h1>
-            <div className='flex flex-col gap-3'>
+          <div className="bg-white p-4 rounded-md shadow-md">
+            <h1 className='mb-3 text-xl'><i className='bi bi-megaphone mr-2'></i>Instructor Announcements</h1>
+            <div className='flex flex-col gap-2'>
               {announcements.map(announcement => (
-                <div key={announcement.id} className="p-2 border rounded-md bg-gray-50">
-                  <p className="text-sm">{announcement.announcement}</p>
+                <div key={announcement.id} className="p-2 border border-gray-200 rounded-md bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">{announcement.createdByName}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
+                        month: 'long', day: 'numeric', year: 'numeric'
+                      }) : ''}
+                    </p>
+                  </div>
                   {announcement.createdByName && (
                     <>
-                      <p className="text-xs text-gray-500 mt-1">By: {announcement.createdByName}</p>
-                      <p className="text-xs text-gray-500 mt-1">Date: {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleString() : ''}</p>
+                      <p className="text-sm mt-2">{announcement.announcement}</p>
+                      
+
                     </>
                   )}
                 </div>
