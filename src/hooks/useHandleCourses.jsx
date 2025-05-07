@@ -1,17 +1,18 @@
 import { db } from '../../firebase';
 import { useState, useEffect } from 'react';
-import { addDoc, collection, query, where, getDocs, orderBy, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { addDoc, collection, query, where, getDocs, orderBy, doc, updateDoc, arrayUnion, getDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../auth/components/authContext';
+import { useHandleStorage } from './useHandleStorage';
 
 export const useHandleCourses = () => {
   const { currentUser, authRole, userData } = useAuth(); // Get authRole and userData from context
   const [courses, setCourses] = useState([]);
   const [courseLimit, setCourseLimit] = useState(false);
-  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { fetchCourseImages } = useHandleStorage(); // Import the function to fetch course images
 
   const coursesRef = collection(db, "courses");
-
 
   const userDocRef = doc(db, 'users', currentUser.uid);
 
@@ -25,12 +26,18 @@ export const useHandleCourses = () => {
         createdAt: new Date(),
       });
       console.log(`Course created: ${courseName}`);
-      window.location.reload(); // Reload the page to fetch new data
     } catch (error) {
       console.error("Error creating course: ", error);
     }
   };
 
+  const deleteCourse = async (courseId) => {
+    try {
+      await deleteDoc(doc(db, "courses", courseId));
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   const enrollStudentInCourse = async (courseId) => {
     try {
@@ -78,16 +85,33 @@ export const useHandleCourses = () => {
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
-        const enrolledCourses = userDoc.data().courses || [];
-        setEnrolledCourses(enrolledCourses);
+        const enrolledCourseIds = userDoc.data().courses || [];
+
+        // For each enrolled course ID, fetch course data and image URL
+        const coursesWithUrls = await Promise.all(
+          enrolledCourseIds.map(async (courseId) => {
+            const courseDoc = await getDoc(doc(db, "courses", courseId));
+            if (!courseDoc.exists()) {
+              return null;
+            }
+            const courseData = { id: courseDoc.id, ...courseDoc.data() };
+            const imageUrl = await fetchCourseImages(courseData.course);
+            return { ...courseData, imageUrl };
+          })
+        );
+
+        // Filter out any nulls (in case some courses no longer exist)
+        const filteredCourses = coursesWithUrls.filter(course => course !== null);
+
+        setEnrolledCourses(filteredCourses); // Update with images
       } else {
         console.log("No such document!");
+        setEnrolledCourses([]);
       }
     } catch (error) {
       console.error("Error fetching enrolled courses: ", error);
     }
-  }
-
+  };
 
   const getCourses = async () => {
     setLoading(true);
@@ -124,6 +148,7 @@ export const useHandleCourses = () => {
   return {
     addNewCourse,
     enrollStudentInCourse,
+    deleteCourse,
     courses,
     enrolledCourses,
     courseLimit,

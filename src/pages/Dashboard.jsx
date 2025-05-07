@@ -5,12 +5,40 @@ import { useHandleCourses } from '../hooks/useHandleCourses';
 import { auth, db } from '../../firebase'; // Import Firebase configuration
 import { onAuthStateChanged } from 'firebase/auth'; // Import Firebase Auth functions
 import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
+import { useHandleStorage } from '../hooks/useHandleStorage';
 
 const Dashboard = () => {
   const { courses, enrolledCourses } = useHandleCourses();
   const { announcements, loading } = useHandleAnnouncements();
+  const { fetchCourseImages } = useHandleStorage();
 
-  console.log("Enrolled Courses: ", enrolledCourses);
+  const [coursesWithImages, setCoursesWithImages] = useState([]);
+
+  useEffect(() => {
+    const fetchImagesForCourses = async () => {
+      try {
+        const coursesWithUrls = await Promise.all(
+          courses.map(async (course) => {
+            if (!course.course) {
+              return { ...course, imageUrl: null };
+            }
+            const imageUrl = await fetchCourseImages(course.course);
+            return { ...course, imageUrl };
+          })
+        );
+        setCoursesWithImages(coursesWithUrls);
+      } catch (error) {
+        console.error('Error fetching course images:', error);
+        setCoursesWithImages(courses.map(course => ({ ...course, imageUrl: null })));
+      }
+    };
+
+    if (courses.length > 0) {
+      fetchImagesForCourses();
+    } else {
+      setCoursesWithImages([]);
+    }
+  }, [courses]);
 
   const upcomingEvents = [
     { id: 1, title: 'Cybersecurity Webinar', date: 'April 10, 2025' },
@@ -69,8 +97,13 @@ const Dashboard = () => {
   const endIdx = startIdx + cardsPerRow;
 
   // Separate enrolled and other courses
-  const enrolledCoursesList = courses.filter(course => enrolledCourses.includes(course.id));
-  const otherCoursesList = courses.filter(course => !enrolledCourses.includes(course.id));
+  const enrolledCourseIds = (enrolledCourses || []).map(c => c.id);
+  const enrolledCoursesList = coursesWithImages.filter(course => enrolledCourseIds.includes(course.id));
+  
+  const otherCoursesList = coursesWithImages.filter(course => !enrolledCourseIds.includes(course.id));
+
+  console.log("Enrolled Courses: ", enrolledCoursesList);
+
 
   // Pagination for enrolled courses
   const currentEnrolledCourses = enrolledCoursesList.slice(startIdx, endIdx);
@@ -137,6 +170,17 @@ const Dashboard = () => {
                 <div className={`grid grid-cols-1 sm:grid-cols-${cardsPerRow >= 2 ? 2 : 1} md:grid-cols-${cardsPerRow} gap-5`}>
                   {currentEnrolledCourses.map((course) => (
                     <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
+                      {course.imageUrl ? (
+                        <img
+                          src={course.imageUrl}
+                          alt={course.course}
+                          className="w-full h-32 object-cover rounded-md mb-2"
+                        />
+                      ) : (
+                        <div className="w-full h-32 bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500">
+                          No Image
+                        </div>
+                      )}
                       <h2 className="text-xl">{course.course}</h2>
                       <p className="text-base">{course.description || '-------'}</p>
                       <p className="text-sm">{course.createdByName || 'none'}</p>
@@ -163,6 +207,17 @@ const Dashboard = () => {
               <div className={`grid grid-cols-1 sm:grid-cols-${cardsPerRow >= 2 ? 2 : 1} md:grid-cols-${cardsPerRow} gap-5`}>
                 {currentOtherCourses.map((course) => (
                   <Link key={course.id} to={`/course/${course.id}`} className="courses-card p-4 border rounded-lg">
+                    {course.imageUrl ? (
+                      <img
+                        src={course.imageUrl}
+                        alt={course.course}
+                        className="w-full h-32 object-cover rounded-md mb-2"
+                      />
+                    ) : (
+                      <div className="w-full h-32 bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500">
+                        No Image
+                      </div>
+                    )}
                     <h2 className="text-xl">{course.course}</h2>
                     <p className="text-base">{course.description || '-------'}</p>
                     <p className="text-sm">{course.createdByName || 'none'}</p>

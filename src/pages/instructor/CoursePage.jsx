@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useHandleCourses } from '../../hooks/useHandleCourses';
 import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
+import { useHandleStorage } from '../../hooks/useHandleStorage';
 import { useParams } from 'react-router-dom';
 
 export default function CoursePage() {
@@ -11,8 +12,11 @@ export default function CoursePage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const { createAnnouncement, deleteAnnouncement, updateAnnouncement, announcements, createdAnnouncements } = useHandleAnnouncements(id);
-  const { courses, loading } = useHandleCourses();
+  const { courses, loading } = useHandleCourses()
+
+  const { fileUpload } = useHandleStorage();
 
   const course = courses.find(c => c.id === id) || null;
 
@@ -21,6 +25,17 @@ export default function CoursePage() {
     createAnnouncement(announcement, course.course, course.id);
     setAnnouncement('');
     setTarget('Free');
+  };
+
+  const handleFileChange = (event) => {
+    setSelectedFiles(Array.from(event.target.files));
+  };
+
+  const handleUploadFiles = () => {
+    if (selectedFiles.length === 0) return;
+    // Placeholder: Implement actual upload logic here
+    alert(`Uploading ${selectedFiles.length} file(s):\n` + selectedFiles.map(f => f.name).join('\n'));
+    setSelectedFiles([]);
   };
 
   const handleEditAnnouncement = () => {
@@ -67,6 +82,34 @@ export default function CoursePage() {
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
         >
           Add Announcement
+        </button>
+      </div>
+
+      {/* File Upload Section */}
+      <div className="file-upload-section p-4 rounded-md bg-white shadow-sm mt-6">
+        <h2 className="text-lg mb-2">Upload Files, Videos, and Images</h2>
+        <input
+          type="file"
+          multiple
+          accept="image/*,video/*,application/pdf"
+          onChange={handleFileChange}
+          className="mb-3"
+        />
+        {selectedFiles.length > 0 && (
+          <div className="mb-3">
+            <p className="font-semibold">Selected files:</p>
+            <ul className="list-disc list-inside text-sm text-gray-700">
+              {selectedFiles.map((file, index) => (
+                <li key={index}>{file.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <button
+          onClick={handleUploadFiles}
+          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+        >
+          Upload
         </button>
       </div>
 
@@ -177,3 +220,4 @@ export default function CoursePage() {
     </section>
   );
 }
+ 

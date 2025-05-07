@@ -27,14 +27,16 @@ const Course = () => {
         return;
       }
   
-      const isEnrolled = enrolledCourses.includes(id);
+      const isEnrolled = enrolledCourses.some(course => course.id === id);
+
       console.log("Enrolled courses:", enrolledCourses);
       console.log("Is enrolled in course:", isEnrolled);
   
       setConfirmed(isEnrolled);
       setLoading(false);
     };
-  
+    
+    setLoading(true); // Set loading to true before checking enrollment
     checkEnrollment();
   }, [id, enrolledCourses, courses]);
   
@@ -57,8 +59,7 @@ const Course = () => {
   const handleConfirm = async () => {
     setIsEnrolling(true);
     await enrollStudentInCourse(course.id); // Enroll the student in the course
-    setIsEnrolling(false);
-    setConfirmed(true);
+    window.location.reload(); // Reload the page to reflect the changes
   };
 
   const handleCancel = () => {
