@@ -86,13 +86,11 @@ export default function QuizCreator({ onCreateQuiz }) {
     };
 
     return (
-        <div className="flex-1 p-6 rounded-xl bg-white shadow-lg">
-            <h2 className="text-2xl mb-4 text-gray-800">Create Quiz</h2>
+        <div className="">
+          
             <form onSubmit={generateQuiz} className="flex flex-col gap-4">
                 <div>
-                    <label htmlFor="topic" className="block mb-2 font-medium text-gray-700">
-                        Quiz Topic
-                    </label>
+                   
                     <input
                         type="text"
                         id="topic"

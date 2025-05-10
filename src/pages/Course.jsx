@@ -206,183 +206,203 @@ const Course = () => {
 
   return (
     <>
-      <section className="">
-        {/* Header with section buttons */}
-        <div className="w-full flex gap-5 bg-white shadow-md py-2 px-4  justify-start mb-4">
-          <div
-            className={`cursor-pointer relative ${activeSection === 'lessons' ? 'active-underline' : ''}`}
-            onClick={() => handleSectionClick('lessons')}
-          >
-            Lessons
-          </div>
-          <div
-            className={`cursor-pointer relative ${activeSection === 'announcements' ? 'active-underline' : ''}`}
-            onClick={() => handleSectionClick('announcements')}
-          >
-            Announcements
-          </div>
-          <div
-            className={`cursor-pointer relative ${activeSection === 'quizzes' ? 'active-underline' : ''}`}
-            onClick={() => handleSectionClick('quizzes')}
-          >
-            Quizzes
-          </div>
-          <div
-            className={`cursor-pointer relative ${activeSection === 'workload' ? 'active-underline' : ''}`}
-            onClick={() => handleSectionClick('workload')}
-          >
-            Workload
+      <section className="bg-gray-50">
+        {/* Enhanced Header with course info and section buttons */}
+        <div className="bg-white shadow-md">
+          <div className="max-w-7xl mx-auto px-10 py-5">
+            <div className="mb-4">
+              <h1 className="text-2xl font-medium text-gray-900">{course?.course}</h1>
+              <p className="text-gray-600 mt-1">{course?.description}</p>
+              <p className="text-gray-600 mt-1">Instructor: {course?.createdByName}</p>
+            </div>
+            
+            <div className="flex gap-6 border-b border-gray-200">
+              <button
+                className={`pb-4 px-2 font-medium text-sm transition-all duration-200 ${
+                  activeSection === 'lessons'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                onClick={() => handleSectionClick('lessons')}
+              >
+                <i className="bi bi-book mr-2"></i>Lessons
+              </button>
+              <button
+                className={`pb-4 px-2 font-medium text-sm transition-all duration-200 ${
+                  activeSection === 'announcements'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                onClick={() => handleSectionClick('announcements')}
+              >
+                <i className="bi bi-megaphone mr-2"></i>Announcements
+              </button>
+              <button
+                className={`pb-4 px-2 font-medium text-sm transition-all duration-200 ${
+                  activeSection === 'quizzes'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                onClick={() => handleSectionClick('quizzes')}
+              >
+                <i className="bi bi-pencil-square mr-2"></i>Quizzes
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Render sections based on active state */}
+        {/* Enhanced Content Sections */}
         {activeSection === 'lessons' && (
-          <div className='w-full max-w-7xl mx-auto p-2 flex flex-col gap-4'>
-            <div className="bg-white shadow-md p-6 rounded-lg">
-              <h2 className="font-bold text-xl mb-4">Course Lessons</h2>
-              {lessonsLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                </div>
-              ) : lessons.length === 0 ? (
-                <div className="text-center py-8">
-                  <i className="bi bi-book text-4xl text-gray-400 mb-4"></i>
-                  <p className="text-gray-500">No lessons available yet.</p>
-                </div>
-              ) : (
-                <div className="grid gap-4">
-                  {lessons.map((lesson) => (
-                    <div key={lesson.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
-                      <div className="mb-2">
-                        <h3 className="text-lg font-medium text-gray-800">{lesson.title}</h3>
-                        <p className="text-sm text-gray-500">{lesson.createdByName}</p>
+          <div className='max-w-7xl mx-auto px-4'>
+            <div className="">
+              <div className="p-4">
+                <h2 className="text-xl font-medium text-gray-900 mb-2">Course Lessons</h2>
+                {lessonsLoading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : lessons.length === 0 ? (
+                  <div className="text-center py-12">
+                    <i className="bi bi-book text-5xl text-gray-300 mb-4"></i>
+                    <p className="text-gray-500 text-lg">No lessons available yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-6">
+                    {lessons.map((lesson) => (
+                      <div key={lesson.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-medium text-gray-900 mb-1">{lesson.title}</h3>
+                            <p className="text-gray-600 mb-4">{lesson.description}</p>
+                            <div className="flex items-center gap-2 bg-gray-100 p-4 rounded-lg hover:bg-gray-200 transition-all duration-200">
+                              <i className={`bi ${lesson.fileType.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-blue-600 text-lg`}></i>
+                              <a
+                                href={lesson.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                {lesson.fileName}
+                              </a>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-gray-600 mb-3">{lesson.description}</p>
-                      <div className="flex items-center gap-2">
-                        <i className={`bi ${lesson.fileType.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-blue-600`}></i>
-                        <a
-                          href={lesson.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          {lesson.fileName}
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {activeSection === 'quizzes' && (
-          <div className='w-full max-w-7xl mx-auto p-2 flex flex-col gap-4'>
-            <div className="bg-white shadow-md p-6 rounded-lg">
-              <h2 className="font-bold text-xl mb-4">Course Quizzes</h2>
-              {quizzesLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                </div>
-              ) : quizzes.length === 0 ? (
-                <div className="text-center py-8">
-                  <i className="bi bi-pencil-square text-4xl text-gray-400 mb-4"></i>
-                  <p className="text-gray-500">No quizzes available yet.</p>
-                </div>
-              ) : (
-                <div className="grid gap-4">
-                  {quizzes.map((quiz) => (
-                    <div key={quiz.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-800 mb-1">{quiz.title}</h3>
-                          <p className="text-gray-600">Topic: {quiz.topic}</p>
-                          <p className="text-gray-500 text-sm mt-2">
-                            {quiz.questions.length} questions • Created by {quiz.createdByName}
+          <div className='max-w-7xl mx-auto px-4 '>
+            <div className="">
+              <div className="p-4">
+                <h2 className="text-xl font-medium text-gray-900 mb-2">Course Quizzes</h2>
+                {quizzesLoading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : quizzes.length === 0 ? (
+                  <div className="text-center py-12">
+                    <i className="bi bi-pencil-square text-5xl text-gray-300 mb-4"></i>
+                    <p className="text-gray-500 text-lg">No quizzes available yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-6">
+                    {quizzes.map((quiz) => (
+                      <div key={quiz.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="text-xl font-medium text-gray-900 mb-2">{quiz.title}</h3>
+                            <p className="text-gray-600 mb-1">Topic: {quiz.topic}</p>
+                            <p className="text-gray-500 text-sm">
+                              {quiz.questions.length} questions
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setSelectedQuiz(quiz)}
+                            className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                          >
+                            <i className="bi bi-pencil-square"></i>
+                            Take Quiz
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeSection === 'announcements' && (
+          <div className="max-w-7xl mx-auto px-4 ">
+            <div className="">
+              <div className="p-4">
+                <h2 className="text-xl font-medium text-gray-900 mb-2">
+                  Course Announcements
+                </h2>
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {announcements.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                      <i className="bi bi-megaphone text-5xl text-gray-300 mb-4"></i>
+                      <p className="text-gray-500 text-lg">No announcements for this course yet.</p>
+                    </div>
+                  ) : (
+                    announcements.map(announcement => (
+                      <div key={announcement.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-gray-500">
+                            {announcement.createdAt
+                              ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
+                                  month: 'long',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })
+                              : ''}
                           </p>
                         </div>
-                        <button
-                          onClick={() => setSelectedQuiz(quiz)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Take Quiz
-                        </button>
+                        <p className="text-gray-700 mb-3">{announcement.announcement}</p>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )}
-
-        {activeSection === 'workload' && (
-          <div className='w-full max-w-7xl mx-auto p-2 flex flex-col gap-4'>
-            <div className="bg-white shadow-md p-4 rounded-lg">
-            <h2 className="font-bold text-lg">Workload</h2>
-            <p>Workload section content here.</p>
-          </div>
-          </div>
-        )}
-
-{activeSection === 'announcements' && (
-  <div className="w-full max-w-7xl mx-auto p-2 flex flex-col bg-white shadow-md p-4 rounded-lg">
-    <h1 className='mb-3 text-xl'>
-      <i className='bi bi-megaphone mr-5 text-lg'></i>Announcement for {course.course}
-    </h1>
-    <div className='grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'>
-      {announcements.length === 0 ? (
-        <p className="text-gray-500 col-span-full">No announcements for this course yet.</p>
-      ) : (
-        announcements.map(announcement => (
-          <div key={announcement.id} className="p-5 border border-gray-200 rounded-md bg-gray-50">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-600">{announcement.createdByName}</p>
-              <p className="text-sm text-gray-500">
-                {announcement.createdAt
-                  ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
-                  : ''}
-              </p>
-            </div>
-            <p className="text-sm mt-2">{announcement.announcement}</p>
-            <p className="text-xs text-gray-500 mt-1">Target: {announcement.target}</p>
-          </div>
-        ))
-      )}
-    </div>
-  </div>
-)}
-
       </section>
 
-      {/* Quiz Display Modal */}
+      {/* Enhanced Quiz Modal */}
       {selectedQuiz && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800">Quiz</h2>
-              <button
-                onClick={() => setSelectedQuiz(null)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <i className="bi bi-x-lg text-xl"></i>
-              </button>
+        <div className="modal-overlay">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">Quiz: {selectedQuiz.title}</h2>
+                <button
+                  onClick={() => setSelectedQuiz(null)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <i className="bi bi-x-lg text-xl"></i>
+                </button>
+              </div>
             </div>
-            <QuizDisplay
-              quiz={selectedQuiz}
-              onSubmitQuiz={submitQuizAttempt}
-              onViewResults={getQuizAttempts}
-              isInstructor={false}
-            />
+            <div className="p-6">
+              <QuizDisplay
+                quiz={selectedQuiz}
+                onSubmitQuiz={submitQuizAttempt}
+                onViewResults={getQuizAttempts}
+                isInstructor={false}
+              />
+            </div>
           </div>
         </div>
       )}
-
     </>
   );
 };

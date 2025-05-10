@@ -19,6 +19,8 @@ export default function CoursePage() {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [activeSection, setActiveSection] = useState('announcements');
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [showDeleteQuizModal, setShowDeleteQuizModal] = useState(false);
+  const [quizToDelete, setQuizToDelete] = useState(null);
   
   // New state for lesson upload
   const [lessonTitle, setLessonTitle] = useState('');
@@ -128,6 +130,12 @@ export default function CoursePage() {
     }
   };
 
+  const handleDeleteQuiz = async (quizId) => {
+    await deleteQuiz(quizId);
+    setShowDeleteQuizModal(false);
+    setQuizToDelete(null);
+  };
+
   if (loading) {
     return <p>Loading course...</p>;
   }
@@ -138,42 +146,45 @@ export default function CoursePage() {
 
   return (
     <section className="max-w-7xl mx-auto py-8 px-6">
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
-        <h1 className="text-3xl font-medium mb-1 text-gray-800">{course.course}</h1>
-        <p className="text-gray-600 text-lg">Created by: <span className="font-medium text-blue-600">{course.createdByName}</span></p>
+      <div className="bg-white rounded-xl shadow-lg p-5 mb-4">
+        <h1 className="text-2xl font-bold mb-2">{course.course}</h1>
+        <p className="text-gray-500 text-lg">Created by: <span className="font-medium text-gray-800">{course.createdByName}</span></p>
       </div>
 
       {/* Navigation Bar */}
-      <div className="w-full flex gap-4 bg-white shadow-lg py-3 px-6 rounded-xl justify-start mb-4">
+      <div className="w-full flex gap-4 bg-white shadow-lg py-4 px-4 rounded-xl justify-start mb-6">
         <button
-          className={`cursor-pointer relative py-2.5 px-6 rounded-lg transition-all duration-200 ${
+          className={`cursor-pointer relative py-3 px-8 rounded-lg transition-all duration-200 flex items-center gap-2 ${
             activeSection === 'announcements' 
               ? 'bg-blue-600 text-white shadow-md' 
-              : 'text-gray-600 hover:bg-gray-50'
+              : 'text-gray-600 hover:bg-gray-100'
           }`}
           onClick={() => handleSectionClick('announcements')}
         >
-          Announcements
+          <i className="bi bi-megaphone"></i>
+          <span>Announcements</span>
         </button>
         <button
-          className={`cursor-pointer relative py-2.5 px-6 rounded-lg transition-all duration-200 ${
+          className={`cursor-pointer relative py-3 px-8 rounded-lg transition-all duration-200 flex items-center gap-2 ${
             activeSection === 'lessons' 
               ? 'bg-blue-600 text-white shadow-md' 
-              : 'text-gray-600 hover:bg-gray-50'
+              : 'text-gray-600 hover:bg-gray-100'
           }`}
           onClick={() => handleSectionClick('lessons')}
         >
-          Lessons
+          <i className="bi bi-book"></i>
+          <span>Lessons</span>
         </button>
         <button
-          className={`cursor-pointer relative py-2.5 px-6 rounded-lg transition-all duration-200 ${
+          className={`cursor-pointer relative py-3 px-8 rounded-lg transition-all duration-200 flex items-center gap-2 ${
             activeSection === 'quizzes' 
               ? 'bg-blue-600 text-white shadow-md' 
-              : 'text-gray-600 hover:bg-gray-50'
+              : 'text-gray-600 hover:bg-gray-100'
           }`}
           onClick={() => handleSectionClick('quizzes')}
         >
-          Quizzes
+          <i className="bi bi-pencil-square"></i>
+          <span>Quizzes</span>
         </button>
       </div>
 
@@ -182,29 +193,38 @@ export default function CoursePage() {
         <div className="flex flex-col gap-6">
           {/* Add Lesson */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Add Lesson</h2>
+            <h2 className="text-xl font-medium mb-2 text-gray-800 flex items-center gap-2">
+              Add New Lesson
+            </h2>
             {lessonsError && (
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600">{lessonsError}</p>
+                <p className="text-red-600 flex items-center gap-2">
+                  <i className="bi bi-exclamation-circle"></i>
+                  {lessonsError}
+                </p>
               </div>
             )}
             <div className="flex flex-col gap-4">
-              <input
-                type="text"
-                placeholder="Lesson Title"
-                value={lessonTitle}
-                onChange={(e) => setLessonTitle(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              />
-              <textarea
-                placeholder="Lesson Description"
-                value={lessonDescription}
-                onChange={(e) => setLessonDescription(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none"
-                rows={3}
-              />
-              <div className="flex items-center gap-4">
-                <label className="cursor-pointer border-2 border-blue-600 text-blue-600 hover:text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200 flex items-center gap-2">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Lesson Title"
+                  value={lessonTitle}
+                  onChange={(e) => setLessonTitle(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pl-5"
+                />
+                </div>
+              <div className="relative">
+                <textarea
+                  placeholder="Lesson Description"
+                  value={lessonDescription}
+                  onChange={(e) => setLessonDescription(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none pl-5"
+                  rows={2}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <label className="cursor-pointer border-2 border-blue-600 text-blue-600 hover:text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-all duration-200 flex items-center gap-2 font-medium">
                   <i className="bi bi-upload"></i>
                   <span>Upload File (PDF/Video)</span>
                   <input
@@ -214,69 +234,78 @@ export default function CoursePage() {
                     className="hidden"
                   />
                 </label>
-                {lessonFile && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-700">{lessonFile.name}</span>
+                <button
+                  onClick={handleUploadLesson}
+                  disabled={!lessonFile || !lessonTitle.trim()}
+                  className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
+                >
+                  <i className="bi bi-cloud-upload"></i>
+                  Upload Lesson
+                </button>
+              </div>
+              {lessonFile && (
+                <div className="flex items-center gap-4 p-5 bg-gray-50 border-2 border-gray-200 rounded-lg">
+                  <div className='flex justify-between w-full items-center'>
+                    <div className="flex items-center gap-3">
+                      <i className={`bi ${lessonFile.type.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-2xl text-blue-600`}></i>
+                      <span className="text-gray-700 font-medium">{lessonFile.name}</span>
+                    </div>
                     <button
                       onClick={handleRemoveLessonFile}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-red-600 hover:text-red-800 flex items-center gap-2"
                     >
-                      <i className="bi bi-x-circle"></i>
+                      <i className="bi bi-trash"></i>
+                      <span>Remove</span>
                     </button>
                   </div>
-                )}
-              </div>
-              <button
-                onClick={handleUploadLesson}
-                disabled={!lessonFile || !lessonTitle.trim()}
-                className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Upload Lesson
-              </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Display Lessons */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Course Lessons</h2>
+          <div className="mt-1">
+            <h2 className="text-xl font-medium mb-2 text-gray-800 flex items-center gap-2">
+              Course Lessons
+            </h2>
             {lessonsLoading ? (
-              <div className="flex justify-center items-center py-8">
+              <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
             ) : lessons.length === 0 ? (
-              <div className="text-center py-8">
-                <i className="bi bi-book text-4xl text-gray-400 mb-4"></i>
-                <p className="text-gray-500">No lessons uploaded yet.</p>
+              <div className="text-center py-12 bg-white rounded-xl shadow-lg">
+                <i className="bi bi-book text-5xl text-gray-400 mb-4"></i>
+                <p className="text-gray-500 text-lg">No lessons uploaded yet.</p>
               </div>
             ) : (
               <div className="grid gap-4">
                 {lessons.map((lesson) => (
-                  <div key={lesson.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
-                    <div className="flex justify-between items-start mb-2">
+                  <div key={lesson.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-800">{lesson.title}</h3>
-                        <p className="text-sm text-gray-500">{lesson.createdByName}</p>
+                        <h3 className="text-xl font-semibold text-gray-800">{lesson.title}</h3>
                       </div>
                       <button
                         onClick={() => {
                           setSelectedLesson(lesson);
                           setShowDeleteLessonModal(true);
                         }}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors"
                       >
-                        <i className="bi bi-trash"></i>
+                        <i className="bi bi-trash"></i> <span>Delete</span>
                       </button>
                     </div>
-                    <p className="text-gray-600 mb-3">{lesson.description}</p>
-                    <div className="flex items-center gap-2">
-                      <i className={`bi ${lesson.fileType.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-blue-600`}></i>
+                    <p className="text-gray-600 mb-4">{lesson.description}</p>
+                    <div className="flex items-center gap-2 bg-gray-100 p-3 rounded-md shadow-md">
+                      <i className={`bi ${lesson.fileType.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-blue-600 text-xl`}></i>
                       <a
                         href={lesson.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
                       >
                         {lesson.fileName}
+                        <i className="bi bi-box-arrow-up-right text-sm"></i>
                       </a>
                     </div>
                   </div>
@@ -290,116 +319,136 @@ export default function CoursePage() {
       {activeSection === 'announcements' && (
         <div>
           {/* Add Announcement */}
-          <div className="announcement-section p-6 rounded-xl bg-white shadow-lg mb-5">
-            <h2 className="text-xl font-medium mb-4 text-gray-800">Add Announcement</h2>
-            <textarea
-              className="w-full p-4 border border-gray-300 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
-              rows={4}
-              placeholder="Write your announcement here..."
-              value={announcement}
-              onChange={(e) => setAnnouncement(e.target.value)}
-            />
-            <div className="flex justify-between items-center">
-              <label className="text-base text-blue-600 cursor-pointer border-2 border-blue-600 rounded-lg px-6 py-2.5 hover:bg-blue-50 transition-all duration-200 font-medium">
-                Upload Files
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*,video/*,application/pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
+          <div className="announcement-section p-6 rounded-xl bg-white shadow-lg mb-6">
+            <h2 className="text-xl font-medium mb-2 text-gray-800 flex items-center gap-2">
+              Add New Announcement
+            </h2>
+            <div className="flex flex-col gap-2">
+              <div className="relative">
+                <textarea
+                  className="w-full p-4 border border-gray-300 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none pl-5"
+                  rows={4}
+                  placeholder="Write your announcement here..."
+                  value={announcement}
+                  onChange={(e) => setAnnouncement(e.target.value)}
                 />
-              </label>
-              <button
-                onClick={handleAddAnnouncement}
-                className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg"
-              >
-                Add Announcement
-              </button>
-            </div>
-            {selectedFiles.length > 0 && (
-              <div className="space-y-3 mb-4 mt-6">
-                {selectedFiles.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between gap-4 bg-gray-50 border border-gray-200 rounded- hover:bg-gray-100 transition-all duration-200"
-                  >
-                    <div className="flex items-center gap-4">
-                      {file.type.startsWith("image/") || file.type.startsWith("video/") ? (
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt="Preview"
-                          className="w-20 h-20 object-cover rounded-lg shadow-sm"
-                        />
-                      ) : (
-                        <div className="w-30 h-20 flex items-center justify-center bg-gray-200 rounded-l-lg text-gray-600 text-sm font-medium">
-                          PDF
-                        </div>
-                      )}
-                      <span className="text-gray-700 font-medium">{file.name}</span>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveFile(index)}
-                      className="text-red-600 hover:text-red-800 text-base transition-colors duration-200 mr-5"
+              </div>
+              <div className="flex justify-between items-center">
+                <label className="text-base text-blue-600 cursor-pointer border-2 border-blue-600 rounded-lg px-6 py-3 hover:bg-blue-50 transition-all duration-200 font-medium flex items-center gap-2">
+                  <i className="bi bi-paperclip"></i>
+                  Upload Files
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,video/*,application/pdf"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  onClick={handleAddAnnouncement}
+                  className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center gap-2"
+                >
+                  <i className="bi bi-send"></i>
+                  Add Announcement
+                </button>
+              </div>
+              {selectedFiles.length > 0 && (
+                <div className="space-y-3 mb-4 mt-6">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between gap-4 bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-all duration-200"
                     >
-                      <i className='bi bi-trash'></i> Remove
+                      <div className="flex items-center gap-4">
+                        {file.type.startsWith("image/") ? (
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt="Preview"
+                            className="w-20 h-20 object-cover rounded-lg shadow-sm"
+                          />
+                        ) : file.type.startsWith("video/") ? (
+                          <div className="w-20 h-20 flex items-center justify-center bg-gray-200 rounded-lg">
+                            <i className="bi bi-play-circle text-3xl text-gray-600"></i>
+                          </div>
+                        ) : (
+                          <div className="w-20 h-20 flex items-center justify-center bg-gray-200 rounded-lg">
+                            <i className="bi bi-file-pdf text-3xl text-gray-600"></i>
+                          </div>
+                        )}
+                        <span className="text-gray-700 font-medium">{file.name}</span>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveFile(index)}
+                        className="text-red-600 hover:text-red-800 text-base transition-colors duration-200 flex items-center gap-2"
+                      >
+                        <i className='bi bi-trash'></i>
+                        <span>Remove</span>
+                      </button>
+                    </div>
+                  ))}
+                  <div className='flex justify-end mt-4'>
+                    <button
+                      onClick={handleUploadFiles}
+                      className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center gap-2"
+                    >
+                      <i className="bi bi-cloud-upload"></i>
+                      Upload Files
                     </button>
                   </div>
-                ))}
-                <div className='flex justify-end mt-4'>
-                  <button
-                    onClick={handleUploadFiles}
-                    className="bg-green-600 text-white px-6 py-2.5 rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg"
-                  >
-                    Upload Files
-                  </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Announcements List */}
           <div className="announcements-list">
-            <h2 className="text-2xl font-medium mb-2 text-gray-800">Announcements</h2>
+            <h2 className="text-xl font-medium mb-2 text-gray-800 flex items-center gap-2">
+              Course Announcements
+            </h2>
             {createdAnnouncements.length === 0 ? (
               <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+                <i className="bi bi-megaphone text-5xl text-gray-400 mb-4"></i>
                 <p className="text-gray-500 text-lg">No announcements for this course yet.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {createdAnnouncements.map((announcement) => (
-                  <div key={announcement.id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-200">
-                    <div className="flex flex-row justify-between items-center mb-3 border-b border-gray-200 pb-3">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-medium">
+                  <div key={announcement.id} className="bg-white rounded-xl shadow-lg p-5 hover:shadow-xl transition-all duration-200">
+                    <div className="flex flex-row justify-between items-center mb-4 border-b border-gray-200 pb-2">
+                      <span className="px-4 py-1.5 bg-blue-100 text-blue-600 rounded-full text-sm font-medium flex items-center gap-2">
+                        <i className="bi bi-tag"></i>
                         {announcement.target}
                       </span>
                       <div className="relative">
                         <button
-                          className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                          className="text-gray-500 hover:text-gray-700 transition-colors duration-200 p-2 hover:bg-gray-100 rounded-lg"
                           onClick={(e) => {
                             const dropdown = e.currentTarget.nextSibling;
                             dropdown.classList.toggle('hidden');
                           }}
                         >
-                          ⋮
+                          <i className="bi bi-three-dots-vertical"></i>
                         </button>
-                        <div className="absolute right-0 w-40 bg-white border border-gray-200 rounded-lg shadow-lg hidden z-10">
+                        <div className="absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg hidden z-10">
                           <button
-                            className="block w-full text-left px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                            className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center gap-2"
                             onClick={() => {
                               setSelectedAnnouncement({ ...announcement, newText: announcement.announcement });
                               setEditModalOpen(true);
                             }}
                           >
+                            <i className="bi bi-pencil"></i>
                             Edit
                           </button>
                           <button
-                            className="block w-full text-left px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors duration-200"
+                            className="block w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-200 flex items-center gap-2"
                             onClick={() => {
                               setSelectedAnnouncement(announcement);
                               setDeleteModalOpen(true);
                             }}
                           >
+                            <i className="bi bi-trash"></i>
                             Delete
                           </button>
                         </div>
@@ -416,44 +465,70 @@ export default function CoursePage() {
 
       {activeSection === 'quizzes' && (
         <div className="flex flex-col gap-6">
-          <QuizCreator onCreateQuiz={createQuiz} />
+          {/* Add Quiz */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-medium mb-2 text-gray-800 flex items-center gap-2">
+              <i className="bi bi-plus-circle"></i>
+              Create New Quiz
+            </h2>
+            <QuizCreator onCreateQuiz={createQuiz} />
+          </div>
 
           {/* Display Quizzes */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Course Quizzes</h2>
+          <div className="mt-1">
+            <h2 className="text-xl font-medium mb-2 text-gray-800 flex items-center gap-2">
+              <i className="bi bi-pencil-square"></i>
+              Course Quizzes
+            </h2>
             {quizzesLoading ? (
-              <div className="flex justify-center items-center py-8">
+              <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
             ) : quizzes.length === 0 ? (
-              <div className="text-center py-8">
-                <i className="bi bi-pencil-square text-4xl text-gray-400 mb-4"></i>
-                <p className="text-gray-500">No quizzes available yet.</p>
+              <div className="text-center py-12 bg-white rounded-xl shadow-lg">
+                <i className="bi bi-pencil-square text-5xl text-gray-400 mb-4"></i>
+                <p className="text-gray-500 text-lg">No quizzes available yet.</p>
               </div>
             ) : (
               <div className="grid gap-4">
                 {quizzes.map((quiz) => (
-                  <div key={quiz.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                  <div key={quiz.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-800 mb-1">{quiz.title}</h3>
-                        <p className="text-gray-600">Topic: {quiz.topic}</p>
-                        <p className="text-gray-500 text-sm mt-2">
-                          {quiz.questions.length} questions • Created by {quiz.createdByName}
-                        </p>
+                        <h3 className="text-xl font-semibold text-gray-800 mb-1">{quiz.title}</h3>
+                        <div className="flex items-center gap-2 bg-gray-100 p-3 rounded-lg mb-3">
+                          <i className="bi bi-bookmark text-blue-600"></i>
+                          <span className="text-gray-700 font-medium">Topic: {quiz.topic}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-500 text-sm">
+                          <div className="flex items-center gap-1">
+                            <i className="bi bi-list-check"></i>
+                            <span>{quiz.questions.length} questions</span>
+                          </div>
+                          <span className="mx-2">•</span>
+                          <div className="flex items-center gap-1">
+                            <i className="bi bi-person"></i>
+                            <span>{quiz.createdByName}</span>
+                          </div>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setSelectedQuiz(quiz)}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2"
                         >
                           <i className="bi bi-eye"></i>
+                          <span>Preview</span>
                         </button>
                         <button
-                          onClick={() => deleteQuiz(quiz.id)}
-                          className="text-red-600 hover:text-red-800"
+                          onClick={() => {
+                            setQuizToDelete(quiz);
+                            setShowDeleteQuizModal(true);
+                          }}
+                          className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
                         >
                           <i className="bi bi-trash"></i>
+                          <span>Delete</span>
                         </button>
                       </div>
                     </div>
@@ -467,26 +542,39 @@ export default function CoursePage() {
 
       {/* Edit Modal */}
       {editModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-xl shadow-2xl w-[480px]">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">Edit Announcement</h3>
-            <textarea
-              className="w-full p-4 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              rows={4}
-              value={selectedAnnouncement.newText}
-              onChange={(e) =>
-                setSelectedAnnouncement((prev) => ({ ...prev, newText: e.target.value }))
-              }
-            />
+        <div className="modal-overlay">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-[480px] transform transition-all duration-300 scale-100">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                Edit Announcement
+              </h3>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div className="relative mb-6">
+              <textarea
+                className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 pl-5"
+                rows={4}
+                value={selectedAnnouncement.newText}
+                onChange={(e) =>
+                  setSelectedAnnouncement((prev) => ({ ...prev, newText: e.target.value }))
+                }
+              />
+             
+            </div>
             <div className="flex justify-end gap-3">
               <button
-                className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 font-medium"
+                className="px-6 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center gap-2"
                 onClick={() => setEditModalOpen(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-6 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg"
+                className="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center gap-2"
                 onClick={handleEditAnnouncement}
               >
                 Save Changes
@@ -498,19 +586,33 @@ export default function CoursePage() {
 
       {/* Delete Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-xl shadow-2xl w-[480px]">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">Delete Announcement</h3>
-            <p className="text-gray-600 mb-6">Are you sure you want to delete this announcement? This action cannot be undone.</p>
+        <div className="modal-overlay">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-[480px] transform transition-all duration-300 scale-100">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                Delete Announcement
+              </h3>
+              <button
+                onClick={() => setDeleteModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-600 flex items-center gap-2">
+                Are you sure you want to delete this announcement? This action cannot be undone.
+              </p>
+            </div>
             <div className="flex justify-end gap-3">
               <button
-                className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 font-medium"
+                className="px-6 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center gap-2"
                 onClick={() => setDeleteModalOpen(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-6 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg"
+                className="px-6 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center gap-2"
                 onClick={handleDeleteAnnouncement}
               >
                 Delete
@@ -522,22 +624,78 @@ export default function CoursePage() {
 
       {/* Delete Lesson Modal */}
       {showDeleteLessonModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-md">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Delete Lesson</h2>
-            <p className="text-gray-700 mb-8">
-              Are you sure you want to delete this lesson? This action cannot be undone.
-            </p>
+        <div className="modal-overlay">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-md transform transition-all duration-300 scale-100">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                Delete Lesson
+              </h2>
+              <button
+                onClick={() => setShowDeleteLessonModal(false)}
+                className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-600 flex items-center gap-2">
+                Are you sure you want to delete this lesson? This action cannot be undone.
+              </p>
+            </div>
             <div className="flex justify-end gap-4">
               <button
                 onClick={() => setShowDeleteLessonModal(false)}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200"
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 flex items-center gap-2"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteLesson}
-                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200"
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 flex items-center gap-2"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Quiz Modal */}
+      {showDeleteQuizModal && (
+        <div className="modal-overlay">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-md transform transition-all duration-300 scale-100">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                Delete Quiz
+              </h2>
+              <button
+                onClick={() => {
+                  setShowDeleteQuizModal(false);
+                  setQuizToDelete(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-600 flex items-center gap-2">
+                Are you sure you want to delete the quiz "{quizToDelete?.title}"? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setShowDeleteQuizModal(false);
+                  setQuizToDelete(null);
+                }}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 flex items-center gap-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteQuiz(quizToDelete.id)}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 flex items-center gap-2"
               >
                 Delete
               </button>
@@ -548,15 +706,17 @@ export default function CoursePage() {
 
       {/* Quiz Display Modal */}
       {selectedQuiz && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="modal-overlay">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800">Quiz Preview</h2>
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                Quiz Preview
+              </h2>
               <button
                 onClick={() => setSelectedQuiz(null)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <i className="bi bi-x-lg text-xl"></i>
+                <i className="bi bi-x-lg"></i>
               </button>
             </div>
             <QuizDisplay
@@ -570,8 +730,9 @@ export default function CoursePage() {
       )}
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <span className="block sm:inline">{error}</span>
+        <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg shadow-lg flex items-center gap-2 transform transition-all duration-300" role="alert">
+          <i className="bi bi-exclamation-circle text-xl"></i>
+          <span className="block sm:inline">{error}</span>
         </div>
       )}
     </section>
