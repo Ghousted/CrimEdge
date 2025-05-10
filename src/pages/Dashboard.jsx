@@ -74,9 +74,11 @@ const Dashboard = () => {
   }, []);
 
   const getCardsPerRow = () => {
-    if (window.innerWidth >= 1024) return 3;
-    if (window.innerWidth >= 640) return 2;
-    return 1;
+    if (window.innerWidth >= 1536) return 4; // 2xl screens
+    if (window.innerWidth >= 1280) return 3; // xl screens
+    if (window.innerWidth >= 1024) return 3; // lg screens
+    if (window.innerWidth >= 768) return 2;  // md screens
+    return 1; // sm and xs screens
   };
 
   const handleDotClick = (index) => {
@@ -119,19 +121,19 @@ const Dashboard = () => {
   };
 
   return (
-    <section className="p-6">
-      <div className="flex flex-col lg:flex-row gap-5">
-        <div className="flex flex-col gap-5 w-full lg:w-5/7">
-          <div className="content-section px-10 py-7  grd-bg2 text-white">
-            <h2 className="text-3xl mb-2">
-                Welcome to Crim Edge, {user ? `${user.firstName} ${user.lastName}` : 'Guest'}!
-              </h2>
-              <p className="text-base font-medium">Crim Edge: Where your insights shape the next top student.</p>   
+    <section className="p-4 sm:p-6">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+        <div className="flex flex-col gap-4 lg:gap-6 w-full lg:w-3/4">
+          <div className="content-section px-6 sm:px-10 py-5 sm:py-7 grd-bg2 text-white rounded-lg">
+            <h2 className="text-2xl sm:text-3xl mb-2">
+              Welcome to Crim Edge, {user ? `${user.firstName} ${user.lastName}` : 'Guest'}!
+            </h2>
+            <p className="text-sm sm:text-base font-medium">Crim Edge: Where your insights shape the next top student.</p>   
           </div>
 
-          <div className="w-full flex gap-7 bg-white shadow-md py-3 px-4 rounded-lg justify-start">
+          <div className="w-full flex flex-wrap gap-3 sm:gap-7 bg-white shadow-md py-3 px-4 rounded-lg justify-start">
             <button
-              className={`px-4 py-2 rounded-md transition-all duration-300 ${
+              className={`px-3 sm:px-4 py-2 rounded-md transition-all duration-300 text-sm sm:text-base ${
                 activeSection === 'enrolled' 
                   ? 'bg-blue-600 text-white shadow-md' 
                   : 'text-gray-600 hover:bg-gray-100'
@@ -142,7 +144,7 @@ const Dashboard = () => {
               Enrolled Courses
             </button>
             <button
-              className={`px-4 py-2 rounded-md transition-all duration-300 ${
+              className={`px-3 sm:px-4 py-2 rounded-md transition-all duration-300 text-sm sm:text-base ${
                 activeSection === 'other' 
                   ? 'bg-blue-600 text-white shadow-md' 
                   : 'text-gray-600 hover:bg-gray-100'
@@ -154,43 +156,42 @@ const Dashboard = () => {
             </button>
           </div>
 
-
           {activeSection === 'enrolled' && (
             <div className="course-container mb-4">
               {enrolledCoursesList.length === 0 ? (
-                <p className="text-gray-500">You are not enrolled in any courses yet.</p>
+                <p className="text-gray-500 text-center py-4">You are not enrolled in any courses yet.</p>
               ) : (
-                <div className={`grid grid-cols-1 sm:grid-cols-${cardsPerRow >= 2 ? 2 : 1} md:grid-cols-${cardsPerRow} gap-5`}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
                   {currentEnrolledCourses.map((course) => (
-                    <Link key={course.id} to={`/course/${course.id}`} className="bg-white shadow-md rounded-md">
+                    <Link key={course.id} to={`/course/${course.id}`} className="bg-white shadow-md rounded-md hover:shadow-lg transition-shadow duration-300">
                       {course.imageUrl ? (
                         <img
                           src={course.imageUrl}
                           alt={course.course}
-                          className="w-full h-35 object-cover rounded-t-md"
+                          className="w-full h-32 sm:h-36 object-cover rounded-t-md"
                         />
                       ) : (
-                        <div className="w-full h-35 bg-gray-200 rounded-t-md flex items-center justify-center text-gray-500">
-                          <div className="text-3xl">
-                          <i className='bi bi-image '></i>
-                        </div>
+                        <div className="w-full h-32 sm:h-36 bg-gray-200 rounded-t-md flex items-center justify-center text-gray-500">
+                          <div className="text-2xl">
+                            <i className='bi bi-image'></i>
+                          </div>
                         </div>
                       )}
-                      <div className="p-4">
-                        <h2 className="text-lg">{course.course}</h2>
-                        <p className="text-base">{course.description || '-------'}</p>
-                        <p className="text-sm">{course.createdByName || 'none'}</p>
+                      <div className="p-2 sm:p-3">
+                        <h2 className="text-sm sm:text-base font-semibold line-clamp-1">{course.course}</h2>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{course.description || '-------'}</p>
+                        <p className="text-xs text-gray-500 mt-1">{course.createdByName || 'none'}</p>
                       </div>
                     </Link>
                   ))}
                 </div>
               )}
-              <div className="flex mt-4 justify-center gap-2">
+              <div className="flex mt-3 justify-center gap-2">
                 {Array.from({ length: Math.ceil(enrolledCoursesList.length / cardsPerRow) }, (_, index) => (
                   <button
                     key={index}
                     onClick={() => handleDotClick(index)}
-                    className={`h-2 w-2 rounded-full transition-all duration-300 ${
+                    className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
                       currentPage === index ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
                     }`}
                   ></button>
@@ -201,36 +202,36 @@ const Dashboard = () => {
 
           {activeSection === 'other' && (
             <div className="course-container">
-              <div className={`grid grid-cols-1 sm:grid-cols-${cardsPerRow >= 2 ? 2 : 1} md:grid-cols-${cardsPerRow} gap-5`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
                 {currentOtherCourses.map((course) => (
-                  <Link key={course.id} to={`/course/${course.id}`} className="bg-white shadow-md rounded-md">
+                  <Link key={course.id} to={`/course/${course.id}`} className="bg-white shadow-md rounded-md hover:shadow-lg transition-shadow duration-300">
                     {course.imageUrl ? (
                       <img
                         src={course.imageUrl}
                         alt={course.course}
-                        className="w-full h-35 object-cover rounded-t-md "
+                        className="w-full h-32 sm:h-36 object-cover rounded-t-md"
                       />
                     ) : (
-                      <div className="w-full h-35 bg-gray-200 rrounded-t-md flex items-center justify-center text-gray-500">
-                        <div className="text-3xl">
-                          <i className='bi bi-image '></i>
+                      <div className="w-full h-32 sm:h-36 bg-gray-200 rounded-t-md flex items-center justify-center text-gray-500">
+                        <div className="text-2xl">
+                          <i className='bi bi-image'></i>
                         </div>
                       </div>
                     )}
-                    <div className="p-4">
-                      <h2 className="text-xl">{course.course}</h2>
-                      <p className="text-base">{course.description || '-------'}</p>
-                      <p className="text-sm">{course.createdByName || 'none'}</p>
+                    <div className="p-2 sm:p-3">
+                      <h2 className="text-sm sm:text-base font-semibold line-clamp-1">{course.course}</h2>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{course.description || '-------'}</p>
+                      <p className="text-xs text-gray-500 mt-1">{course.createdByName || 'none'}</p>
                     </div>
                   </Link>
                 ))}
               </div>
-              <div className="flex mt-4 justify-center gap-2">
+              <div className="flex mt-3 justify-center gap-2">
                 {Array.from({ length: Math.ceil(otherCoursesList.length / cardsPerRow) }, (_, index) => (
                   <button
                     key={index}
                     onClick={() => handleDotClick(index)}
-                    className={`h-2 w-2 rounded-full transition-all duration-300 ${
+                    className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
                       currentPage === index ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
                     }`}
                   ></button>
@@ -240,18 +241,18 @@ const Dashboard = () => {
           )}
         </div>
 
-        <div className="flex flex-col gap-4 w-full lg:w-2/7">
+        <div className="flex flex-col gap-4 w-full lg:w-1/4">
           <div className="bg-white p-4 rounded-md shadow-md">
-            <h1 className='mb-3 text-xl font-semibold text-gray-800'>
+            <h1 className='mb-3 text-lg sm:text-xl font-semibold text-gray-800'>
               <i className='bi bi-megaphone mr-2 text-blue-600'></i>
               Instructor Announcements
             </h1>
             <div className='flex flex-col gap-3'>
               {announcements.map(announcement => (
                 <div key={announcement.id} className="p-3 border border-gray-200 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <p className="text-sm font-medium text-gray-700">{announcement.createdByName}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
                         month: 'long', day: 'numeric', year: 'numeric'
                       }) : ''}
