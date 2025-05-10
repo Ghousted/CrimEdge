@@ -12,7 +12,7 @@ export const useHandleCourses = () => {
 
   const coursesRef = collection(db, "courses");
 
-
+  console.log(currentUser);
   const userDocRef = doc(db, 'users', currentUser.uid);
 
   const addNewCourse = async (courseName, courseDescription) => {
