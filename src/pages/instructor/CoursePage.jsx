@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useHandleCourses } from '../../hooks/useHandleCourses';
 import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
 import { useHandleStorage } from '../../hooks/useHandleStorage';
+import { useHandleLessons } from '../../hooks/useHandleLessons';
 import { useParams } from 'react-router-dom';
 
 export default function CoursePage() {
@@ -14,10 +15,20 @@ export default function CoursePage() {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [activeSection, setActiveSection] = useState('announcements');
+  
+  // New state for lesson upload
+  const [lessonTitle, setLessonTitle] = useState('');
+  const [lessonDescription, setLessonDescription] = useState('');
+  const [lessonFile, setLessonFile] = useState(null);
+  const [showDeleteLessonModal, setShowDeleteLessonModal] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [error, setError] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const { createAnnouncement, deleteAnnouncement, updateAnnouncement, announcements, createdAnnouncements } = useHandleAnnouncements(id);
   const { courses, loading } = useHandleCourses();
   const { fileUpload } = useHandleStorage();
+  const { uploadLessonFile, deleteLesson, lessons, loading: lessonsLoading, error: lessonsError } = useHandleLessons(id);
 
   const course = courses.find(c => c.id === id) || null;
 
@@ -37,14 +48,31 @@ export default function CoursePage() {
   };
 
   const handleUploadFiles = async () => {
-    if (selectedFiles.length === 0) return;
+    if (!selectedFiles.length) {
+        setError('Please select at least one file to upload');
+        return;
+    }
+
     try {
-      await fileUpload(selectedFiles, course.id);
-      alert('Files uploaded successfully!');
-      setSelectedFiles([]);
+        setUploading(true);
+        const results = await fileUpload(selectedFiles, id);
+        
+        // Create a new lesson for each uploaded file
+        for (const result of results) {
+            await uploadLessonFile(
+                result.file, // Pass the actual file object
+                result.fileName, // Use the file name as the title
+                `Uploaded file: ${result.fileName}` // Use a default description
+            );
+        }
+
+        setSelectedFiles([]);
+        setError(null);
     } catch (error) {
-      console.error('Error uploading files:', error);
-      alert('Failed to upload files. Please try again.');
+        console.error('Error uploading files:', error);
+        setError(error.message || 'Failed to upload files. Please try again.');
+    } finally {
+        setUploading(false);
     }
   };
 
@@ -66,6 +94,33 @@ export default function CoursePage() {
 
   const handleSectionClick = (section) => {
     setActiveSection(section);
+  };
+
+  const handleLessonFileChange = (event) => {
+    setLessonFile(event.target.files[0]);
+  };
+
+  const handleRemoveLessonFile = () => {
+    setLessonFile(null);
+  };
+
+  const handleUploadLesson = async () => {
+    if (!lessonFile || !lessonTitle.trim()) return;
+
+    const success = await uploadLessonFile(lessonFile, lessonTitle, lessonDescription);
+    if (success) {
+      setLessonTitle('');
+      setLessonDescription('');
+      setLessonFile(null);
+    }
+  };
+
+  const handleDeleteLesson = async () => {
+    if (selectedLesson) {
+      await deleteLesson(selectedLesson.id, selectedLesson.fileUrl);
+      setShowDeleteLessonModal(false);
+      setSelectedLesson(null);
+    }
   };
 
   if (loading) {
@@ -119,8 +174,111 @@ export default function CoursePage() {
 
       {/* Conditional Rendering of Sections */}
       {activeSection === 'lessons' && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Lessons</h2>
+        <div className="flex flex-col gap-6">
+          {/* Add Lesson */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Add Lesson</h2>
+            {lessonsError && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600">{lessonsError}</p>
+              </div>
+            )}
+            <div className="flex flex-col gap-4">
+              <input
+                type="text"
+                placeholder="Lesson Title"
+                value={lessonTitle}
+                onChange={(e) => setLessonTitle(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              />
+              <textarea
+                placeholder="Lesson Description"
+                value={lessonDescription}
+                onChange={(e) => setLessonDescription(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none"
+                rows={3}
+              />
+              <div className="flex items-center gap-4">
+                <label className="cursor-pointer border-2 border-blue-600 text-blue-600 hover:text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200 flex items-center gap-2">
+                  <i className="bi bi-upload"></i>
+                  <span>Upload File (PDF/Video)</span>
+                  <input
+                    type="file"
+                    accept=".pdf,video/*"
+                    onChange={handleLessonFileChange}
+                    className="hidden"
+                  />
+                </label>
+                {lessonFile && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700">{lessonFile.name}</span>
+                    <button
+                      onClick={handleRemoveLessonFile}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <i className="bi bi-x-circle"></i>
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={handleUploadLesson}
+                disabled={!lessonFile || !lessonTitle.trim()}
+                className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Upload Lesson
+              </button>
+            </div>
+          </div>
+
+          {/* Display Lessons */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Course Lessons</h2>
+            {lessonsLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : lessons.length === 0 ? (
+              <div className="text-center py-8">
+                <i className="bi bi-book text-4xl text-gray-400 mb-4"></i>
+                <p className="text-gray-500">No lessons uploaded yet.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {lessons.map((lesson) => (
+                  <div key={lesson.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-800">{lesson.title}</h3>
+                        <p className="text-sm text-gray-500">{lesson.createdByName}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedLesson(lesson);
+                          setShowDeleteLessonModal(true);
+                        }}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    </div>
+                    <p className="text-gray-600 mb-3">{lesson.description}</p>
+                    <div className="flex items-center gap-2">
+                      <i className={`bi ${lesson.fileType.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-blue-600`}></i>
+                      <a
+                        href={lesson.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        {lesson.fileName}
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -309,6 +467,38 @@ export default function CoursePage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Delete Lesson Modal */}
+      {showDeleteLessonModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-md">
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Delete Lesson</h2>
+            <p className="text-gray-700 mb-8">
+              Are you sure you want to delete this lesson? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowDeleteLessonModal(false)}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteLesson}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span className="block sm:inline">{error}</span>
         </div>
       )}
     </section>

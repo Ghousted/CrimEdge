@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users
+    match /users/{userId} {
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Only the user themself can read/write their profile
+      allow read: if isSelf(userId) || isAdmin() || isInstructor();
+      allow update: if isSelf(userId) && (isRole("user") || isRole("instructor"));
+    }
+
+    // Admin-only documents
+    match /admin/{document} {
+      allow read, write: if isAdmin();
+    }
+
+    // Subscription plans (readable by all logged-in users)
+    match /plans/{document} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Instructor documents
+    match /instructor/{document} {
+      allow read, write: if isInstructor();
+    }
+
+    // Announcements (readable by all, writable by instructors/admins)
+    match /announcements/{announcementId} {
+      allow read: if request.auth != null;
+      allow write: if isInstructor() || isAdmin();
+    }
+
+    // Courses (readable by all, writable by instructors/admins)
+    match /courses/{courseId} {
+      allow read: if request.auth != null;
+      allow write: if isInstructor() || isAdmin();
+    }
+
+    // Lessons (readable by all authenticated users, writable by instructors/admins)
+    match /lessons/{lessonId} {
+      allow read: if request.auth != null;
+      allow create: if isInstructor() || isAdmin();
+      allow update, delete: if (isInstructor() || isAdmin()) 
+        && resource.data.createdBy == request.auth.uid;
+    }
+
+    // ===== Helper functions =====
+    function isSelf(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isRole(roleName) {
+      return request.auth != null &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == roleName;
+    }
+
+    function isAdmin() {
+      return isRole("admin");
+    }
+
+    function isInstructor() {
+      return isRole("instructor");
+    }
+  }
+} 

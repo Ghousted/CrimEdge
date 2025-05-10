@@ -1,0 +1,12 @@
+specVersion: "v1"
+serviceId: "crimedge-ecef4"
+location: "asia-southeast1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "crimedge-ecef4-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]

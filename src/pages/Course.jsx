@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useHandleCourses } from '../hooks/useHandleCourses';
 import { useHandleAnnouncements } from '../hooks/useHandleAnnouncements'; // Import your hook
+import { useHandleLessons } from '../hooks/useHandleLessons';
 import { useAuth } from '../auth/components/authContext'; // Add this import
 
 
@@ -9,6 +10,7 @@ const Course = () => {
   const { id } = useParams();
   const { createAnnouncement, announcements, createdAnnouncements } = useHandleAnnouncements(id);
   const { courses, enrollStudentInCourse, enrolledCourses, courseLimit } = useHandleCourses(); // Get courses from hook
+  const { lessons, loading: lessonsLoading } = useHandleLessons(id);
   const { membershipPlan } = useAuth(); // Add this line
   const navigate = useNavigate();
 
@@ -226,11 +228,42 @@ const Course = () => {
         {/* Render sections based on active state */}
         {activeSection === 'lessons' && (
           <div className='w-full max-w-7xl mx-auto p-2 flex flex-col gap-4'>
-            <div className="bg-white shadow-md p-4 rounded-lg">
-            <h2 className="font-bold text-lg">Lessons</h2>
-            <p>{course.description}</p>
-            <p>Number of lessons: {course.lessons}</p>
-          </div>
+            <div className="bg-white shadow-md p-6 rounded-lg">
+              <h2 className="font-bold text-xl mb-4">Course Lessons</h2>
+              {lessonsLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+              ) : lessons.length === 0 ? (
+                <div className="text-center py-8">
+                  <i className="bi bi-book text-4xl text-gray-400 mb-4"></i>
+                  <p className="text-gray-500">No lessons available yet.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {lessons.map((lesson) => (
+                    <div key={lesson.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                      <div className="mb-2">
+                        <h3 className="text-lg font-medium text-gray-800">{lesson.title}</h3>
+                        <p className="text-sm text-gray-500">{lesson.createdByName}</p>
+                      </div>
+                      <p className="text-gray-600 mb-3">{lesson.description}</p>
+                      <div className="flex items-center gap-2">
+                        <i className={`bi ${lesson.fileType.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-blue-600`}></i>
+                        <a
+                          href={lesson.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          {lesson.fileName}
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
