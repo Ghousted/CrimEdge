@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useHandleCourses } from '../hooks/useHandleCourses';
 import { useHandleAnnouncements } from '../hooks/useHandleAnnouncements'; // Import your hook
+import { useAuth } from '../auth/components/authContext'; // Add this import
 
 
 const Course = () => {
   const { id } = useParams();
   const { createAnnouncement, announcements, createdAnnouncements } = useHandleAnnouncements(id);
   const { courses, enrollStudentInCourse, enrolledCourses, courseLimit } = useHandleCourses(); // Get courses from hook
+  const { membershipPlan } = useAuth(); // Add this line
   const navigate = useNavigate();
 
   const [activeSection, setActiveSection] = useState('lessons');
@@ -66,9 +68,80 @@ const Course = () => {
     navigate('/dashboard');
   };
 
+  // Check if user has free membership and has reached the 2-course limit
+  if (!confirmed && membershipPlan?.plan === 'Free' && enrolledCourses?.length >= 2) {
+    return (
+      <section className="p-8 max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 p-6">
+            <div className="flex items-center justify-center mb-4">
+              <i className="bi bi-lock-fill text-4xl text-white"></i>
+            </div>
+            <h2 className="text-3xl font-bold text-center text-white mb-2">Course Limit Reached</h2>
+            <p className="text-center text-yellow-100">You've reached the maximum courses for your Free plan</p>
+          </div>
+          
+          <div className="p-8">
+            <div className="bg-yellow-50 rounded-lg p-6 mb-6">
+              <h3 className="text-xl font-semibold text-yellow-800 mb-3">Current Plan Limitations</h3>
+              <ul className="space-y-3">
+                <li className="flex items-center text-yellow-700">
+                  <i className="bi bi-check-circle-fill mr-2"></i>
+                  <span>Maximum 2 courses allowed</span>
+                </li>
+                <li className="flex items-center text-yellow-700">
+                  <i className="bi bi-check-circle-fill mr-2"></i>
+                  <span>Basic course access</span>
+                </li>
+                <li className="flex items-center text-yellow-700">
+                  <i className="bi bi-check-circle-fill mr-2"></i>
+                  <span>Standard learning materials</span>
+                </li>
+              </ul>
+            </div>
 
+            <div className="bg-blue-50 rounded-lg p-6 mb-6">
+              <h3 className="text-xl font-semibold text-blue-800 mb-3">Upgrade Benefits</h3>
+              <ul className="space-y-3">
+                <li className="flex items-center text-blue-700">
+                  <i className="bi bi-star-fill mr-2"></i>
+                  <span>Unlimited course access</span>
+                </li>
+                <li className="flex items-center text-blue-700">
+                  <i className="bi bi-star-fill mr-2"></i>
+                  <span>Premium learning materials</span>
+                </li>
+                <li className="flex items-center text-blue-700">
+                  <i className="bi bi-star-fill mr-2"></i>
+                  <span>Priority support</span>
+                </li>
+              </ul>
+            </div>
 
-  if (courseLimit) {
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <button
+                onClick={() => navigate('/upgrade-plan')}
+                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold flex items-center justify-center"
+              >
+                <i className="bi bi-arrow-up-circle-fill mr-2"></i>
+                Upgrade Plan
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-8 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-semibold flex items-center justify-center"
+              >
+                <i className="bi bi-arrow-left-circle-fill mr-2"></i>
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Check if user has reached their plan's course limit
+  if (!confirmed && courseLimit) {
     return (
       <section className="p-6 text-center bg-yellow-100 border border-yellow-400 rounded-md">
         <h2 className="text-2xl font-semibold mb-4 text-yellow-800">Course Limit Reached</h2>
@@ -78,23 +151,25 @@ const Course = () => {
         <p className="mb-6 text-yellow-700">
           To enroll in more courses, please upgrade your membership plan.
         </p>
-        <button
-          onClick={() => navigate('/upgrade-plan')}
-          className="px-6 py-3 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-        >
-          Upgrade Plan
-        </button>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="px-6 py-3 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-        >
-          Dashboard
-        </button>
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={() => navigate('/subscription/upgrade-plan')}
+            className="px-6 py-3 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+          >
+            Upgrade Plan
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-6 py-3 bg-gray-600 text-white rounded hover:bg-gray-700"
+          >
+            Back to Dashboard
+          </button>
+        </div>
       </section>
     );
   }
 
-  if (confirmed === false) {
+  if (!confirmed) {
     console.log('Course not confirmed yet');
     return (
       <section className="p-6 text-center">
