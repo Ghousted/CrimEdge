@@ -58,48 +58,75 @@ export default function AdminDashboard() {
   const endIdx = startIdx + cardsPerRow;
   const currentAnnouncements = announcements.slice(startIdx, endIdx);
 
+  // Helper function for date formatting
+  function formatDateDot(dateObj) {
+    const d = new Date(dateObj.seconds * 1000);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}.${month}.${year}`;
+  }
+
   return (
-    <section className="p-6 bg-gray-100 min-h-screen">
-      <div className="page-title mb-4 text-3xl font-bold text-gray-800">Admin Announcements</div>
-      <div className="flex justify-between mb-4">
-        <button
-          onClick={handlePrev}
-          disabled={currentPage === 0}
-          className="prev-next-btn px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
-        >
-          <i className="bi bi-arrow-left"></i> Previous
-        </button>
-        <button
-          onClick={handleNext}
-          disabled={endIdx >= announcements.length}
-          className="prev-next-btn px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
-        >
-          Next <i className="bi bi-arrow-right"></i>
-        </button>
-      </div>
-      <div className="announcement-list w-full">
-        {loading ? (
-          <p className="text-gray-600">Loading announcements...</p>
-        ) : announcements.length === 0 ? (
-          <p className="text-gray-600">No announcements available.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {currentAnnouncements.map((announcement) => (
-              <div
-                key={announcement.id}
-                className="bg-white shadow-md p-6 rounded-lg border border-gray-200 relative hover:shadow-lg transition-shadow duration-300"
-              >
-            
-                <p className="text-lg font-semibold">{announcement.announcement}</p>
-                <p className="text-sm text-gray-600 mt-2">Target: {announcement.target}</p>
-                <p className="text-sm text-gray-600 mt-1">By: {announcement.createdByName}</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Date: {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleString() : ''}
-                </p>
-              </div>
-            ))}
+    <section className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 tracking-tight">
+            Admin Announcements
+          </h1>
+          <div className="flex gap-4">
+            <button
+              onClick={handlePrev}
+              disabled={currentPage === 0}
+              className="prev-next-btn px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-sm"
+            >
+              <i className="bi bi-arrow-left"></i> Previous
+            </button>
+            <button
+              onClick={handleNext}
+              disabled={endIdx >= announcements.length}
+              className="prev-next-btn px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-sm"
+            >
+              Next <i className="bi bi-arrow-right"></i>
+            </button>
           </div>
-        )}
+        </div>
+
+        <div className="announcement-list w-full">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+              <p className="text-gray-500 text-lg">No announcements available.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentAnnouncements.map((announcement) => (
+                <div
+                  key={announcement.id}
+                  className="bg-white shadow p-6 rounded-2xl border border-gray-100 relative transition-all duration-300"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-400 font-medium">By {announcement.createdByName}</span>
+                    <span className="text-sm text-gray-400 font-medium">
+                      {announcement.createdAt
+                        ? formatDateDot(announcement.createdAt)
+                        : ''}
+                    </span>
+                  </div>
+                  <div className="mb-2">
+                    <span className="text-lg text-blue-500 ">Target: {announcement.target}</span>
+                  </div>
+                  <div className="mb-2">
+                    <p className="text-base text-gray-800 leading-snug">{announcement.announcement}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

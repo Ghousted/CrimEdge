@@ -40,16 +40,6 @@ const Dashboard = () => {
     }
   }, [courses]);
 
-  const upcomingEvents = [
-    { id: 1, title: 'Cybersecurity Webinar', date: 'April 10, 2025' },
-    { id: 2, title: 'AI in Criminal Justice', date: 'April 15, 2025' },
-  ];
-
-  const recentActivity = [
-    { id: 1, description: 'You completed the Digital Forensics course.', time: '2 hours ago' },
-    { id: 2, description: 'You enrolled in Crime Scene Investigation.', time: 'Yesterday' },
-  ];
-
   const [currentPage, setCurrentPage] = useState(0);
   const [cardsPerRow, setCardsPerRow] = useState(3);
   const [user, setUser] = useState(null); // State to store user data
@@ -139,19 +129,29 @@ const Dashboard = () => {
               <p className="text-base font-medium">Crim Edge: Where your insights shape the next top student.</p>   
           </div>
 
-          <div className="w-full flex gap-7 bg-white shadow-md py-2 px-4 rounded-lg justify-start ">
-            <div
-              className={`cursor-pointer relative ${activeSection === 'enrolled' ? 'active-underline' : ''}`}
+          <div className="w-full flex gap-7 bg-white shadow-md py-3 px-4 rounded-lg justify-start">
+            <button
+              className={`px-4 py-2 rounded-md transition-all duration-300 ${
+                activeSection === 'enrolled' 
+                  ? 'bg-blue-600 text-white shadow-md' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
               onClick={() => setActiveSection('enrolled')}
             >
+              <i className="bi bi-book mr-2"></i>
               Enrolled Courses
-            </div>
-            <div
-              className={`cursor-pointer relative ${activeSection === 'other' ? 'active-underline' : ''}`}
+            </button>
+            <button
+              className={`px-4 py-2 rounded-md transition-all duration-300 ${
+                activeSection === 'other' 
+                  ? 'bg-blue-600 text-white shadow-md' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
               onClick={() => setActiveSection('other')}
             >
+              <i className="bi bi-grid mr-2"></i>
               Other Courses
-            </div>
+            </button>
           </div>
 
 
@@ -242,54 +242,23 @@ const Dashboard = () => {
 
         <div className="flex flex-col gap-4 w-full lg:w-2/7">
           <div className="bg-white p-4 rounded-md shadow-md">
-            <h1 className='mb-3 text-xl'><i className='bi bi-calendar-check mr-2'></i>Upcoming Events</h1>
-            <div className="flex flex-col gap-2">
-              {upcomingEvents.map(event => (
-                <div key={event.id} className="p-1 flex items-start gap-3">
-                  <i className='bi bi-bell'></i>
-                  <div>
-                    <h2 className="text-sm font-medium">{event.title}</h2>
-                    <p className="text-xs text-gray-600">{event.date}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-md shadow-md">
-            <h1 className='mb-3 text-xl'><i className='bi bi-clock mr-2'></i>Recent Activity</h1>
-            <div className='flex flex-col gap-2'>
-              {recentActivity.map(activity => (
-                <div key={activity.id} className="p-1 flex items-start gap-3">
-                  <i className='bi bi-bell'></i>
-                  <div>
-                    <p className="text-sm">{activity.description}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-md shadow-md">
-            <h1 className='mb-3 text-xl'><i className='bi bi-megaphone mr-2'></i>Instructor Announcements</h1>
-            <div className='flex flex-col gap-2'>
+            <h1 className='mb-3 text-xl font-semibold text-gray-800'>
+              <i className='bi bi-megaphone mr-2 text-blue-600'></i>
+              Instructor Announcements
+            </h1>
+            <div className='flex flex-col gap-3'>
               {announcements.map(announcement => (
-                <div key={announcement.id} className="p-2 border border-gray-200 rounded-md bg-gray-50">
+                <div key={announcement.id} className="p-3 border border-gray-200 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-600">{announcement.createdByName}</p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm font-medium text-gray-700">{announcement.createdByName}</p>
+                    <p className="text-sm text-gray-500">
                       {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
                         month: 'long', day: 'numeric', year: 'numeric'
                       }) : ''}
                     </p>
                   </div>
                   {announcement.createdByName && (
-                    <>
-                      <p className="text-sm mt-2">{announcement.announcement}</p>
-                      
-
-                    </>
+                    <p className="text-sm mt-2 text-gray-600">{announcement.announcement}</p>
                   )}
                 </div>
               ))}

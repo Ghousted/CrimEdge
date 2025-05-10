@@ -39,10 +39,7 @@ export default function Account() {
             <span className="font-medium">Email Notifications:</span>
             <span>Enabled</span>
           </div>
-          <div className="flex justify-between mt-2">
-            <span className="font-medium">Dark Mode:</span>
-            <span>Off</span>
-          </div>
+        
           <div className="flex justify-between mt-2">
             <span className="font-medium">Language:</span>
             <span>English</span>
