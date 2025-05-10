@@ -46,6 +46,27 @@ service cloud.firestore {
         && resource.data.createdBy == request.auth.uid;
     }
 
+    // Quizzes (readable by all authenticated users, writable by instructors/admins)
+    match /quizzes/{quizId} {
+      allow read: if request.auth != null;
+      allow create: if isInstructor() || isAdmin();
+      allow update, delete: if (isInstructor() || isAdmin()) 
+        && resource.data.createdBy == request.auth.uid;
+    }
+
+    // Quiz Attempts (readable by the student who made them and instructors, writable by students)
+    match /quizAttempts/{attemptId} {
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        isInstructor() || 
+        isAdmin()
+      );
+      allow create: if request.auth != null && (
+        request.resource.data.userId == request.auth.uid
+      );
+      allow update, delete: if false; // No updates or deletions allowed
+    }
+
     // ===== Helper functions =====
     function isSelf(userId) {
       return request.auth != null && request.auth.uid == userId;

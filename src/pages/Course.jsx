@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useHandleCourses } from '../hooks/useHandleCourses';
 import { useHandleAnnouncements } from '../hooks/useHandleAnnouncements'; // Import your hook
 import { useHandleLessons } from '../hooks/useHandleLessons';
+import { useHandleQuizzes } from '../hooks/useHandleQuizzes';
 import { useAuth } from '../auth/components/authContext'; // Add this import
+import QuizDisplay from '../components/QuizDisplay';
 
 
 const Course = () => {
@@ -19,6 +21,14 @@ const Course = () => {
 
   const [loading, setLoading] = React.useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
+
+  const {
+    quizzes,
+    loading: quizzesLoading,
+    submitQuizAttempt,
+    getQuizAttempts
+  } = useHandleQuizzes(id);
 
   //hindi pa ayos, lumalabas yung access course confirmation section kahit enrolled na
   useEffect(() => {
@@ -269,10 +279,41 @@ const Course = () => {
 
         {activeSection === 'quizzes' && (
           <div className='w-full max-w-7xl mx-auto p-2 flex flex-col gap-4'>
-            <div className="bg-white shadow-md p-4 rounded-lg">
-            <h2 className="font-bold text-lg">Quizzes</h2>
-            <p>Quizzes section content here.</p>
-          </div>
+            <div className="bg-white shadow-md p-6 rounded-lg">
+              <h2 className="font-bold text-xl mb-4">Course Quizzes</h2>
+              {quizzesLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+              ) : quizzes.length === 0 ? (
+                <div className="text-center py-8">
+                  <i className="bi bi-pencil-square text-4xl text-gray-400 mb-4"></i>
+                  <p className="text-gray-500">No quizzes available yet.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {quizzes.map((quiz) => (
+                    <div key={quiz.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-800 mb-1">{quiz.title}</h3>
+                          <p className="text-gray-600">Topic: {quiz.topic}</p>
+                          <p className="text-gray-500 text-sm mt-2">
+                            {quiz.questions.length} questions • Created by {quiz.createdByName}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setSelectedQuiz(quiz)}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Take Quiz
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -319,6 +360,28 @@ const Course = () => {
 
       </section>
 
+      {/* Quiz Display Modal */}
+      {selectedQuiz && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800">Quiz</h2>
+              <button
+                onClick={() => setSelectedQuiz(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <i className="bi bi-x-lg text-xl"></i>
+              </button>
+            </div>
+            <QuizDisplay
+              quiz={selectedQuiz}
+              onSubmitQuiz={submitQuizAttempt}
+              onViewResults={getQuizAttempts}
+              isInstructor={false}
+            />
+          </div>
+        </div>
+      )}
 
     </>
   );

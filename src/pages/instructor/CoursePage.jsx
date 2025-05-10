@@ -3,7 +3,10 @@ import { useHandleCourses } from '../../hooks/useHandleCourses';
 import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
 import { useHandleStorage } from '../../hooks/useHandleStorage';
 import { useHandleLessons } from '../../hooks/useHandleLessons';
+import { useHandleQuizzes } from '../../hooks/useHandleQuizzes';
 import { useParams } from 'react-router-dom';
+import QuizCreator from '../../components/QuizCreator';
+import QuizDisplay from '../../components/QuizDisplay';
 
 export default function CoursePage() {
   const { id } = useParams();
@@ -15,6 +18,7 @@ export default function CoursePage() {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [activeSection, setActiveSection] = useState('announcements');
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
   
   // New state for lesson upload
   const [lessonTitle, setLessonTitle] = useState('');
@@ -29,6 +33,7 @@ export default function CoursePage() {
   const { courses, loading } = useHandleCourses();
   const { fileUpload } = useHandleStorage();
   const { uploadLessonFile, deleteLesson, lessons, loading: lessonsLoading, error: lessonsError } = useHandleLessons(id);
+  const { createQuiz, deleteQuiz, submitQuizAttempt, getQuizAttempts, quizzes, createdQuizzes, loading: quizzesLoading } = useHandleQuizzes(id);
 
   const course = courses.find(c => c.id === id) || null;
 
@@ -410,8 +415,53 @@ export default function CoursePage() {
       )}
 
       {activeSection === 'quizzes' && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Quizzes</h2>
+        <div className="flex flex-col gap-6">
+          <QuizCreator onCreateQuiz={createQuiz} />
+
+          {/* Display Quizzes */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Course Quizzes</h2>
+            {quizzesLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : quizzes.length === 0 ? (
+              <div className="text-center py-8">
+                <i className="bi bi-pencil-square text-4xl text-gray-400 mb-4"></i>
+                <p className="text-gray-500">No quizzes available yet.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {quizzes.map((quiz) => (
+                  <div key={quiz.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-800 mb-1">{quiz.title}</h3>
+                        <p className="text-gray-600">Topic: {quiz.topic}</p>
+                        <p className="text-gray-500 text-sm mt-2">
+                          {quiz.questions.length} questions • Created by {quiz.createdByName}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setSelectedQuiz(quiz)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <i className="bi bi-eye"></i>
+                        </button>
+                        <button
+                          onClick={() => deleteQuiz(quiz.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -492,6 +542,29 @@ export default function CoursePage() {
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quiz Display Modal */}
+      {selectedQuiz && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800">Quiz Preview</h2>
+              <button
+                onClick={() => setSelectedQuiz(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <i className="bi bi-x-lg text-xl"></i>
+              </button>
+            </div>
+            <QuizDisplay
+              quiz={selectedQuiz}
+              onSubmitQuiz={submitQuizAttempt}
+              onViewResults={getQuizAttempts}
+              isInstructor={true}
+            />
           </div>
         </div>
       )}

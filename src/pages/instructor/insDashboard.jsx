@@ -3,6 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
 import { useHandleCourses } from '../../hooks/useHandleCourses';
 import { useHandleStorage } from '../../hooks/useHandleStorage';
+import { useHandleQuizzes } from '../../hooks/useHandleQuizzes';
+import QuizCreator from '../../components/QuizCreator';
+import QuizDisplay from '../../components/QuizDisplay';
 
 export default function InstructorDashboard() {
   const [activeTab, setActiveTab] = useState('courses');
@@ -18,6 +21,7 @@ export default function InstructorDashboard() {
   const [deleteType, setDeleteType] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [coursesWithImages, setCoursesWithImages] = useState([]);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
 
   const { id } = useParams();
   const courseId = id;
@@ -44,6 +48,16 @@ export default function InstructorDashboard() {
     loading: coursesLoading,
     getCourses
   } = useHandleCourses();
+
+  const {
+    createQuiz,
+    deleteQuiz,
+    submitQuizAttempt,
+    getQuizAttempts,
+    quizzes,
+    createdQuizzes,
+    loading: quizzesLoading
+  } = useHandleQuizzes(courseId);
 
   useEffect(() => {
     const fetchImagesForCourses = async () => {
@@ -147,6 +161,23 @@ export default function InstructorDashboard() {
     setDropdownOpen(dropdownOpen === index ? null : index);
   };
 
+  const handleCreateQuiz = async (title, topic, questions) => {
+    try {
+      await createQuiz(title, topic, questions);
+    } catch (error) {
+      console.error('Error creating quiz:', error);
+    }
+  };
+
+  const handleDeleteQuiz = async (quizId) => {
+    try {
+      await deleteQuiz(quizId);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting quiz:', error);
+    }
+  };
+
   return (
     <section className="max-w-7xl mx-auto py-8 px-6 bg-gray-50 ">
       {/* Tabs */}
@@ -172,6 +203,17 @@ export default function InstructorDashboard() {
         >
           <i className="bi bi-megaphone mr-2"></i>
           Announcements
+        </div>
+        <div
+          className={`cursor-pointer relative py-3 px-6 rounded-lg transition-all duration-200 ${
+            activeTab === 'quizzes' 
+              ? 'bg-blue-600 text-white shadow-md' 
+              : 'text-blue-600 hover:bg-blue-50'
+          }`}
+          onClick={() => setActiveTab('quizzes')}
+        >
+          <i className="bi bi-pencil-square mr-2"></i>
+          Quizzes
         </div>
       </div>
 
@@ -403,6 +445,83 @@ export default function InstructorDashboard() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Quizzes Section */}
+      {activeTab === 'quizzes' && (
+        <div className="flex flex-col w-full gap-6">
+          <QuizCreator onCreateQuiz={handleCreateQuiz} />
+
+          {/* Display Quizzes */}
+          <div className="mt-4">
+            <h2 className="text-2xl mb-3 text-gray-800">Your Quizzes</h2>
+            {quizzesLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : createdQuizzes.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-xl shadow-lg">
+                <i className="bi bi-pencil-square text-4xl text-gray-400 mb-4"></i>
+                <p className="text-gray-500 text-lg">You have not created any quizzes yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6">
+                {createdQuizzes.map((quiz) => (
+                  <div key={quiz.id} className="bg-white shadow-lg rounded-xl overflow-hidden">
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-xl font-medium text-gray-800 mb-1">{quiz.title}</h3>
+                          <p className="text-gray-600">Topic: {quiz.topic}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setSelectedQuiz(quiz)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <i className="bi bi-eye"></i>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteQuiz(quiz.id)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-gray-600">
+                        {quiz.questions.length} questions • Created on {new Date(quiz.createdAt.toDate()).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quiz Display Modal */}
+          {selectedQuiz && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-8 rounded-xl shadow-2xl w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-semibold text-gray-800">Quiz Preview</h2>
+                  <button
+                    onClick={() => setSelectedQuiz(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <i className="bi bi-x-lg text-xl"></i>
+                  </button>
+                </div>
+                <QuizDisplay
+                  quiz={selectedQuiz}
+                  onSubmitQuiz={submitQuizAttempt}
+                  onViewResults={getQuizAttempts}
+                  isInstructor={true}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
