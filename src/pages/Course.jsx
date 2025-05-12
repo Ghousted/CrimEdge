@@ -85,7 +85,7 @@ const Course = () => {
     return (
       <section className="p-8 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 p-6">
+          <div className="bg-gradient-to-r from-red-600 via-blue-600 to-purple-600 p-6">
             <div className="flex items-center justify-center mb-4">
               <i className="bi bi-lock-fill text-4xl text-white"></i>
             </div>
@@ -94,7 +94,7 @@ const Course = () => {
           </div>
           
           <div className="p-8">
-            <div className="bg-yellow-50 rounded-lg p-6 mb-6">
+            <div className="bg-red-50 rounded-lg p-6 mb-6">
               <h3 className="text-xl font-semibold text-yellow-800 mb-3">Current Plan Limitations</h3>
               <ul className="space-y-3">
                 <li className="flex items-center text-yellow-700">
@@ -206,46 +206,49 @@ const Course = () => {
 
   return (
     <>
-      <section className="bg-gray-50">
+      <section className="bg-gray-50 min-h-screen">
         {/* Enhanced Header with course info and section buttons */}
-        <div className="bg-white shadow-md">
-          <div className="max-w-7xl mx-auto px-10 py-5">
-            <div className="mb-4">
-              <h1 className="text-2xl font-medium text-gray-900">{course?.course}</h1>
-              <p className="text-gray-600 mt-1">{course?.description}</p>
-              <p className="text-gray-600 mt-1">Instructor: {course?.createdByName}</p>
+        <div className="bg-white shadow-sm border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-6 py-4">
+            <div className="mb-3">
+              <h1 className="text-xl font-semibold text-gray-900">{course?.course}</h1>
+              <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                <p className="line-clamp-1">{course?.description}</p>
+                <span className="text-gray-300">•</span>
+                <p>Instructor: {course?.createdByName}</p>
+              </div>
             </div>
             
-            <div className="flex gap-6 border-b border-gray-200">
+            <div className="flex gap-4 border-b border-gray-100">
               <button
-                className={`pb-4 px-2 font-medium text-sm transition-all duration-200 ${
+                className={`pb-3 px-2 font-medium text-sm transition-all duration-200 ${
                   activeSection === 'lessons'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
                 onClick={() => handleSectionClick('lessons')}
               >
-                <i className="bi bi-book mr-2"></i>Lessons
+                <i className="bi bi-book mr-1.5"></i>Lessons
               </button>
               <button
-                className={`pb-4 px-2 font-medium text-sm transition-all duration-200 ${
+                className={`pb-3 px-2 font-medium text-sm transition-all duration-200 ${
                   activeSection === 'announcements'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
                 onClick={() => handleSectionClick('announcements')}
               >
-                <i className="bi bi-megaphone mr-2"></i>Announcements
+                <i className="bi bi-megaphone mr-1.5"></i>Announcements
               </button>
               <button
-                className={`pb-4 px-2 font-medium text-sm transition-all duration-200 ${
+                className={`pb-3 px-2 font-medium text-sm transition-all duration-200 ${
                   activeSection === 'quizzes'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
                 onClick={() => handleSectionClick('quizzes')}
               >
-                <i className="bi bi-pencil-square mr-2"></i>Quizzes
+                <i className="bi bi-pencil-square mr-1.5"></i>Quizzes
               </button>
             </div>
           </div>
@@ -253,124 +256,117 @@ const Course = () => {
 
         {/* Enhanced Content Sections */}
         {activeSection === 'lessons' && (
-          <div className='max-w-7xl mx-auto px-4'>
-            <div className="">
-              <div className="p-4">
-                <h2 className="text-xl font-medium text-gray-900 mb-2">Course Lessons</h2>
-                {lessonsLoading ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : lessons.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="bi bi-book text-5xl text-gray-300 mb-4"></i>
-                    <p className="text-gray-500 text-lg">No lessons available yet.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-6">
-                    {lessons.map((lesson) => (
-                      <div key={lesson.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-medium text-gray-900 mb-1">{lesson.title}</h3>
-                            <p className="text-gray-600 mb-4">{lesson.description}</p>
-                            <div className="flex items-center gap-2 bg-gray-100 p-4 rounded-lg hover:bg-gray-200 transition-all duration-200">
-                              <i className={`bi ${lesson.fileType.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-blue-600 text-lg`}></i>
-                              <a
-                                href={lesson.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 font-medium"
-                              >
-                                {lesson.fileName}
-                              </a>
-                            </div>
+          <div className='max-w-6xl mx-auto px-4 py-4'>
+            <div className="p-2">
+              <h2 className="text-lg font-medium text-gray-900 mb-3">Course Lessons</h2>
+              {lessonsLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : lessons.length === 0 ? (
+                <div className="text-center py-8 bg-white rounded-lg border border-gray-100">
+                  <i className="bi bi-book text-4xl text-gray-300 mb-2"></i>
+                  <p className="text-gray-500">No lessons available yet.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {lessons.map((lesson) => (
+                    <div key={lesson.id} className="bg-white border border-gray-100 rounded-lg p-4 hover:shadow-sm transition-all duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-base font-medium text-gray-900 mb-1">{lesson.title}</h3>
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{lesson.description}</p>
+                          <div className="flex items-center gap-2 bg-gray-50 p-2.5 rounded-md hover:bg-gray-100 transition-all duration-200">
+                            <i className={`bi ${lesson.fileType.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-blue-600`}></i>
+                            <a
+                              href={lesson.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:text-blue-800 font-medium truncate"
+                            >
+                              {lesson.fileName}
+                            </a>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {activeSection === 'quizzes' && (
-          <div className='max-w-7xl mx-auto px-4 '>
-            <div className="">
-              <div className="p-4">
-                <h2 className="text-xl font-medium text-gray-900 mb-2">Course Quizzes</h2>
-                {quizzesLoading ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : quizzes.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="bi bi-pencil-square text-5xl text-gray-300 mb-4"></i>
-                    <p className="text-gray-500 text-lg">No quizzes available yet.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-6">
-                    {quizzes.map((quiz) => (
-                      <div key={quiz.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="text-xl font-medium text-gray-900 mb-2">{quiz.title}</h3>
-                            <p className="text-gray-600 mb-1">Topic: {quiz.topic}</p>
-                            <p className="text-gray-500 text-sm">
-                              {quiz.questions.length} questions
-                            </p>
+          <div className='max-w-6xl mx-auto px-4 py-4'>
+            <div className="p-2">
+              <h2 className="text-lg font-medium text-gray-900 mb-3">Course Quizzes</h2>
+              {quizzesLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : quizzes.length === 0 ? (
+                <div className="text-center py-8 bg-white rounded-lg border border-gray-100">
+                  <i className="bi bi-pencil-square text-4xl text-gray-300 mb-2"></i>
+                  <p className="text-gray-500">No quizzes available yet.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {quizzes.map((quiz) => (
+                    <div key={quiz.id} className="bg-white border border-gray-100 rounded-lg p-4 hover:shadow-sm transition-all duration-200">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-base font-medium text-gray-900 mb-1">{quiz.title}</h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span className="bg-gray-50 px-2 py-0.5 rounded text-gray-600">Topic: {quiz.topic}</span>
+                            <span className="text-gray-400">•</span>
+                            <span>{quiz.questions.length} questions</span>
                           </div>
-                          <button
-                            onClick={() => setSelectedQuiz(quiz)}
-                            className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
-                          >
-                            <i className="bi bi-pencil-square"></i>
-                            Take Quiz
-                          </button>
                         </div>
+                        <button
+                          onClick={() => setSelectedQuiz(quiz)}
+                          className="bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-1.5"
+                        >
+                          <i className="bi bi-pencil-square"></i>
+                          Take Quiz
+                        </button>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {activeSection === 'announcements' && (
-          <div className="max-w-7xl mx-auto px-4 ">
-            <div className="">
-              <div className="p-4">
-                <h2 className="text-xl font-medium text-gray-900 mb-2">
-                  Course Announcements
-                </h2>
-                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {announcements.length === 0 ? (
-                    <div className="col-span-full text-center py-12">
-                      <i className="bi bi-megaphone text-5xl text-gray-300 mb-4"></i>
-                      <p className="text-gray-500 text-lg">No announcements for this course yet.</p>
-                    </div>
-                  ) : (
-                    announcements.map(announcement => (
-                      <div key={announcement.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm text-gray-500">
-                            {announcement.createdAt
-                              ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
-                                  month: 'long',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                })
-                              : ''}
-                          </p>
-                        </div>
-                        <p className="text-gray-700 mb-3">{announcement.announcement}</p>
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <div className="p-2">
+              <h2 className="text-lg font-medium text-gray-900 mb-3">Course Announcements</h2>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {announcements.length === 0 ? (
+                  <div className="col-span-full text-center py-8 bg-white rounded-lg border border-gray-100">
+                    <i className="bi bi-megaphone text-4xl text-gray-300 mb-2"></i>
+                    <p className="text-gray-500">No announcements for this course yet.</p>
+                  </div>
+                ) : (
+                  announcements.map(announcement => (
+                    <div key={announcement.id} className="bg-white border border-gray-100 rounded-lg p-4 hover:shadow-sm transition-all duration-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                          {announcement.createdAt
+                            ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
+                            : ''}
+                        </p>
                       </div>
-                    ))
-                  )}
-                </div>
+                      <p className="text-sm text-gray-700 line-clamp-3">{announcement.announcement}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

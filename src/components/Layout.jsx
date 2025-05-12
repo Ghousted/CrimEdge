@@ -1,31 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import Sidebar from './Sidebar';
 import Header from './Header';
+import Loading from './Loading';
+
+// Create a loading context
+export const LoadingContext = createContext({
+  isLoading: false,
+  setIsLoading: () => {},
+});
+
+// Custom hook to use loading state
+export const useLoading = () => useContext(LoadingContext);
 
 export default function Layout() {
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1200);
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsSidebarOpen(window.innerWidth > 1200);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
-    <>
-      <Header toggleSidebar={toggleSidebar} />
-      <Sidebar isOpen={isSidebarOpen} />
-      <main>
-        <div className={`content ${isSidebarOpen ? '' : 'collapsed'}`}>
-          <Outlet />
-        </div>
+    <LoadingContext.Provider value={{ isLoading, setIsLoading }}>
+      {isLoading && <Loading />}
+      <Header />
+      <main className="mt-[70px] min-h-[calc(100vh-70px)] w-full box-border p-5 bg-[#f7f9fa]">
+        <Outlet />
       </main>
-    </>
+    </LoadingContext.Provider>
   );
 }
