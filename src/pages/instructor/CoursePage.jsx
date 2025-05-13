@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useHandleCourses } from '../../hooks/useHandleCourses';
 import { useHandleStorage } from '../../hooks/useHandleStorage';
 import { useHandleLessons } from '../../hooks/useHandleLessons';
+import QuizCreator from '../../components/QuizCreator';
+import QuizDisplay from '../../components/QuizDisplay';
 
 export default function CoursePage() {
   try {
@@ -40,6 +42,11 @@ export default function CoursePage() {
     const [announcements, setAnnouncements] = useState([]);
     const [announcementText, setAnnouncementText] = useState('');
     const [announcementFiles, setAnnouncementFiles] = useState([]);
+
+    // Quiz-related state
+    const [quizzes, setQuizzes] = useState([]);
+    const [currentQuiz, setCurrentQuiz] = useState(null);
+    const [quizResults, setQuizResults] = useState({});
 
     const { id } = useParams();
     const courseId = id;
@@ -261,49 +268,92 @@ export default function CoursePage() {
       }
     };
 
+    const handleCreateQuiz = async (title, topic, questions) => {
+        // Convert correct answers to letters (A, B, C, D)
+        const processedQuestions = questions.map(q => {
+            const correctIndex = q.options.indexOf(q.correctAnswer);
+            return {
+                ...q,
+                correctAnswer: String.fromCharCode(65 + correctIndex) // Convert to A, B, C, or D
+            };
+        });
 
-    return (
-      <section className="p-8 sm:px-4 lg:px-6">
-        {console.log('Current courseDetails:', courseDetails)}
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Main Content */}
-            <div className="flex flex-col w-full gap-4 lg:col-span-2">
-              {/* Course Header */}
-              <div className="flex flex-col gap-4">
-                <div>
-                  <h1 className='text-3xl font-bold text-gray-900'>{courseDetails?.course || 'Course Name'}</h1>
-                  <p className='text-gray-600 text-lg'>{courseDetails?.description || 'Course Description'}</p>
-                </div>
-                <div className="bg-black rounded-lg shadow-lg aspect-video flex flex-col items-center justify-center relative mb-4 p-4 text-white">
-                  {selectedLecture ? (
-                    <>
-                      <h2 className="text-2xl font-bold mb-2">{selectedLecture.title}</h2>
-                      <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>
-                        {selectedLecture.content || 'No description available.'}
-                      </p>
-                    </>
-                  ) : (
-                    <span className="text-2xl">Select a lecture to view content</span>
-                  )}
-                </div>
-              </div>
+        const newQuiz = {
+            id: Date.now(),
+            title,
+            topic,
+            questions: processedQuestions,
+            createdAt: new Date().toISOString()
+        };
+        
+        // Log quiz details
+        console.log('New Quiz Created:', {
+            title: newQuiz.title,
+            topic: newQuiz.topic,
+            totalQuestions: newQuiz.questions.length,
+            questions: newQuiz.questions.map((q, index) => ({
+                questionNumber: index + 1,
+                question: q.question,
+                options: q.options,
+                correctAnswer: q.correctAnswer // Now shows A, B, C, or D
+            }))
+        });
 
-              {/* Tabs and Content */}
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                <div className="border-b border-gray-200 mb-4 flex gap-2">
-                  {tabs.map(tab => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors duration-150 ${activeTab === tab ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-600 hover:text-blue-700'}`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-                <div className="min-h-[200px]">
-                  {activeTab === 'Overview' && (
+        setQuizzes([newQuiz, ...quizzes]);
+        setCurrentQuiz(newQuiz);
+    };
+
+    const handleSubmitQuiz = async (quizId, answers) => {
+        const quiz = quizzes.find(q => q.id === quizId);
+        if (!quiz) return null;
+
+        let score = 0;
+        answers.forEach((answer, index) => {
+            // Compare the submitted answer (A, B, C, D) with the correct answer (A, B, C, D)
+            if (answer === quiz.questions[index].correctAnswer) {
+                score++;
+            }
+        });
+
+        const result = {
+            score,
+            percentage: (score / quiz.questions.length) * 100
+        };
+
+        // Log the quiz results
+        console.log('Quiz Results:', {
+            quizId,
+            score,
+            totalQuestions: quiz.questions.length,
+            percentage: result.percentage,
+            answers: answers.map((answer, index) => ({
+                questionNumber: index + 1,
+                submittedAnswer: answer,
+                correctAnswer: quiz.questions[index].correctAnswer,
+                isCorrect: answer === quiz.questions[index].correctAnswer
+            }))
+        });
+
+        setQuizResults(prev => ({
+            ...prev,
+            [quizId]: result
+        }));
+
+        return result;
+    };
+
+    const handleViewQuizResults = async (quizId) => {
+        // In a real application, this would fetch results from a backend
+        return [
+            { userName: 'Student 1', score: 8, percentage: 80 },
+            { userName: 'Student 2', score: 7, percentage: 70 }
+        ];
+    };
+
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'Overview':
+                return (
                     <div>
                       <h2 className="text-xl font-semibold mb-2">Course Overview</h2>
                       <p className="text-gray-700 text-sm mb-4">
@@ -469,8 +519,9 @@ export default function CoursePage() {
                         </div>
                       </div>
                     </div>
-                  )}
-                  {activeTab === 'Q&A' && (
+                );
+            case 'Q&A':
+                return (
                     <div>
                       <div className="flex items-center gap-2 mb-4">
                         <input
@@ -490,8 +541,9 @@ export default function CoursePage() {
                         <button className="border border-blue-600 text-blue-700 px-4 py-2 rounded-lg font-medium text-sm bg-white hover:bg-blue-50 transition flex items-center gap-2">Filter questions <i className="bi bi-chevron-down"></i></button>
                       </div>
                     </div>
-                  )}
-                  {activeTab === 'Notes' && (
+                );
+            case 'Notes':
+                return (
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-medium text-gray-800">Course Notes</h2>
@@ -592,8 +644,9 @@ export default function CoursePage() {
                         )}
                       </div>
                     </div>
-                  )}
-                  {activeTab === 'Announcements' && (
+                );
+            case 'Announcements':
+                return (
                     <div>
                       <h2 className="text-lg font-medium mb-3 text-gray-800">Add Announcement</h2>
                       <form onSubmit={handleAddAnnouncement} className="mb-6">
@@ -653,20 +706,158 @@ export default function CoursePage() {
                         )}
                       </div>
                     </div>
-                  )}
-                  {activeTab === 'Reviews' && (
+                );
+            case 'Reviews':
+                return (
                     <div>
                       <h2 className="text-xl font-semibold mb-2">Reviews</h2>
                       <p className="text-gray-700 text-sm">Reviews section coming soon.</p>
                     </div>
-                  )}
-                  {activeTab === 'Learning tools' && (
-                    <div>
-                      <h2 className="text-xl font-semibold mb-2">Learning Tools</h2>
-                      <p className="text-gray-700 text-sm">Learning tools section coming soon.</p>
-                    </div>
-                  )}
+                );
+            case 'Learning tools':
+                return (
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-lg shadow p-6">
+                            <h2 className="text-2xl font-semibold mb-4">AI Quiz Generator</h2>
+                            <QuizCreator onCreateQuiz={handleCreateQuiz} />
+                        </div>
+                        
+                        {quizzes.length > 0 && (
+                            <div className="bg-white rounded-lg shadow p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-semibold">Created Quizzes</h3>
+                                    {currentQuiz && (
+                                        <button
+                                            onClick={() => setCurrentQuiz(null)}
+                                            className="text-blue-600 hover:text-blue-700 flex items-center gap-2 text-sm"
+                                        >
+                                            <i className="bi bi-arrow-left"></i>
+                                            Back to Quiz List
+                                        </button>
+                                    )}
+                                </div>
 
+                                {currentQuiz ? (
+                                    <div className="space-y-4">
+                                        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                                            <h4 className="font-medium text-blue-800">{currentQuiz.title}</h4>
+                                            <p className="text-sm text-blue-600">Topic: {currentQuiz.topic}</p>
+                                            <p className="text-xs text-blue-500 mt-1">
+                                                Created: {new Date(currentQuiz.createdAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <QuizDisplay 
+                                            quiz={currentQuiz}
+                                            onSubmitQuiz={handleSubmitQuiz}
+                                            onViewResults={handleViewQuizResults}
+                                            isInstructor={true}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {quizzes.map(quiz => (
+                                            <div 
+                                                key={quiz.id}
+                                                className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200"
+                                                onClick={() => setCurrentQuiz(quiz)}
+                                            >
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-800">{quiz.title}</h4>
+                                                        <p className="text-sm text-gray-600">Topic: {quiz.topic}</p>
+                                                    </div>
+                                                    <span className="text-xs text-gray-500">
+                                                        {new Date(quiz.createdAt).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                                
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between text-sm">
+                                                        <span className="text-gray-600">Questions:</span>
+                                                        <span className="font-medium">{quiz.questions.length}</span>
+                                                    </div>
+                                                    {quizResults[quiz.id] && (
+                                                        <div className="flex items-center justify-between text-sm">
+                                                            <span className="text-gray-600">Last Score:</span>
+                                                            <span className="font-medium text-blue-600">
+                                                                {quizResults[quiz.id].score}/{quiz.questions.length} 
+                                                                ({quizResults[quiz.id].percentage.toFixed(1)}%)
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="mt-4 pt-3 border-t border-gray-100">
+                                                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                        <i className="bi bi-eye"></i>
+                                                        <span>Click to preview and take quiz</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {quizzes.length === 0 && !currentQuiz && (
+                            <div className="bg-white rounded-lg shadow p-6 text-center">
+                                <div className="text-gray-400 mb-3">
+                                    <i className="bi bi-journal-text text-4xl"></i>
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-800 mb-2">No Quizzes Created Yet</h3>
+                                <p className="text-gray-600 text-sm">
+                                    Use the AI Quiz Generator above to create your first quiz!
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+      <section className="p-8 sm:px-4 lg:px-6">
+        {console.log('Current courseDetails:', courseDetails)}
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Main Content */}
+            <div className="flex flex-col w-full gap-4 lg:col-span-2">
+              {/* Course Header */}
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h1 className='text-3xl font-bold text-gray-900'>{courseDetails?.course || 'Course Name'}</h1>
+                  <p className='text-gray-600 text-lg'>{courseDetails?.description || 'Course Description'}</p>
+                </div>
+                <div className="bg-black rounded-lg shadow-lg aspect-video flex flex-col items-center justify-center relative mb-4 p-4 text-white">
+                  {selectedLecture ? (
+                    <>
+                      <h2 className="text-2xl font-bold mb-2">{selectedLecture.title}</h2>
+                      <p className="text-sm">{selectedLecture.content || 'No description available.'}</p>
+                    </>
+                  ) : (
+                    <span className="text-2xl">Select a lecture to view content</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Tabs and Content */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div className="border-b border-gray-200 mb-4 flex gap-2">
+                  {tabs.map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors duration-150 ${activeTab === tab ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-600 hover:text-blue-700'}`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+                <div className="min-h-[200px]">
+                  {renderTabContent()}
                 </div>
               </div>
             </div>
