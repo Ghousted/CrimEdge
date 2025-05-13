@@ -307,7 +307,9 @@ const Course = () => {
                   {selectedLecture ? (
                     <>
                       <h2 className="text-xl font-bold text-gray-800 mb-2">{selectedLecture.title}</h2>
-                      <p className="text-gray-700 text-sm">{selectedLecture.content || 'No description available.'}</p>
+                      <p className="text-gray-700 text-sm" style={{ whiteSpace: 'pre-wrap' }}>
+                        {selectedLecture.content || 'No description available.'}
+                      </p>
                     </>
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-500 text-lg">

@@ -279,7 +279,9 @@ export default function CoursePage() {
                   {selectedLecture ? (
                     <>
                       <h2 className="text-2xl font-bold mb-2">{selectedLecture.title}</h2>
-                      <p className="text-sm">{selectedLecture.content || 'No description available.'}</p>
+                      <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>
+                        {selectedLecture.content || 'No description available.'}
+                      </p>
                     </>
                   ) : (
                     <span className="text-2xl">Select a lecture to view content</span>

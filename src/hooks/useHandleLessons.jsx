@@ -8,7 +8,7 @@ import {
   getDocs,
   orderBy,
   doc,
-  deleteDoc, 
+  deleteDoc,
   updateDoc,
   arrayUnion
 } from 'firebase/firestore';
@@ -210,7 +210,8 @@ export const useHandleLessons = (courseId) => {
           const chunk = lectureIds.slice(i, i + chunkSize);
           const lectureQuery = query(
             lecturesRef,
-            where("__name__", "in", chunk)
+            where("__name__", "in", chunk),
+            orderBy("createdAt", "asc")
           );
 
           const lectureSnapshot = await getDocs(lectureQuery);
