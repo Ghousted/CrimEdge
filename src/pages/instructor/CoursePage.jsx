@@ -5,6 +5,8 @@ import { useHandleStorage } from '../../hooks/useHandleStorage';
 import { useHandleLessons } from '../../hooks/useHandleLessons';
 import QuizCreator from '../../components/QuizCreator';
 import QuizDisplay from '../../components/QuizDisplay';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../../firebase';
 
 export default function CoursePage() {
   try {
@@ -47,6 +49,16 @@ export default function CoursePage() {
     const [quizzes, setQuizzes] = useState([]);
     const [currentQuiz, setCurrentQuiz] = useState(null);
     const [quizResults, setQuizResults] = useState({});
+
+    // Add state for selected file
+    const [selectedFile, setSelectedFile] = useState(null);
+
+    // Add new state for learning materials upload
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [uploadTitle, setUploadTitle] = useState('');
+    const [uploadDescription, setUploadDescription] = useState('');
+    const [uploadFile, setUploadFile] = useState(null);
+    const [uploadError, setUploadError] = useState('');
 
     const { id } = useParams();
     const courseId = id;
@@ -190,22 +202,69 @@ export default function CoursePage() {
     };
 
     const handleUploadLesson = async () => {
-      // Here you would typically handle the lesson upload
-      if (!lessonFile) {
-        await addNewLecture(lessonId, lessonTitle, lessonDescription);
+        if (!lessonId || !lessonTitle || !lessonDescription) {
+            setLessonsError('Please fill in all required fields');
+            return;
+        }
 
-        console.log('Uploading lesson:', {
+        try {
+            console.log('Starting lecture upload:', {
           title: lessonTitle,
           description: lessonDescription,
-          file: lessonFile
-        });
-      }
+                hasFile: !!lessonFile
+            });
 
+            let fileData = null;
+            if (lessonFile) {
+                // Create a unique file name
+                const fileName = `${Date.now()}_${lessonFile.name}`;
+                const storagePath = `lectures/${courseId}/${fileName}`;
+                const storageRef = ref(storage, storagePath);
+
+                console.log('Uploading file to Firebase Storage:', {
+                    path: storagePath,
+                    fileName: lessonFile.name,
+                    fileType: lessonFile.type,
+                    fileSize: lessonFile.size
+                });
+
+                // Upload file to Firebase Storage
+                const snapshot = await uploadBytes(storageRef, lessonFile);
+                const fileUrl = await getDownloadURL(snapshot.ref);
+
+                fileData = {
+                    fileName: lessonFile.name,
+                    fileType: lessonFile.type,
+                    fileSize: lessonFile.size,
+                    fileUrl: fileUrl
+                };
+
+                console.log('File uploaded successfully:', fileData);
+            }
+
+            // Create lecture with file data
+            const success = await addNewLecture(
+                lessonId,
+                lessonTitle,
+                lessonDescription,
+                fileData
+            );
+
+            if (success) {
+                console.log('Lecture created successfully');
       // Reset form
       setLessonTitle('');
       setLessonDescription('');
       setLessonFile(null);
       setShowAddLessonModal(false);
+                setLessonsError('');
+            } else {
+                setLessonsError('Failed to create lecture');
+            }
+        } catch (error) {
+            console.error('Error uploading lecture:', error);
+            setLessonsError(error.message || 'Failed to upload lecture');
+        }
     };
 
     // Add note handling functions
@@ -348,6 +407,108 @@ export default function CoursePage() {
             { userName: 'Student 1', score: 8, percentage: 80 },
             { userName: 'Student 2', score: 7, percentage: 70 }
         ];
+    };
+
+    // Function to handle file selection
+    const handleFileSelect = (file) => {
+        setSelectedFile(file);
+    };
+
+    // Function to render file preview
+    const renderFilePreview = (file) => {
+        if (!file) return null;
+
+        if (file.fileType === 'application/pdf') {
+            return (
+                <iframe
+                    src={file.fileUrl}
+                    className="w-full h-[600px] rounded-lg shadow-lg"
+                    title={file.fileName}
+                />
+            );
+        } else if (file.fileType.startsWith('video/')) {
+            return (
+                <video
+                    controls
+                    className="w-full rounded-lg shadow-lg"
+                    src={file.fileUrl}
+                >
+                    Your browser does not support the video tag.
+                </video>
+            );
+        }
+        return null;
+    };
+
+    // Function to handle file selection for learning materials
+    const handleLearningMaterialFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.type.includes('pdf') || file.type.includes('video')) {
+                setUploadFile(file);
+                setUploadError('');
+            } else {
+                setUploadError('Please upload only PDF or video files');
+                setUploadFile(null);
+            }
+        }
+    };
+
+    // Function to handle learning material upload
+    const handleUploadLearningMaterial = async () => {
+        if (!uploadTitle || !uploadDescription || !uploadFile) {
+            setUploadError('Please fill in all fields and select a file');
+            return;
+        }
+
+        try {
+            // Create a unique file name
+            const fileName = `${Date.now()}_${uploadFile.name}`;
+            // Update storage path to match existing rules structure
+            const storagePath = `lessons/${courseId}/${fileName}`;
+            const storageRef = ref(storage, storagePath);
+
+            console.log('Uploading learning material:', {
+                path: storagePath,
+                fileName: uploadFile.name,
+                fileType: uploadFile.type,
+                fileSize: uploadFile.size
+            });
+
+            // Upload file to Firebase Storage
+            const snapshot = await uploadBytes(storageRef, uploadFile);
+            const fileUrl = await getDownloadURL(snapshot.ref);
+
+            const fileData = {
+                fileName: uploadFile.name,
+                fileType: uploadFile.type,
+                fileSize: uploadFile.size,
+                fileUrl: fileUrl
+            };
+
+            // Create a new lecture with the uploaded file
+            const success = await addNewLecture(
+                lessons[0]?.id || '', // Use the first section's ID or create a new section
+                uploadTitle,
+                uploadDescription,
+                fileData
+            );
+
+            if (success) {
+                console.log('Learning material uploaded successfully');
+                // Reset form
+                setUploadTitle('');
+                setUploadDescription('');
+                setUploadFile(null);
+                setShowUploadModal(false);
+                setUploadError('');
+            } else {
+                setUploadError('Failed to upload learning material');
+            }
+        } catch (error) {
+            console.error('Error uploading learning material:', error);
+            setUploadError(error.message || 'Failed to upload learning material');
+        }
     };
 
     const renderTabContent = () => {
@@ -717,6 +878,136 @@ export default function CoursePage() {
             case 'Learning tools':
                 return (
                     <div className="space-y-6">
+                        {/* Learning Materials Library */}
+                        <div className="bg-white rounded-lg shadow p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-2xl font-semibold">Learning Materials Library</h2>
+                                <button
+                                    onClick={() => setShowUploadModal(true)}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center gap-2"
+                                >
+                                    <i className="bi bi-upload"></i>
+                                    Upload Material
+                                </button>
+                            </div>
+                            
+                            {/* Filter Controls */}
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                                            activeTab === 'all' 
+                                                ? 'bg-blue-100 text-blue-700' 
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                        onClick={() => setActiveTab('all')}
+                                    >
+                                        All Materials
+                                    </button>
+                                    <button 
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                                            activeTab === 'pdf' 
+                                                ? 'bg-blue-100 text-blue-700' 
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                        onClick={() => setActiveTab('pdf')}
+                                    >
+                                        PDFs
+                                    </button>
+                                    <button 
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                                            activeTab === 'video' 
+                                                ? 'bg-blue-100 text-blue-700' 
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                        onClick={() => setActiveTab('video')}
+                                    >
+                                        Videos
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Materials Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {lessons.flatMap(lesson => 
+                                    lesson.lectures
+                                        .filter(lecture => lecture.lectureFiles && lecture.lectureFiles.length > 0)
+                                        .flatMap(lecture => 
+                                            lecture.lectureFiles
+                                                .filter(file => 
+                                                    activeTab === 'all' || 
+                                                    (activeTab === 'pdf' && file.fileType === 'application/pdf') ||
+                                                    (activeTab === 'video' && file.fileType.startsWith('video/'))
+                                                )
+                                                .map((file, index) => (
+                                                    <div 
+                                                        key={`${lecture.id}-${index}`}
+                                                        className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
+                                                    >
+                                                        <div className="flex items-start gap-3">
+                                                            <div className={`p-2 rounded-lg ${
+                                                                file.fileType === 'application/pdf' 
+                                                                    ? 'bg-red-100 text-red-600' 
+                                                                    : 'bg-blue-100 text-blue-600'
+                                                            }`}>
+                                                                <i className={`bi ${
+                                                                    file.fileType === 'application/pdf' 
+                                                                        ? 'bi-file-pdf' 
+                                                                        : 'bi-file-play'
+                                                                } text-xl`}></i>
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <h3 className="font-medium text-gray-900 mb-1 truncate">
+                                                                    {file.fileName}
+                                                                </h3>
+                                                                <p className="text-sm text-gray-500 mb-2">
+                                                                    {lecture.title}
+                                                                </p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={() => handleFileSelect(file)}
+                                                                        className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                                                                    >
+                                                                        <i className="bi bi-eye"></i>
+                                                                        View
+                                                                    </button>
+                                                                    <a
+                                                                        href={file.fileUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                                                                    >
+                                                                        <i className="bi bi-download"></i>
+                                                                        Download
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                        )
+                                )}
+                            </div>
+
+                            {/* Empty State */}
+                            {!lessons.some(lesson => 
+                                lesson.lectures.some(lecture => 
+                                    lecture.lectureFiles && 
+                                    lecture.lectureFiles.some(file => 
+                                        activeTab === 'all' || 
+                                        (activeTab === 'pdf' && file.fileType === 'application/pdf') ||
+                                        (activeTab === 'video' && file.fileType.startsWith('video/'))
+                                    )
+                                )
+                            ) && (
+                                <div className="text-center py-12">
+                                    <i className="bi bi-folder text-4xl text-gray-400 mb-3"></i>
+                                    <p className="text-gray-500">No learning materials found</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* AI Quiz Generator */}
                         <div className="bg-white rounded-lg shadow p-6">
                             <h2 className="text-2xl font-semibold mb-4">AI Quiz Generator</h2>
                             <QuizCreator onCreateQuiz={handleCreateQuiz} />
@@ -762,7 +1053,7 @@ export default function CoursePage() {
                                                 onClick={() => setCurrentQuiz(quiz)}
                                             >
                                                 <div className="flex items-start justify-between mb-3">
-                                                    <div>
+                    <div>
                                                         <h4 className="font-medium text-gray-800">{quiz.title}</h4>
                                                         <p className="text-sm text-gray-600">Topic: {quiz.topic}</p>
                                                     </div>
@@ -783,8 +1074,8 @@ export default function CoursePage() {
                                                                 {quizResults[quiz.id].score}/{quiz.questions.length} 
                                                                 ({quizResults[quiz.id].percentage.toFixed(1)}%)
                                                             </span>
-                                                        </div>
-                                                    )}
+                    </div>
+                  )}
                                                 </div>
 
                                                 <div className="mt-4 pt-3 border-t border-gray-100">
@@ -811,6 +1102,96 @@ export default function CoursePage() {
                                 </p>
                             </div>
                         )}
+
+                        {/* Upload Learning Material Modal */}
+                        {showUploadModal && (
+                            <div className="modal-overlay">
+                                <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-2xl">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="text-xl font-medium text-gray-800">Upload Learning Material</h2>
+                                        <button
+                                            onClick={() => {
+                                                setShowUploadModal(false);
+                                                setUploadTitle('');
+                                                setUploadDescription('');
+                                                setUploadFile(null);
+                                                setUploadError('');
+                                            }}
+                                            className="text-gray-500 hover:text-gray-700"
+                                        >
+                                            <i className="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+
+                                    {uploadError && (
+                                        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                            <p className="text-red-600 flex items-center gap-2">
+                                                <i className="bi bi-exclamation-circle"></i>
+                                                {uploadError}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-col gap-4">
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                placeholder="Material Title"
+                                                value={uploadTitle}
+                                                onChange={(e) => setUploadTitle(e.target.value)}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pl-5"
+                                            />
+                                        </div>
+                                        <div className="relative">
+                                            <textarea
+                                                placeholder="Material Description"
+                                                value={uploadDescription}
+                                                onChange={(e) => setUploadDescription(e.target.value)}
+                                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none pl-5"
+                                                rows={3}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <label className="cursor-pointer border-2 border-blue-600 text-blue-600 hover:text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200 flex items-center gap-2 font-medium">
+                                                <i className="bi bi-upload"></i>
+                                                <span>Select File (PDF/Video)</span>
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf,video/*"
+                                                    onChange={handleLearningMaterialFileChange}
+                                                    className="hidden"
+                                                />
+                                            </label>
+                                            <button
+                                                onClick={handleUploadLearningMaterial}
+                                                disabled={!uploadTitle || !uploadDescription || !uploadFile}
+                                                className="bg-blue-600 text-white py-2 px-8 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
+                                            >
+                                                <i className="bi bi-cloud-upload"></i>
+                                                Upload Material
+                                            </button>
+                                        </div>
+                                        {uploadFile && (
+                                            <div className="flex items-center gap-4 p-5 bg-gray-50 border-2 border-gray-200 rounded-lg">
+                                                <div className='flex justify-between w-full items-center'>
+                                                    <div className="flex items-center gap-3">
+                                                        <i className={`bi ${uploadFile.type.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-2xl text-blue-600`}></i>
+                                                        <span className="text-gray-700 font-medium">{uploadFile.name}</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setUploadFile(null)}
+                                                        className="text-red-600 hover:text-red-800 flex items-center gap-2"
+                                                    >
+                                                        <i className="bi bi-trash"></i>
+                                                        <span>Remove</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             default:
@@ -831,14 +1212,55 @@ export default function CoursePage() {
                   <h1 className='text-3xl font-bold text-gray-900'>{courseDetails?.course || 'Course Name'}</h1>
                   <p className='text-gray-600 text-lg'>{courseDetails?.description || 'Course Description'}</p>
                 </div>
-                <div className="bg-black rounded-lg shadow-lg aspect-video flex flex-col items-center justify-center relative mb-4 p-4 text-white">
+                <div className="bg-white rounded-lg shadow-lg p-6">
                   {selectedLecture ? (
-                    <>
-                      <h2 className="text-2xl font-bold mb-2">{selectedLecture.title}</h2>
-                      <p className="text-sm">{selectedLecture.content || 'No description available.'}</p>
-                    </>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold">{selectedLecture.title}</h2>
+                        <div className="flex items-center gap-2">
+                          {selectedLecture.lectureFiles && selectedLecture.lectureFiles.length > 0 && (
+                            <div className="flex items-center gap-2">
+                              {selectedLecture.lectureFiles.map((file, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => handleFileSelect(file)}
+                                  className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors duration-200 ${
+                                    selectedFile?.fileName === file.fileName
+                                      ? 'bg-blue-100 text-blue-700'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  <i className={`bi ${file.fileType === 'application/pdf' ? 'bi-file-pdf' : 'bi-file-play'}`}></i>
+                                  {file.fileName}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-gray-700">{selectedLecture.content}</p>
+                      
+                      {/* File Preview Section */}
+                      {selectedFile && (
+                        <div className="mt-6 border-t border-gray-200 pt-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-medium text-gray-800">Learning Material</h3>
+                            <button
+                              onClick={() => setSelectedFile(null)}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              <i className="bi bi-x-lg"></i>
+                            </button>
+                          </div>
+                          {renderFilePreview(selectedFile)}
+                        </div>
+                      )}
+                    </div>
                   ) : (
-                    <span className="text-2xl">Select a lecture to view content</span>
+                    <div className="text-center py-12">
+                      <i className="bi bi-journal-text text-4xl text-gray-400 mb-3"></i>
+                      <p className="text-gray-500">Select a lecture to view its content and materials</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -922,12 +1344,35 @@ export default function CoursePage() {
                             lesson.lectures.map((lec, lidx) => (
                               <li
                                 key={lidx}
-                                className={`flex items-center gap-2 text-sm p-2 rounded-lg transition-colors duration-200 cursor-pointer ${selectedLecture && selectedLecture.title === lec.title ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                                className={`flex items-center gap-2 text-sm p-2 rounded-lg transition-colors duration-200 cursor-pointer ${
+                                  selectedLecture && selectedLecture.id === lec.id
+                                    ? 'bg-blue-100 text-blue-700 font-semibold'
+                                    : 'text-gray-700 hover:bg-gray-50'
                                   }`}
                                 onClick={() => setSelectedLecture(lec)}
                               >
-                                <input type="checkbox" checked={lec.isCompleted} readOnly className="accent-blue-600" />
+                                <input
+                                  type="checkbox"
+                                  checked={lec.isCompleted}
+                                  readOnly
+                                  className="accent-blue-600"
+                                />
+                                <div className="flex-1">
                                 <span>{lec.title}</span>
+                                  {lec.lectureFiles && lec.lectureFiles.length > 0 && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {lec.lectureFiles.map((file, index) => (
+                                        <span
+                                          key={index}
+                                          className="text-xs px-2 py-0.5 bg-gray-100 rounded-full flex items-center gap-1"
+                                        >
+                                          <i className={`bi ${file.fileType === 'application/pdf' ? 'bi-file-pdf' : 'bi-file-play'}`}></i>
+                                          {file.fileName}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </li>
                             ))}
                           <li className="mt-2">
