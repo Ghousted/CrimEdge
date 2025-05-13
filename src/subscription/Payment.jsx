@@ -1,20 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/components/authContext'; // Replace with your actual auth context
+import { useAuth } from '../auth/components/authContext';
 import { useEditAdminSettings } from '../hooks/useEditAdminSettings';
+import Loading from '../components/Loading';
+import { authControl } from '../auth/components/authControl';
 
 export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
   const { membershipPlan } = useAuth();
-  const { subscriptionPlans } = useEditAdminSettings();
-
-  useEffect(() => {
-    document.body.style.background = "radial-gradient(circle, rgba(225,238,254,1) 0%, rgba(90,110,201,1) 100%)";
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-    document.body.style.overflowX = "hidden";
-  }, []);
+  const { subscriptionPlans, isLoading } = useEditAdminSettings();
+  const { logout } = authControl();
 
   const queryParams = new URLSearchParams(location.search);
   const planId = queryParams.get('plan');
@@ -28,45 +24,90 @@ export default function Payment() {
     navigate(`/${method}?plan=${encodeURIComponent(membershipPlan)}&method=${encodeURIComponent(method)}`);
   };
 
+  const handleSignOut = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Error signing out:", error.message);
+    }
+  };
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
-    <section className="p-6 flex flex-col items-center">
-      <div className="flex flex-col sm:flex-row justify-between items-center w-full rounded-lg mb-10 px-4 md:px-20">
-        <img src="src/assets/CrimEdge.png" alt="Logo" className="w-35 h-12 mb-4 md:mb-0" />
-        <button className="bg-white text-black px-5 py-1 rounded-full hover:bg-blue-700" onClick={() => navigate('/landing')}>
-          Sign Out
-        </button>
-      </div>
+    <section className="min-h-screen bg-gradient-to-r from-gray-100 to-gray-200">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-10">
+          <img
+            src="src/assets/ReviewHub.png"
+            alt="Logo"
+            className="w-40 h-14 object-contain mb-4 sm:mb-0"
+          />
+          <button
+            className="bg-[#161647] text-white px-6 py-2 rounded-full hover:bg-[#3535AD] transition-colors duration-300 shadow-md"
+            onClick={handleSignOut}
+          >
+            Sign Out
+          </button>
+        </div>
 
-      <div className="text-center mb-5">
-        <h2 className="text-2xl font-semibold mb-2">You have selected the {planName}</h2>
-        <p className="mb-2">Payment Amount: <span className="font-bold">{price}</span></p>
-        <p className="mb-5">Your payment is encrypted, and you can change how you pay anytime.</p>
-      </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-center mb-10 bg-gradient-to-r from-[#161647] to-[#3535AD] bg-clip-text text-transparent">
+          Complete Your Payment
+        </h1>
 
-      <div className="w-full max-w-lg p-6 rounded-lg">
-        <h2 className="text-3xl font-semibold mb-5 text-center">Choose how to pay</h2>
-
-        <button
-          onClick={() => navigateToPayment(planId, 'creditdebit')}
-          className="flex items-center justify-between w-full p-4 mb-2 bg-gray-100 rounded-lg hover:bg-gray-200"
-        >
-          <span className="text-lg font-medium">Credit or Debit Card</span>
-          <div className="flex items-center space-x-5">
-            <img src="src/assets/visa.png" alt="Visa" className="w-10 h-10" />
-            <img src="src/assets/mastercard.png" alt="Mastercard" className="w-10 h-10" />
+        <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-semibold mb-3 text-gray-800">You have selected the {planName}</h2>
+            <div className="inline-block bg-gray-50 px-4 py-2 rounded-full mb-3">
+              <p className="text-lg">Payment Amount: <span className="font-bold text-[#161647]">{price}</span></p>
+            </div>
+            <p className="text-gray-600 max-w-xl mx-auto text-sm">
+              Your payment is encrypted, and you can change how you pay anytime.
+            </p>
           </div>
-        </button>
 
-        <button
-          onClick={() => navigateToPayment(planId, 'digitalwallet')}
-          className="flex items-center justify-between w-full p-4 mb-2 bg-gray-100 rounded-lg hover:bg-gray-200"
-        >
-          <span className="text-lg font-medium">Digital Wallet</span>
-          <div className="flex items-center space-x-5">
-            <img src="src/assets/gcash.png" alt="GCash" className="w-10 h-10" />
-            <img src="src/assets/paypal.png" alt="PayPal" className="w-10 h-10" />
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold mb-5 text-center text-gray-800">Choose how to pay</h2>
+
+            <button
+              onClick={() => navigateToPayment(planId, 'creditdebit')}
+              className="flex items-center justify-between w-full p-4 bg-white rounded-lg hover:bg-gray-50 transition-all duration-200 border border-gray-200 hover:border-[#161647] hover:shadow-md"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-[#161647] rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <span className="text-lg font-medium text-gray-800">Credit or Debit Card</span>
+              </div>
+              <div className="flex items-center space-x-4">
+                <img src="src/assets/visa.png" alt="Visa" className="w-8 h-8 object-contain" />
+                <img src="src/assets/mastercard.png" alt="Mastercard" className="w-8 h-8 object-contain" />
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigateToPayment(planId, 'digitalwallet')}
+              className="flex items-center justify-between w-full p-4 bg-white rounded-lg hover:bg-gray-50 transition-all duration-200 border border-gray-200 hover:border-[#161647] hover:shadow-md"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-[#161647] rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <span className="text-lg font-medium text-gray-800">Digital Wallet</span>
+              </div>
+              <div className="flex items-center space-x-4">
+                <img src="src/assets/gcash.png" alt="GCash" className="w-8 h-8 object-contain" />
+                <img src="src/assets/paypal.png" alt="PayPal" className="w-8 h-8 object-contain" />
+              </div>
+            </button>
           </div>
-        </button>
+        </div>
       </div>
     </section>
   );

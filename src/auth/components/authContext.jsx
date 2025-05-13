@@ -24,13 +24,18 @@ export const AuthProvider = ({ children }) => {
   const fetchUserData = useCallback(async (user) => {
     if (user) {
       try {
+        console.log('Fetching user data for:', user.uid);
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
+          console.log('User data from Firestore:', data);
+          
           const membership = data.membership;
           const membershipStatus = data.membershipStatus;
           const emailVerified = data.emailVerified;
           const role = data.role;
+          
+          console.log('Setting user role:', role);
           setUserData(data);
           setAuthRole(role || null);
           setMembershipStatus(membershipStatus || false);
@@ -53,7 +58,7 @@ export const AuthProvider = ({ children }) => {
           } else {
             setMembershipPlan(null);
           }
-          console.log("User role:", role);
+          console.log("User role set to:", role);
 
         } else {
           console.warn('User document not found in Firestore');
@@ -80,6 +85,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('Auth state changed:', user);
       setCurrentUser(user);
       fetchUserData(user);
     });

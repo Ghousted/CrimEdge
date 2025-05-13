@@ -264,7 +264,7 @@ button.prev-next-btn:hover {
   justify-content: center;
   align-items: center;
   z-index: 5000; /* Make sure the modal is above other content */
-  backdrop-filter: blur(2px); /* Apply blur effect */
+  backdrop-filter: blur(1px); /* Apply blur effect */
 }
 
 .grd-bg2 {

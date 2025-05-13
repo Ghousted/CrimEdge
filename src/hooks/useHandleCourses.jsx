@@ -153,5 +153,6 @@ export const useHandleCourses = () => {
     enrolledCourses,
     courseLimit,
     loading,
+    getCourses,
   };
 };

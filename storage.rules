@@ -1,0 +1,47 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is instructor or admin
+    function isInstructorOrAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.role == 'instructor' || request.auth.token.role == 'admin');
+    }
+
+    // Debug function to log request details
+    function debugRequest() {
+      return {
+        auth: request.auth,
+        token: request.auth.token,
+        role: request.auth.token.role
+      };
+    }
+
+    // Allow authenticated users to read and write their own files
+    match /lessons/{courseId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();  // Temporarily allow all authenticated users to write
+    }
+    
+    // Allow authenticated users to read and write course images
+    match /course_image/{courseName}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();  // Temporarily allow all authenticated users to write
+    }
+
+    // Allow authenticated users to read and write files in announcements
+    match /files/{courseId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();  // Temporarily allow all authenticated users to write
+    }
+    
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+} 

@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@gsap/react": "^2.1.2",
     "@tailwindcss/vite": "^4.1.6",
     "@zegocloud/zego-uikit-prebuilt": "^2.14.3-beta",
     "bootstrap": "^5.3.6",
     "bootstrap-icons": "^1.13.1",
     "firebase": "^11.7.1",
+    "framer-motion": "^12.10.5",
     "gsap": "^3.13.0",
     "install": "^0.13.0",
     "lucide-react": "^0.486.0",
@@ -26,7 +28,9 @@
     "react-router-dom": "^7.6.0",
     "react-slick": "^0.30.3",
     "slick-carousel": "^1.8.1",
-    "tailwindcss": "^4.1.6"
+    "styled-components": "^6.1.18",
+    "tailwindcss": "^4.1.6",
+    "typescript": "^5.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

@@ -108,7 +108,7 @@ const AdminSettings = () => {
 
             {/* Edit Modal */}
             {showModal && selectedPlan && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="modal-overlay">
                     <div className="bg-white p-8 rounded-xl shadow-xl w-[90%] max-w-md transform transition-all">
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Plan</h2>
                         <div className="space-y-6">
@@ -154,7 +154,7 @@ const AdminSettings = () => {
 
             {/* Delete Confirmation Modal */}
             {showDeleteModal && selectedPlan && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="modal-overlay">
                     <div className="bg-white p-8 rounded-xl shadow-xl w-[90%] max-w-md transform transition-all">
                         <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
                             <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

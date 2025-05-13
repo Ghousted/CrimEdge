@@ -34,12 +34,6 @@ export default function AdminSidebar({ isOpen }) {
             <span className="ml-2">User Management</span>
           </li>
         </Link>
-        <Link to="/admin/content" style={{ textDecoration: 'none' }}>
-          <li className="flex items-center p-4 hover:bg-gray-200 cursor-pointer">
-            <i className="bi bi-file-earmark-text"></i>
-            <span className="ml-2">Content</span>
-          </li>
-        </Link>
         <Link to="/admin/settings" style={{ textDecoration: 'none' }}>
           <li className="flex items-center p-4 hover:bg-gray-200 cursor-pointer">
             <i className="bi bi-gear-fill"></i>
