@@ -59,7 +59,7 @@ export default function InstructorHeader() {
   };
 
   return (
-    <header className="w-full h-[70px] flex items-center justify-between bg-white border-b border-gray-200 px-5 fixed top-0 left-0 z-50">
+    <header className="w-full h-[60px] flex items-center justify-between bg-white border-b border-gray-200 px-5 fixed top-0 left-0 z-50">
       {/* Left: Logo */}
       <div className="flex items-center gap-[18px]">
         <Link to="/dashboard" className="no-underline">
@@ -76,7 +76,7 @@ export default function InstructorHeader() {
           <input
             type="text"
             placeholder="Find expert-led courses to boost your career"
-            className="w-full py-2.5 px-[18px] pl-11 rounded-3xl border border-[#d1d7dc] bg-[#f7f9fa] text-base outline-none transition-colors duration-200"
+            className="w-full py-2 px-[18px] pl-11 rounded-xl border border-[#d1d7dc] bg-[#f7f9fa] text-sm outline-none transition-colors duration-200"
           />
         </div>
       </div>

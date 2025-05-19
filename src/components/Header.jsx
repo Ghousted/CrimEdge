@@ -59,7 +59,7 @@ export default function Header() {
   };
 
   return (
-    <header className="w-full h-[70px] flex items-center justify-between bg-white border-b border-gray-200 px-5 fixed top-0 left-0 z-50">
+    <header className="w-full h-[60px] flex items-center justify-between bg-white border-b border-gray-200 px-5 fixed top-0 left-0 z-50">
       {/* Left: Logo */}
       <div className="flex items-center gap-[18px]">
         <Link to="/dashboard" className="no-underline">
@@ -75,8 +75,8 @@ export default function Header() {
           <i className="bi bi-search absolute left-[18px] top-1/2 -translate-y-1/2 text-gray-500 text-lg"></i>
           <input
             type="text"
-            placeholder="Search for courses and certifications"
-            className="w-full py-2.5 pl-11 pr-5 rounded-3xl border border-gray-200 bg-[#f7f9fa] text-base outline-none transition-colors focus:border-[#a435f0]"
+            placeholder="Find expert-led courses to boost your career"
+            className="w-full py-2 px-[18px] pl-11 rounded-xl border border-[#d1d7dc] bg-[#f7f9fa] text-sm outline-none transition-colors duration-200"
           />
         </div>
       </div>
@@ -86,7 +86,7 @@ export default function Header() {
         {/* Notification Bell */}
         <div ref={notifRef} className="relative">
           <i
-            className="bi bi-bell text-[22px] text-[#2d2f31] cursor-pointer"
+            className="bi bi-bell text-2xl text-[#2d2f31] cursor-pointer"
             onClick={() => setNotifOpen((open) => !open)}
           ></i>
           {notifOpen && (
@@ -96,7 +96,7 @@ export default function Header() {
                 <div className="p-[18px] text-gray-500">No notifications</div>
               ) : (
                 notifications.map(n => (
-                  <div key={n.id} className="px-[18px] py-2.5 text-[#2d2f31] text-[15px] border-b border-gray-100">{n.text}</div>
+                  <div key={n.id} className="p-[10px] px-[18px] text-[#2d2f31] text-[15px] border-b border-gray-100">{n.text}</div>
                 ))
               )}
             </div>
