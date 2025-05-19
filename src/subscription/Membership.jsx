@@ -1,10 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useHandleUserMembership } from '../hooks/handleUserSubscription';
 import { useEditAdminSettings } from '../hooks/useEditAdminSettings';
 import { authControl } from '../auth/components/authControl';
+import Loading from '../components/Loading';
 
 export default function Membership() {
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     document.body.style.background = "#ffffff";
     document.body.style.margin = "0";
@@ -18,19 +21,33 @@ export default function Membership() {
   const { logout } = authControl();
 
   const handleSignOut = async () => {
+    setIsLoading(true);
     try {
+      await new Promise(resolve => setTimeout(resolve, 500));
       await logout();
     } catch (error) {
       console.error("Error signing out:", error.message);
+      setIsLoading(false);
     }
   };
 
-  const navigateToPayment = (planId) => {
-    const selectedPlan = subscriptionPlans ? subscriptionPlans.find((plan) => plan.id === planId) : null;
-    const planName = selectedPlan ? selectedPlan.plan : 'Unknown Plan';
-    captureMembershipPlan(planName);
-    navigate(`/payment?plan=${encodeURIComponent(planId)}`);
+  const navigateToPayment = async (planId) => {
+    setIsLoading(true);
+    try {
+      const selectedPlan = subscriptionPlans ? subscriptionPlans.find((plan) => plan.id === planId) : null;
+      const planName = selectedPlan ? selectedPlan.plan : 'Unknown Plan';
+      captureMembershipPlan(planName);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      navigate(`/payment?plan=${encodeURIComponent(planId)}`);
+    } catch (error) {
+      console.error("Error navigating to payment:", error);
+      setIsLoading(false);
+    }
   };
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <section className="min-h-screen bg-gradient-to-r from-gray-100 to-gray-200">

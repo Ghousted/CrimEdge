@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { authControl } from './components/authControl';
 import { useNavigate } from 'react-router-dom';
 import ReviewHubLogo from '../assets/ReviewHub.png';
+import Loading from '../components/Loading';
+import 'bootstrap-icons/font/bootstrap-icons.css'; // Import Bootstrap Icons
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const { signIn } = authControl();
   const navigate = useNavigate();
 
@@ -37,13 +40,25 @@ export default function SignIn() {
     }
 
     try {
-      await signIn({ email, password });
+      setIsSignedIn(true); // Set this before the sign-in attempt
+      await signIn({
+        email,
+        password,
+        onSuccess: () => {
+          // Navigation will be handled by authControl
+          return;
+        }
+      });
     } catch (error) {
       console.error('Sign in error:', error);
-    } finally {
       setIsLoading(false);
+      setIsSignedIn(false);
     }
   };
+
+  if (isSignedIn) {
+    return <Loading />;
+  }
 
   return (
     <section className="flex justify-center items-center min-h-screen p-2 bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -98,6 +113,27 @@ export default function SignIn() {
               'Sign In'
             )}
           </button>
+          <div className="flex items-center my-4">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="mx-4 text-gray-500">or</span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </div>
+          <div className="space-y-3">
+            <button
+              type="button"
+              className="w-full py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-xl border border-gray-300 hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center"
+            >
+              <i className="bi bi-google mr-2"></i>
+              Continue with Google
+            </button>
+            <button
+              type="button"
+              className="w-full py-2.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center"
+            >
+              <i className="bi bi-apple mr-2"></i>
+              Continue with Apple
+            </button>
+          </div>
           <div className="text-center text-sm text-gray-600 space-y-3">
             <div>
               <span>Don't have an account? </span>

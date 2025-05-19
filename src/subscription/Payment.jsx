@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/components/authContext';
 import { useEditAdminSettings } from '../hooks/useEditAdminSettings';
@@ -9,8 +9,9 @@ export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
   const { membershipPlan } = useAuth();
-  const { subscriptionPlans, isLoading } = useEditAdminSettings();
+  const { subscriptionPlans, isLoading: isLoadingPlans } = useEditAdminSettings();
   const { logout } = authControl();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const queryParams = new URLSearchParams(location.search);
   const planId = queryParams.get('plan');
@@ -20,19 +21,26 @@ export default function Payment() {
   const price = selectedPlan ? (selectedPlan.price === 0 ? 'Free' : `₱${selectedPlan.price} / month`) : 'Unknown Plan';
   const planName = selectedPlan ? selectedPlan.plan : 'Unknown Plan';
 
-  const navigateToPayment = (membershipPlan, method) => {
+  const navigateToPayment = async (membershipPlan, method) => {
+    setIsNavigating(true);
+    // Add a small delay to ensure loading screen shows
+    await new Promise(resolve => setTimeout(resolve, 500));
     navigate(`/${method}?plan=${encodeURIComponent(membershipPlan)}&method=${encodeURIComponent(method)}`);
   };
 
   const handleSignOut = async () => {
+    setIsNavigating(true);
     try {
+      // Add a small delay to ensure loading screen shows
+      await new Promise(resolve => setTimeout(resolve, 500));
       await logout();
     } catch (error) {
       console.error("Error signing out:", error.message);
+      setIsNavigating(false);
     }
   };
 
-  if (isLoading) {
+  if (isLoadingPlans || isNavigating) {
     return <Loading />;
   }
 

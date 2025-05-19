@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useHandleCourses } from '../../hooks/useHandleCourses';
 import { useHandleStorage } from '../../hooks/useHandleStorage';
 import { useHandleLessons } from '../../hooks/useHandleLessons';
+import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
 import QuizCreator from '../../components/QuizCreator';
 import QuizDisplay from '../../components/QuizDisplay';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../../firebase';
+import SectionModal from '../../utils/SectionModal';
+import LessonModal from '../../utils/LessonModal';
+
 
 export default function CoursePage() {
   try {
@@ -25,6 +29,83 @@ export default function CoursePage() {
     const [replyText, setReplyText] = useState('');
     const [lessonId, setLessonId] = useState(null);
 
+    // View Assessment state variables
+    const [selectedAssessmentType, setSelectedAssessmentType] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState('submittedAt');
+    const [sortOrder, setSortOrder] = useState('desc');
+    const [filterStatus, setFilterStatus] = useState('all');
+
+    // Add dummy assessment results data
+    const dummyResults = [
+        {
+            id: 1,
+            studentName: "John Doe",
+            score: 85,
+            submittedAt: "2024-03-15 14:30",
+            timeTaken: "45m 30s",
+            status: "passed",
+            answers: [
+                { question: "Question 1", correct: true },
+                { question: "Question 2", correct: true },
+                { question: "Question 3", correct: false },
+                { question: "Question 4", correct: true },
+                { question: "Question 5", correct: true }
+            ]
+        },
+        {
+            id: 2,
+            studentName: "Jane Smith",
+            score: 92,
+            submittedAt: "2024-03-15 15:45",
+            timeTaken: "38m 15s",
+            status: "passed",
+            answers: [
+                { question: "Question 1", correct: true },
+                { question: "Question 2", correct: true },
+                { question: "Question 3", correct: true },
+                { question: "Question 4", correct: true },
+                { question: "Question 5", correct: false }
+            ]
+        },
+        {
+            id: 3,
+            studentName: "Mike Johnson",
+            score: 55,
+            submittedAt: "2024-03-15 16:20",
+            timeTaken: "52m 10s",
+            status: "failed",
+            answers: [
+                { question: "Question 1", correct: true },
+                { question: "Question 2", correct: false },
+                { question: "Question 3", correct: false },
+                { question: "Question 4", correct: true },
+                { question: "Question 5", correct: false }
+            ]
+        }
+    ];
+
+    // Filter and sort results
+    const filteredResults = dummyResults
+        .filter(result => {
+            const matchesSearch = result.studentName.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesStatus = filterStatus === 'all' || result.status === filterStatus;
+            return matchesSearch && matchesStatus;
+        })
+        .sort((a, b) => {
+            const multiplier = sortOrder === 'asc' ? 1 : -1;
+            switch (sortBy) {
+                case 'score':
+                    return (a.score - b.score) * multiplier;
+                case 'studentName':
+                    return a.studentName.localeCompare(b.studentName) * multiplier;
+                case 'submittedAt':
+                    return (new Date(a.submittedAt) - new Date(b.submittedAt)) * multiplier;
+                default:
+                    return 0;
+            }
+        });
+
     // New state variables for lesson modal
     const [showAddLessonModal, setShowAddLessonModal] = useState(false);
     const [lessonTitle, setLessonTitle] = useState('');
@@ -34,14 +115,7 @@ export default function CoursePage() {
     const [activeSection, setActiveSection] = useState(null);
     const [selectedLecture, setSelectedLecture] = useState(null);
 
-    // Add new state for notes
-    const [notes, setNotes] = useState([]);
-    const [newNote, setNewNote] = useState('');
-    const [editingNoteId, setEditingNoteId] = useState(null);
-    const [editNoteText, setEditNoteText] = useState('');
-
     // Add state for announcements
-    const [announcements, setAnnouncements] = useState([]);
     const [announcementText, setAnnouncementText] = useState('');
     const [announcementFiles, setAnnouncementFiles] = useState([]);
 
@@ -66,9 +140,10 @@ export default function CoursePage() {
     const { courses, getCourses } = useHandleCourses();
     const { fetchCourseImages } = useHandleStorage();
     const { addNewSection, addNewLecture, uploadLessonFile, lessons = [] } = useHandleLessons(courseId);
+    const { createAnnouncement, announcements: courseAnnouncements, loading: announcementsLoading } = useHandleAnnouncements(courseId);
     const course = courses.find(c => c.id === courseId);
 
-
+    const navigate = useNavigate();
 
     useEffect(() => {
       if (course) {
@@ -76,11 +151,26 @@ export default function CoursePage() {
       }
     }, [course]);
 
+    // Add new useEffect for setting initial lesson and lecture
+    useEffect(() => {
+      if (lessons && lessons.length > 0) {
+        // Set the first lesson as expanded
+        setExpandedSections({ 0: true });
+        
+        // Get the first lesson's lectures
+        const firstLesson = lessons[0];
+        if (firstLesson.lectures && firstLesson.lectures.length > 0) {
+          // Set the first lecture as selected
+          setSelectedLecture(firstLesson.lectures[0]);
+        }
+      }
+    }, [lessons]);
+
     console.log('Found course:', course);
     console.log('Course ID:', courseId);
     console.log(courseDetails);
 
-    const tabs = ['Overview', 'Q&A', 'Notes', 'Announcements', 'Reviews', 'Learning tools'];
+    const tabs = ['Overview', 'Q&A', 'Announcements', 'Reviews', 'Assessment', 'Learning tools', 'Quizzes'];
 
     const toggleSection = (sectionIndex) => {
       setExpandedSections(prev => ({
@@ -267,63 +357,20 @@ export default function CoursePage() {
         }
     };
 
-    // Add note handling functions
-    const handleAddNote = (e) => {
-      e.preventDefault();
-      if (newNote.trim()) {
-        const note = {
-          id: Date.now(),
-          text: newNote.trim(),
-          timestamp: new Date().toISOString(),
-          isEditing: false
-        };
-        setNotes([note, ...notes]);
-        setNewNote('');
-      }
-    };
-
-    const handleEditNote = (noteId) => {
-      const note = notes.find(n => n.id === noteId);
-      if (note) {
-        setEditingNoteId(noteId);
-        setEditNoteText(note.text);
-      }
-    };
-
-    const handleSaveEdit = (noteId) => {
-      if (editNoteText.trim()) {
-        setNotes(notes.map(note =>
-          note.id === noteId
-            ? { ...note, text: editNoteText.trim(), timestamp: new Date().toISOString() }
-            : note
-        ));
-        setEditingNoteId(null);
-        setEditNoteText('');
-      }
-    };
-
-    const handleDeleteNote = (noteId) => {
-      setNotes(notes.filter(note => note.id !== noteId));
-    };
-
     const handleAnnouncementFileChange = (e) => {
       setAnnouncementFiles(Array.from(e.target.files));
     };
 
-    const handleAddAnnouncement = (e) => {
+    const handleAddAnnouncement = async (e) => {
       e.preventDefault();
-      if (announcementText.trim()) {
-        setAnnouncements([
-          {
-            id: Date.now(),
-            text: announcementText.trim(),
-            files: announcementFiles,
-            timestamp: new Date().toISOString(),
-          },
-          ...announcements,
-        ]);
-        setAnnouncementText('');
-        setAnnouncementFiles([]);
+      if (announcementText.trim() && course) {
+        try {
+          await createAnnouncement(announcementText.trim(), course.course, courseId);
+          setAnnouncementText('');
+          setAnnouncementFiles([]);
+        } catch (error) {
+          console.error('Error creating announcement:', error);
+        }
       }
     };
 
@@ -516,11 +563,24 @@ export default function CoursePage() {
             case 'Overview':
                 return (
                     <div>
-                      <h2 className="text-xl font-semibold mb-2">Course Overview</h2>
-                      <p className="text-gray-700 text-sm mb-4">
-                        Welcome to the Complete Guide to Microsoft PowerApps! This comprehensive course will take you from beginner to expert in building powerful business applications using Microsoft PowerApps. You'll learn how to create custom apps that connect to your data, automate workflows, and transform your business processes.
-                      </p>
+                                            <h2 className="text-2xl mb-1">{courseDetails?.course || 'Loading...'}</h2>                      <p className="text-gray-700 text-sm mb-4">                        {courseDetails?.description || 'Loading course description...'}                      </p>
 
+                      {/* Course Statistics */}
+                      <div className="flex items-center gap-6 mb-6 border-b border-gray-200 pb-6">
+                        <div className="flex items-center gap-1">
+                          <span className="text-xl font-bold text-amber-500">{courseDetails?.rating || '4.3'}</span>
+                          <i className="bi bi-star-fill text-amber-500"></i>
+                          <span className="text-sm text-gray-600 ml-1">({courseDetails?.totalRatings || '10,508'} ratings)</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <i className="bi bi-people text-gray-600"></i>
+                          <span className="text-sm text-gray-600">{courseDetails?.students || '185,456'} students</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <i className="bi bi-calendar-check"></i>
+                          <span>Last updated {courseDetails?.lastUpdated || 'November 2017'}</span>
+                        </div>
+                      </div>
 
                       {/* Comments Section */}
                       <div className="mt-6 border-t border-gray-200 pt-4">
@@ -846,24 +906,43 @@ export default function CoursePage() {
                         )}
                       </form>
                       <div className="space-y-4">
-                        {announcements.map(a => (
-                          <div key={a.id} className="bg-white p-3 rounded-md border border-gray-200 shadow-sm">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-gray-800 text-sm font-medium">Announcement</span>
-                              <span className="text-xs text-gray-500">{new Date(a.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                            </div>
-                            <p className="text-gray-700 text-sm mb-2 whitespace-pre-wrap">{a.text}</p>
-                            {a.files && a.files.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {a.files.map((file, idx) => (
-                                  <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs border border-blue-200">{file.name}</span>
-                                ))}
-                              </div>
-                            )}
+                        {announcementsLoading ? (
+                          <div className="flex justify-center items-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
                           </div>
-                        ))}
-                        {announcements.length === 0 && (
-                          <div className="text-center py-6 bg-gray-50 rounded-md border border-gray-200 text-xs text-gray-500">No announcements yet.</div>
+                        ) : courseAnnouncements.filter(a => a.courseId === courseId).length === 0 ? (
+                          <div className="text-center py-6 bg-gray-50 rounded-md border border-gray-200">
+                            <i className="bi bi-megaphone text-2xl text-gray-400 mb-2"></i>
+                            <p className="text-gray-500 text-xs">No announcements yet for {course?.course}</p>
+                          </div>
+                        ) : (
+                          courseAnnouncements
+                            .filter(a => a.courseId === courseId)
+                            .sort((a, b) => b.createdAt.seconds - a.createdAt.seconds)
+                            .map(announcement => (
+                              <div key={announcement.id} className="bg-white p-3 rounded-md border border-gray-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                                      {course?.course}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      {announcement.createdByName}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-gray-500">
+                                    {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString(undefined, {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    }) : ''}
+                                  </span>
+                                </div>
+                                <p className="text-gray-700 text-sm whitespace-pre-wrap">{announcement.announcement}</p>
+                              </div>
+                            ))
                         )}
                       </div>
                     </div>
@@ -873,6 +952,284 @@ export default function CoursePage() {
                     <div>
                       <h2 className="text-xl font-semibold mb-2">Reviews</h2>
                       <p className="text-gray-700 text-sm">Reviews section coming soon.</p>
+                    </div>
+                );
+            case 'Assessment':
+                return (
+                    <div className="space-y-4">
+                        {/* Manage Assessment Section */}
+                        <div className="">
+                            <h2 className="text-xl text-gray-800 mb-2">Manage Assessment</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <button
+                                    className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                                    onClick={() => navigate(`/assessment/${id}/pre-test`)}
+                                >
+                                    <i className="bi bi-journal-check text-3xl text-blue-600 mb-2"></i>
+                                    <span className="font-medium">Pre-Test</span>
+                                    <span className="text-sm text-gray-500 text-center mt-1">Evaluate initial understanding</span>
+                                </button>
+                                <button
+                                    className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                                    onClick={() => navigate(`/assessment/${id}/post-test`)}
+                                >
+                                    <i className="bi bi-journal-text text-3xl text-green-600 mb-2"></i>
+                                    <span className="font-medium">Post-Test</span>
+                                    <span className="text-sm text-gray-500 text-center mt-1">Assess learning outcomes</span>
+                                </button>
+                                <button
+                                    className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                                    onClick={() => navigate(`/assessment/${id}/mock-exam`)}
+                                >
+                                    <i className="bi bi-clock text-3xl text-purple-600 mb-2"></i>
+                                    <span className="font-medium">Mock Exam</span>
+                                    <span className="text-sm text-gray-500 text-center mt-1">Timed simulation</span>
+                                </button>
+                                <button
+                                    className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                                    onClick={() => navigate(`/assessment/${id}/final-exam`)}
+                                >
+                                    <i className="bi bi-award text-3xl text-red-600 mb-2"></i>
+                                    <span className="font-medium">Final Exam</span>
+                                    <span className="text-sm text-gray-500 text-center mt-1">Comprehensive evaluation</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* View Assessment Section */}
+                        <div className="">
+
+                            
+                            {/* Assessment Type Navigation */}
+                            <div className="mb-6 mt-2">
+                                <div className="flex items-center gap-2 border-b border-gray-200">
+                                    <button
+                                        onClick={() => setSelectedAssessmentType('all')}
+                                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                                            selectedAssessmentType === 'all'
+                                                ? 'border-blue-600 text-blue-700'
+                                                : 'border-transparent text-gray-600 hover:text-blue-700'
+                                        }`}
+                                    >
+                                        All Assessments
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedAssessmentType('pre-test')}
+                                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                                            selectedAssessmentType === 'pre-test'
+                                                ? 'border-blue-600 text-blue-700'
+                                                : 'border-transparent text-gray-600 hover:text-blue-700'
+                                        }`}
+                                    >
+                                        Pre-Test
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedAssessmentType('post-test')}
+                                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                                            selectedAssessmentType === 'post-test'
+                                                ? 'border-blue-600 text-blue-700'
+                                                : 'border-transparent text-gray-600 hover:text-blue-700'
+                                        }`}
+                                    >
+                                        Post-Test
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedAssessmentType('mock-exam')}
+                                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                                            selectedAssessmentType === 'mock-exam'
+                                                ? 'border-blue-600 text-blue-700'
+                                                : 'border-transparent text-gray-600 hover:text-blue-700'
+                                        }`}
+                                    >
+                                        Mock Exam
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedAssessmentType('final-exam')}
+                                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                                            selectedAssessmentType === 'final-exam'
+                                                ? 'border-blue-600 text-blue-700'
+                                                : 'border-transparent text-gray-600 hover:text-blue-700'
+                                        }`}
+                                    >
+                                        Final Exam
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Search and Filter Section */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <input
+                                        type="text"
+                                        placeholder="Search by student name..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <select
+                                        value={filterStatus}
+                                        onChange={(e) => setFilterStatus(e.target.value)}
+                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value="all">All Status</option>
+                                        <option value="passed">Passed</option>
+                                        <option value="failed">Failed</option>
+                                    </select>
+                                </div>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value="submittedAt">Sort by Date</option>
+                                        <option value="score">Sort by Score</option>
+                                        <option value="studentName">Sort by Name</option>
+                                    </select>
+                                    <button
+                                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                        className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                    >
+                                        <i className={`bi bi-arrow-${sortOrder === 'asc' ? 'up' : 'down'}`}></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Assessment Summary */}
+                            <div className="mb-4">
+                               
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="bg-white p-3 rounded-lg shadow-sm">
+                                        <p className="text-sm text-gray-600">Total Submissions</p>
+                                        <p className="text-2xl font-bold text-gray-800">{filteredResults.length}</p>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-lg shadow-sm">
+                                        <p className="text-sm text-gray-600">Average Score</p>
+                                        <p className="text-2xl font-bold text-gray-800">
+                                            {Math.round(filteredResults.reduce((acc, curr) => acc + curr.score, 0) / filteredResults.length)}%
+                                        </p>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-lg shadow-sm">
+                                        <p className="text-sm text-gray-600">Pass Rate</p>
+                                        <p className="text-2xl font-bold text-gray-800">
+                                            {Math.round((filteredResults.filter(r => r.status === 'passed').length / filteredResults.length) * 100)}%
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Results Table */}
+                            <div className="w-full rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                                {/* Header Row */}
+                                <div className="flex items-center px-4 py-3 text-sm font-semibold text-gray-700 border-b border-gray-200 bg-gray-50 sticky top-0">
+                                    <div className="flex-1 font-medium">Student Name</div>
+                                    <div className="flex-1 text-center font-medium">Status</div>
+                                    <div className="flex-1 text-center font-medium">Score</div>
+                                    <div className="flex-1 text-center font-medium">Time Spent</div>
+                                    <div className="flex-1 text-center font-medium">Submitted</div>
+                                    <div className="flex-1 text-center font-medium">Actions</div>
+                                </div>
+                                {/* Data Rows */}
+                                {filteredResults.map((result, idx) => {
+                                    const totalQuestions = result.answers.length;
+                                    const correctAnswers = result.answers.filter(a => a.correct).length;
+                                    const scoreString = `${correctAnswers}/${totalQuestions} (${result.score}%)`;
+                                    const dateObj = new Date(result.submittedAt.replace(' ', 'T'));
+                                    const formattedDate = dateObj.toLocaleString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                        hour12: true
+                                    });
+                                    const displayDate = formattedDate.replace(',', '').replace(/\s+/, ' ').replace('AM', 'am').replace('PM', 'pm').replace(',', '').replace(' at', ' at');
+                                    return (
+                                        <div
+                                            key={result.id}
+                                            className={`flex items-center px-4 py-3.5 text-sm border-b border-gray-200 last:border-b-0 transition-all duration-200 ${
+                                                idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                            } hover:bg-blue-50 group`}
+                                        >
+                                            <div className="flex-1 min-w-[120px]">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium text-gray-800">{result.studentName}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 text-center">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                    result.status === 'passed' 
+                                                        ? 'bg-green-100 text-green-700 border border-green-200' 
+                                                        : 'bg-red-100 text-red-700 border border-red-200'
+                                                }`}>
+                                                    {result.status === 'passed' ? 'Passed' : 'Failed'}
+                                                </span>
+                                            </div>
+                                            <div className="flex-1 text-center">
+                                                <div className="inline-flex items-center gap-1.5">
+                                                    <span className={`text-sm font-medium ${
+                                                        result.status === 'passed' ? 'text-green-600' : 'text-red-600'
+                                                    }`}>
+                                                        {scoreString}
+                                                    </span>
+                                                    {result.status === 'passed' && (
+                                                        <i className="bi bi-check-circle-fill text-green-500 text-xs"></i>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 text-center">
+                                                <div className="inline-flex items-center gap-1.5 bg-gray-100 px-2.5 py-1 rounded-full">
+                                                    <span className="text-gray-700 font-medium">{result.timeTaken.toUpperCase()}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 text-center">
+                                                <div className="inline-flex items-center gap-1.5 text-gray-600">
+                                                    <span className="text-sm">{displayDate}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 text-center">
+                                                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                                                    <i className="bi bi-eye text-sm"></i>
+                                                    View Details
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'Quizzes':
+                return (
+                    <div className="space-y-8">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 className="text-xl text-gray-800 mb-2">Generate Quiz</h2>
+                                <p className="text-gray-600 mt-1">Quiz per lecture will be generated automatically -- select a lecture to generate a quiz -- comment ito </p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <select 
+                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white text-sm"
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>Select a lecture</option>
+                                    <option value="intro">Introduction to Criminal Law</option>
+                                    <option value="elements">Elements of a Crime</option>
+                                    <option value="defenses">Criminal Defenses</option>
+                                    <option value="procedure">Criminal Procedure</option>
+                                    <option value="evidence">Rules of Evidence</option>
+                                </select>
+                                <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium">
+                                    <i className="bi bi-lightning-charge-fill mr-1"></i>
+                                    Powered by AI
+                                </span>
+                            </div>
+                        </div>
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+                            <QuizCreator onCreateQuiz={handleCreateQuiz} />
+                        </div>
                     </div>
                 );
             case 'Learning tools':
@@ -1007,102 +1364,6 @@ export default function CoursePage() {
                             )}
                         </div>
 
-                        {/* AI Quiz Generator */}
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h2 className="text-2xl font-semibold mb-4">AI Quiz Generator</h2>
-                            <QuizCreator onCreateQuiz={handleCreateQuiz} />
-                        </div>
-                        
-                        {quizzes.length > 0 && (
-                            <div className="bg-white rounded-lg shadow p-6">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xl font-semibold">Created Quizzes</h3>
-                                    {currentQuiz && (
-                                        <button
-                                            onClick={() => setCurrentQuiz(null)}
-                                            className="text-blue-600 hover:text-blue-700 flex items-center gap-2 text-sm"
-                                        >
-                                            <i className="bi bi-arrow-left"></i>
-                                            Back to Quiz List
-                                        </button>
-                                    )}
-                                </div>
-
-                                {currentQuiz ? (
-                                    <div className="space-y-4">
-                                        <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                                            <h4 className="font-medium text-blue-800">{currentQuiz.title}</h4>
-                                            <p className="text-sm text-blue-600">Topic: {currentQuiz.topic}</p>
-                                            <p className="text-xs text-blue-500 mt-1">
-                                                Created: {new Date(currentQuiz.createdAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                        <QuizDisplay 
-                                            quiz={currentQuiz}
-                                            onSubmitQuiz={handleSubmitQuiz}
-                                            onViewResults={handleViewQuizResults}
-                                            isInstructor={true}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {quizzes.map(quiz => (
-                                            <div 
-                                                key={quiz.id}
-                                                className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200"
-                                                onClick={() => setCurrentQuiz(quiz)}
-                                            >
-                                                <div className="flex items-start justify-between mb-3">
-                    <div>
-                                                        <h4 className="font-medium text-gray-800">{quiz.title}</h4>
-                                                        <p className="text-sm text-gray-600">Topic: {quiz.topic}</p>
-                                                    </div>
-                                                    <span className="text-xs text-gray-500">
-                                                        {new Date(quiz.createdAt).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                                
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center justify-between text-sm">
-                                                        <span className="text-gray-600">Questions:</span>
-                                                        <span className="font-medium">{quiz.questions.length}</span>
-                                                    </div>
-                                                    {quizResults[quiz.id] && (
-                                                        <div className="flex items-center justify-between text-sm">
-                                                            <span className="text-gray-600">Last Score:</span>
-                                                            <span className="font-medium text-blue-600">
-                                                                {quizResults[quiz.id].score}/{quiz.questions.length} 
-                                                                ({quizResults[quiz.id].percentage.toFixed(1)}%)
-                                                            </span>
-                    </div>
-                  )}
-                                                </div>
-
-                                                <div className="mt-4 pt-3 border-t border-gray-100">
-                                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                        <i className="bi bi-eye"></i>
-                                                        <span>Click to preview and take quiz</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {quizzes.length === 0 && !currentQuiz && (
-                            <div className="bg-white rounded-lg shadow p-6 text-center">
-                                <div className="text-gray-400 mb-3">
-                                    <i className="bi bi-journal-text text-4xl"></i>
-                                </div>
-                                <h3 className="text-lg font-medium text-gray-800 mb-2">No Quizzes Created Yet</h3>
-                                <p className="text-gray-600 text-sm">
-                                    Use the AI Quiz Generator above to create your first quiz!
-                                </p>
-                            </div>
-                        )}
-
                         {/* Upload Learning Material Modal */}
                         {showUploadModal && (
                             <div className="modal-overlay">
@@ -1200,103 +1461,23 @@ export default function CoursePage() {
     };
 
     return (
-      <section className="p-8 sm:px-4 lg:px-6">
+      <section className="p-10 sm:px-4 lg:px-6">
         {console.log('Current courseDetails:', courseDetails)}
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Main Content */}
-            <div className="flex flex-col w-full gap-4 lg:col-span-2">
-              {/* Course Header */}
-              <div className="flex flex-col gap-4">
-                <div>
-                  <h1 className='text-3xl font-bold text-gray-900'>{courseDetails?.course || 'Course Name'}</h1>
-                  <p className='text-gray-600 text-lg'>{courseDetails?.description || 'Course Description'}</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-lg p-6">
-                  {selectedLecture ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold">{selectedLecture.title}</h2>
-                        <div className="flex items-center gap-2">
-                          {selectedLecture.lectureFiles && selectedLecture.lectureFiles.length > 0 && (
-                            <div className="flex items-center gap-2">
-                              {selectedLecture.lectureFiles.map((file, index) => (
-                                <button
-                                  key={index}
-                                  onClick={() => handleFileSelect(file)}
-                                  className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors duration-200 ${
-                                    selectedFile?.fileName === file.fileName
-                                      ? 'bg-blue-100 text-blue-700'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                  }`}
-                                >
-                                  <i className={`bi ${file.fileType === 'application/pdf' ? 'bi-file-pdf' : 'bi-file-play'}`}></i>
-                                  {file.fileName}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-gray-700">{selectedLecture.content}</p>
-                      
-                      {/* File Preview Section */}
-                      {selectedFile && (
-                        <div className="mt-6 border-t border-gray-200 pt-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-medium text-gray-800">Learning Material</h3>
-                            <button
-                              onClick={() => setSelectedFile(null)}
-                              className="text-gray-500 hover:text-gray-700"
-                            >
-                              <i className="bi bi-x-lg"></i>
-                            </button>
-                          </div>
-                          {renderFilePreview(selectedFile)}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <i className="bi bi-journal-text text-4xl text-gray-400 mb-3"></i>
-                      <p className="text-gray-500">Select a lecture to view its content and materials</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Tabs and Content */}
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                <div className="border-b border-gray-200 mb-4 flex gap-2">
-                  {tabs.map(tab => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors duration-150 ${activeTab === tab ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-600 hover:text-blue-700'}`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-                <div className="min-h-[200px]">
-                  {renderTabContent()}
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="flex flex-col w-full gap-4">
+        <div className="mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Sidebar - Now on the left */}
+            <div className="flex flex-col w-full gap-4 lg:col-span-3">
               <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-medium text-gray-800 flex items-center gap-2">
-                    Course Content
+                    {courseDetails?.course || 'Loading...'}
                   </h2>
                   <button
                     onClick={() => setShowAddSectionModal(true)}
                     className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-all duration-200 flex items-center gap-1.5 font-medium text-sm"
                   >
                     <i className="bi bi-plus-circle"></i>
-                    Add Section
+                    Add Lesson
                   </button>
                 </div>
                 <div className="space-y-4">
@@ -1319,7 +1500,7 @@ export default function CoursePage() {
                         >
                           <i className="bi bi-three-dots-vertical"></i>
                           {dropdownOpen === `section-${idx}` && (
-                            <div className="absolute left-full top-0 ml-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-[100] overflow-hidden">
+                            <div className="absolute right-0 top-0 mr-8 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-[100] overflow-hidden">
                               <button
                                 className="flex items-center gap-1.5 w-full px-3 py-2 hover:bg-gray-50 text-gray-700 transition-colors duration-200 text-sm"
                                 onClick={() => handleEditSection(idx)}
@@ -1395,147 +1576,120 @@ export default function CoursePage() {
                 </div>
               </div>
             </div>
+
+            {/* Main Content - Now on the right */}
+            <div className="flex flex-col w-full gap-4 lg:col-span-9">
+              {/* Course Header */}
+              <div className="flex flex-col gap-4">
+                
+                <div className="bg-white rounded-lg shadow-lg p-6">
+                  {selectedLecture ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold">{selectedLecture.title}</h2>
+                        <div className="flex items-center gap-2">
+                          {selectedLecture.lectureFiles && selectedLecture.lectureFiles.length > 0 && (
+                            <div className="flex items-center gap-2">
+                              {selectedLecture.lectureFiles.map((file, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => handleFileSelect(file)}
+                                  className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors duration-200 ${
+                                    selectedFile?.fileName === file.fileName
+                                      ? 'bg-blue-100 text-blue-700'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  <i className={`bi ${file.fileType === 'application/pdf' ? 'bi-file-pdf' : 'bi-file-play'}`}></i>
+                                  {file.fileName}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-gray-700">{selectedLecture.content}</p>
+                      
+                      {/* File Preview Section */}
+                      {selectedFile && (
+                        <div className="mt-6 border-t border-gray-200 pt-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-medium text-gray-800">Learning Material</h3>
+                            <button
+                              onClick={() => setSelectedFile(null)}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              <i className="bi bi-x-lg"></i>
+                            </button>
+                          </div>
+                          {renderFilePreview(selectedFile)}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <i className="bi bi-journal-text text-4xl text-gray-400 mb-3"></i>
+                      <p className="text-gray-500">Select a lecture to view its content and materials</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tabs and Content */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div className="border-b border-gray-200 mb-4 flex gap-2">
+                  {tabs.map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors duration-150 ${activeTab === tab ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-600 hover:text-blue-700'}`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+                <div className="min-h-[200px]">
+                  {renderTabContent()}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Add Section Modal */}
-        {showAddSectionModal && (
-          <div className="modal-overlay">
-            <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md">
-              <h2 className="text-xl font-medium mb-4 text-gray-800">Add New Section</h2>
-              <div className="mb-4">
-                <label htmlFor="sectionTitle" className="block font-medium text-gray-700 text-base">Section Title</label>
-                <input
-                  type="text"
-                  id="sectionTitle"
-                  className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
-                  placeholder="Enter section title"
-                  value={newSectionTitle}
-                  onChange={(e) => setNewSectionTitle(e.target.value)}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="sectionDescription" className="block font-medium text-gray-700 text-base">Section Description</label>
-                <textarea
-                  id="sectionDescription"
-                  className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm resize-none"
-                  placeholder="Enter section description"
-                  rows="3"
-                  value={newSectionDescription}
-                  onChange={(e) => setNewSectionDescription(e.target.value)}
-                />
-              </div>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setShowAddSectionModal(false);
-                    setNewSectionTitle('');
-                    setNewSectionDescription('');
-                  }}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddSection}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center gap-1.5 font-medium shadow-md shadow-blue-500/20 text-sm"
-                  disabled={!newSectionTitle.trim()}
-                >
-                  Add Section
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <SectionModal
+          showModal={showAddSectionModal}
+          onClose={() => setShowAddSectionModal(false)}
+          title={newSectionTitle}
+          setTitle={setNewSectionTitle}
+          description={newSectionDescription}
+          setDescription={setNewSectionDescription}
+          onSubmit={handleAddSection}
+        />
 
         {/* Add Lecture Modal */}
-        {showAddLessonModal && (
-          <div className="modal-overlay">
-            <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-2xl">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-medium text-gray-800">Add New Lecture</h2>
-                <button
-                  onClick={() => {
-                    setLessonId(null);
-                    setShowAddLessonModal(false);
-                    setLessonTitle('');
-                    setLessonDescription('');
-                    setLessonFile(null);
-                    setLessonsError('');
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <i className="bi bi-x-lg"></i>
-                </button>
-              </div>
-              {lessonsError && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-600 flex items-center gap-2">
-                    <i className="bi bi-exclamation-circle"></i>
-                    {lessonsError}
-                  </p>
-                </div>
-              )}
-              <div className="flex flex-col gap-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Lecture Title"
-                    value={lessonTitle}
-                    onChange={(e) => setLessonTitle(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pl-5"
-                  />
-                </div>
-                <div className="relative">
-                  <textarea
-                    placeholder="Lecture Content"
-                    value={lessonDescription}
-                    onChange={(e) => setLessonDescription(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none pl-5"
-                    rows={2}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <label className="cursor-pointer border-2 border-blue-600 text-blue-600 hover:text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200 flex items-center gap-2 font-medium">
-                    <i className="bi bi-upload"></i>
-                    <span>Upload File (PDF/Video)</span>
-                    <input
-                      type="file"
-                      accept=".pdf,video/*"
-                      onChange={handleLessonFileChange}
-                      className="hidden"
-                    />
-                  </label>
-                  <button
-                    onClick={handleUploadLesson}
-                    disabled={!lessonDescription || !lessonTitle.trim()}
-                    className="bg-blue-600 text-white py-2 px-8 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
-                  >
-                    <i className="bi bi-cloud-upload"></i>
-                    Upload Lecture
-                  </button>
-                </div>
-                {lessonFile && (
-                  <div className="flex items-center gap-4 p-5 bg-gray-50 border-2 border-gray-200 rounded-lg">
-                    <div className='flex justify-between w-full items-center'>
-                      <div className="flex items-center gap-3">
-                        <i className={`bi ${lessonFile.type.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-2xl text-blue-600`}></i>
-                        <span className="text-gray-700 font-medium">{lessonFile.name}</span>
-                      </div>
-                      <button
-                        onClick={handleRemoveLessonFile}
-                        className="text-red-600 hover:text-red-800 flex items-center gap-2"
-                      >
-                        <i className="bi bi-trash"></i>
-                        <span>Remove</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        <LessonModal
+          showModal={showAddLessonModal}
+          onClose={() => {
+            setLessonId(null);
+            setShowAddLessonModal(false);
+            setLessonTitle('');
+            setLessonDescription('');
+            setLessonFile(null);
+            setLessonsError('');
+          }}
+          title={lessonTitle}
+          setTitle={setLessonTitle}
+          description={lessonDescription}
+          setDescription={setLessonDescription}
+          file={lessonFile}
+          onFileChange={handleLessonFileChange}
+          onRemoveFile={handleRemoveLessonFile}
+          error={lessonsError}
+          onSubmit={handleUploadLesson}
+        />
+
+  
       </section>
     );
   } catch (err) {

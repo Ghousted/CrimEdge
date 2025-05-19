@@ -3,6 +3,7 @@ import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
 import { useHandleCourses } from '../../hooks/useHandleCourses';
 import { useHandleLessons } from '../../hooks/useHandleLessons';
 import { useHandleQuizzes } from '../../hooks/useHandleQuizzes';
+import { motion } from 'framer-motion';
 
 export default function AdminDashboard() {
   const { announcements, loading: announcementsLoading } = useHandleAnnouncements();
@@ -13,6 +14,10 @@ export default function AdminDashboard() {
   const [quizAttempts, setQuizAttempts] = useState({});
   const [activeView, setActiveView] = useState('courses');
   const [currentPage, setCurrentPage] = useState(0);
+  const [expandedLesson, setExpandedLesson] = useState(null);
+  const [user, setUser] = useState({ firstName: 'Admin', lastName: 'User' });
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedLecture, setSelectedLecture] = useState(null);
   const coursesPerPage = 3;
 
   useEffect(() => {
@@ -27,6 +32,16 @@ export default function AdminDashboard() {
       fetchAttempts();
     }
   }, [selectedCourse, quizzes]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
   const totalPages = Math.ceil(courses.length / coursesPerPage);
   const startIndex = currentPage * coursesPerPage;
@@ -53,15 +68,98 @@ export default function AdminDashboard() {
     return `${day}.${month}.${year}`;
   }
 
+  const toggleLesson = (lessonId) => {
+    setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
+  };
+
+  const viewLectureDownloads = (lecture) => {
+    setSelectedLecture(lecture);
+  };
+
+  // Dummy data for downloads
+  const dummyDownloads = [
+    {
+      lessonId: 1,
+      lessonTitle: 'Introduction to Criminal Law',
+      lectures: [
+        {
+          lectureId: 1,
+          lectureTitle: 'Basics of Criminal Law',
+          downloads: 15,
+          users: [
+            { id: 1, name: 'John Doe', email: 'john.doe@example.com' },
+            { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com' },
+            { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com' },
+            // Add more users as needed
+          ],
+        },
+        {
+          lectureId: 2,
+          lectureTitle: 'Legal Procedures',
+          downloads: 8,
+          users: [
+            { id: 1, name: 'John Doe', email: 'john.doe@example.com' },
+            { id: 4, name: 'Bob Brown', email: 'bob.brown@example.com' },
+            // Add more users as needed
+          ],
+        },
+      ],
+    },
+    {
+      lessonId: 2,
+      lessonTitle: 'Advanced Criminal Law',
+      lectures: [
+        {
+          lectureId: 1,
+          lectureTitle: 'Case Studies',
+          downloads: 22,
+          users: [
+            { id: 1, name: 'John Doe', email: 'john.doe@example.com' },
+            { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com' },
+            { id: 5, name: 'Charlie Davis', email: 'charlie.davis@example.com' },
+            // Add more users as needed
+          ],
+        },
+      ],
+    },
+    // Add more lessons as needed
+  ];
+
   return (
-    <section className="">
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
-        <div className="mb-3 bg-white rounded-lg p-4 shadow-md border border-gray-100">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Admin Dashboard
-          </h1>
-          <p className="mt-1 text-sm text-gray-600">Manage your courses, lessons, and announcements</p>
-        </div>
+    <section className="relative p-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
+        {/* Welcome Container */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden rounded-xl grd-bg2 p-5 shadow-lg mb-4"
+        >
+          <div className="absolute inset-0 bg-grid-white/[0.1] bg-[size:16px_16px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+              <span className="text-xs text-blue-50 font-medium">Admin Dashboard</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+              Welcome back, {user ? `${user.firstName} ${user.lastName}` : 'Admin'}!
+            </h2>
+            <p className="text-sm text-blue-50/90 font-medium">
+              Manage your courses, lessons, and announcements with Crim Edge
+            </p>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-blue-50/90">
+                <i className="bi bi-calendar-check text-sm"></i>
+                <span className="text-xs">{currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+              </div>
+              <div className="h-3 w-px bg-blue-50/30"></div>
+              <div className="flex items-center gap-1.5 text-blue-50/90">
+                <i className="bi bi-clock text-sm"></i>
+                <span className="text-xs">{currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Navigation */}
         <div className="flex space-x-3 mb-3">
@@ -84,6 +182,16 @@ export default function AdminDashboard() {
             }`}
           >
             Announcements
+          </button>
+          <button
+            onClick={() => setActiveView('downloads')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+              activeView === 'downloads'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            Downloads
           </button>
         </div>
 
@@ -119,7 +227,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-              
+
               {coursesLoading ? (
                 <div className="flex justify-center items-center h-48">
                   <div className="animate-spin rounded-full h-10 w-10 border-4 border-indigo-200 border-t-indigo-600"></div>
@@ -163,7 +271,7 @@ export default function AdminDashboard() {
                       {lessons.length} Total
                     </span>
                   </div>
-                  
+
                   {lessonsLoading ? (
                     <div className="flex justify-center items-center h-24">
                       <div className="animate-spin rounded-full h-6 w-6 border-4 border-green-200 border-t-green-600"></div>
@@ -171,21 +279,63 @@ export default function AdminDashboard() {
                   ) : lessons.length === 0 ? (
                     <p className="text-gray-500 text-center py-6 bg-gray-50 rounded-lg text-sm">No lessons available.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-4">
                       {lessons.map((lesson) => (
-                        <div key={lesson.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all duration-300">
-                          <div>
-                            <h4 className="font-medium text-gray-800 text-sm mb-0.5">{lesson.title}</h4>
-                            <p className="text-xs text-gray-600">{lesson.description}</p>
-                          </div>
-                          <a
-                            href={lesson.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors duration-300 flex items-center gap-1"
+                        <div key={lesson.id} className="bg-gray-50 rounded-lg">
+                          <div
+                            className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                            onClick={() => toggleLesson(lesson.id)}
                           >
-                            <i className="bi bi-download"></i> Download
-                          </a>
+                            <div className="flex items-center gap-1">
+                              <i className={`bi ${expandedLesson === lesson.id ? 'bi-chevron-down' : 'bi-chevron-right'} text-gray-600`}></i>
+                              <h4 className="font-medium text-gray-800 text-sm">{lesson.title}</h4>
+                            </div>
+                            {lesson.fileUrl && (
+                              <a
+                                href={lesson.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors duration-300 flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <i className="bi bi-download"></i> Download
+                              </a>
+                            )}
+                          </div>
+                          {expandedLesson === lesson.id && (
+                            <div className="p-4">
+                              <p className="text-xs text-gray-600 mb-3">{lesson.description}</p>
+                              {/* Lectures within the lesson */}
+                              {lesson.lectures && lesson.lectures.length > 0 && (
+                                <div className="space-y-2">
+                                  {lesson.lectures.map((lecture) => (
+                                    <div key={lecture.id} className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-gray-100 transition-all duration-300">
+                                      <div>
+                                        <h5 className="font-medium text-gray-800 text-sm mb-0.5">{lecture.title}</h5>
+                                        <p className="text-xs text-gray-600">{lecture.description}</p>
+                                      </div>
+                                      {lecture.fileUrl && (
+                                        <a
+                                          href={lecture.fileUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors duration-300 flex items-center gap-1"
+                                        >
+                                          <i className="bi bi-download"></i> Download
+                                        </a>
+                                      )}
+                                      <button
+                                        onClick={() => viewLectureDownloads(lecture)}
+                                        className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center gap-1"
+                                      >
+                                        <i className="bi bi-eye"></i> View
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -200,7 +350,7 @@ export default function AdminDashboard() {
                       {quizzes.length} Total
                     </span>
                   </div>
-                  
+
                   {quizzesLoading ? (
                     <div className="flex justify-center items-center h-24">
                       <div className="animate-spin rounded-full h-6 w-6 border-4 border-purple-200 border-t-purple-600"></div>
@@ -218,7 +368,7 @@ export default function AdminDashboard() {
                             </span>
                           </div>
                           <p className="text-xs text-gray-600 mb-3">Topic: {quiz.topic}</p>
-                          
+
                           {quizAttempts[quiz.id] && quizAttempts[quiz.id].length > 0 && (
                             <div className="mt-3">
                               <h5 className="text-xs font-semibold text-gray-700 mb-2">Recent Attempts:</h5>
@@ -251,6 +401,73 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
+        ) : activeView === 'downloads' ? (
+          <div className="bg-white rounded-lg shadow-md border border-gray-100 p-5">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Downloads</h2>
+            {selectedLecture ? (
+              <div>
+                <button
+                  onClick={() => setSelectedLecture(null)}
+                  className="mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200"
+                >
+                  Back to Lessons
+                </button>
+                <h3 className="font-medium text-gray-800 text-lg mb-2">{selectedLecture.lectureTitle}</h3>
+                <p className="text-xs text-gray-600 mb-3">Downloads: {selectedLecture.downloads}</p>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white rounded-lg shadow-sm">
+                    <thead>
+                      <tr>
+                        <th className="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                        <th className="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                        <th className="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedLecture.users.map((user, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="py-2 px-4 border-b border-gray-200 text-sm text-gray-600">{user.id}</td>
+                          <td className="py-2 px-4 border-b border-gray-200 text-sm text-gray-600">{user.name}</td>
+                          <td className="py-2 px-4 border-b border-gray-200 text-sm text-gray-600">{user.email}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {dummyDownloads.map((lesson) => (
+                  <div key={lesson.lessonId} className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-medium text-gray-800 text-lg">{lesson.lessonTitle}</h3>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">
+                        Total Downloads: {lesson.lectures.reduce((total, lecture) => total + lecture.downloads, 0)}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {lesson.lectures.map((lecture) => (
+                        <div key={lecture.lectureId} className="bg-white rounded-lg p-4 shadow-sm">
+                          <div className="flex justify-between items-center mb-2">
+                            <h4 className="font-medium text-gray-800 text-sm">{lecture.lectureTitle}</h4>
+                            <span className="px-2 py-0.5 bg-green-100 text-green-600 rounded-full text-xs font-medium">
+                              Downloads: {lecture.downloads}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => viewLectureDownloads(lecture)}
+                            className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center gap-1"
+                          >
+                            <i className="bi bi-eye"></i> View
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
           /* Announcements View */
           <div className="bg-white rounded-lg shadow-md border border-gray-100 p-5">
@@ -260,7 +477,7 @@ export default function AdminDashboard() {
                 {announcements.length} Total
               </span>
             </div>
-            
+
             {announcementsLoading ? (
               <div className="flex justify-center items-center h-48">
                 <div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-200 border-t-orange-600"></div>

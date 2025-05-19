@@ -20,7 +20,15 @@ export default function Layout() {
     <LoadingContext.Provider value={{ isLoading, setIsLoading }}>
       {isLoading && <Loading />}
       <Header />
-      <main className="mt-[70px] min-h-[calc(100vh-70px)] w-full box-border p-5 bg-[#f7f9fa]">
+      <main 
+        style={{
+
+          marginTop: '60px', // Adjust this value based on your header height
+          minHeight: 'calc(100vh - 60px)', // Full viewport height minus header height
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
         <Outlet />
       </main>
     </LoadingContext.Provider>

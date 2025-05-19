@@ -7,13 +7,19 @@ import { onAuthStateChanged } from 'firebase/auth'; // Import Firebase Auth func
 import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
 import { useHandleStorage } from '../hooks/useHandleStorage';
 import { motion, AnimatePresence } from 'framer-motion'; // Add framer-motion for animations
+import Loading from '../components/Loading'; // Import Loading component
 
 const Dashboard = () => {
   const { courses, enrolledCourses } = useHandleCourses();
-  const { announcements, loading } = useHandleAnnouncements();
+  const { announcements, loading: announcementsLoading } = useHandleAnnouncements();
   const { fetchCourseImages } = useHandleStorage();
 
   const [coursesWithImages, setCoursesWithImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [cardsPerRow, setCardsPerRow] = useState(3);
+  const [user, setUser] = useState(null);
+  const [activeSection, setActiveSection] = useState('enrolled');
 
   useEffect(() => {
     const fetchImagesForCourses = async () => {
@@ -31,6 +37,8 @@ const Dashboard = () => {
       } catch (error) {
         console.error('Error fetching course images:', error);
         setCoursesWithImages(courses.map(course => ({ ...course, imageUrl: null })));
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -38,13 +46,9 @@ const Dashboard = () => {
       fetchImagesForCourses();
     } else {
       setCoursesWithImages([]);
+      setIsLoading(false);
     }
   }, [courses]);
-
-  const [currentPage, setCurrentPage] = useState(0);
-  const [cardsPerRow, setCardsPerRow] = useState(3);
-  const [user, setUser] = useState(null); // State to store user data
-  const [activeSection, setActiveSection] = useState('enrolled'); // State to manage active section
 
   useEffect(() => {
     const handleResize = () => {
@@ -126,27 +130,22 @@ const Dashboard = () => {
   const CARD_IMAGE_HEIGHT = 'h-[140px]'; // Fixed height for card images
   const CARD_CONTENT_HEIGHT = 'h-[140px]'; // Fixed height for card content
 
-  // Add loading state
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Your existing data fetching logic
-        await Promise.all([
-          // Add any async operations here
-        ]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
   return (
-    <section className="">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-6">
+    <section className="relative p-4">
+      {isLoading && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex items-center justify-center"
+        >
+          <div className="relative">
+            <div className="absolute -inset-4 rounded-full bg-blue-500/10 animate-pulse"></div>
+            <Loading />
+          </div>
+        </motion.div>
+      )}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex flex-col gap-4 w-full lg:w-3/4">
             <motion.div 
@@ -162,7 +161,7 @@ const Dashboard = () => {
                   <span className="text-xs text-blue-50 font-medium">Active Session</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                  Welcome back, {user ? `${user.firstName} ${user.lastName}` : 'Guest'}! 👋
+                  Welcome back, {user ? `${user.firstName} ${user.lastName}` : 'Guest'}! 
                 </h2>
                 <p className="text-sm text-blue-50/90 font-medium">
                   Continue your learning journey with Crim Edge
@@ -243,29 +242,12 @@ const Dashboard = () => {
 
               <div className="p-3">
                 <AnimatePresence mode="wait">
-                  {isLoading ? (
+                  {activeSection === 'enrolled' ? (
                     <motion.div 
+                      key="enrolled"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3"
-                    >
-                      {[...Array(8)].map((_, index) => (
-                        <div key={index} className={`bg-white/50 rounded-lg shadow-sm overflow-hidden animate-pulse ${CARD_HEIGHT}`}>
-                          <div className={`${CARD_IMAGE_HEIGHT} bg-gradient-to-br from-gray-100 to-gray-200`}></div>
-                          <div className={`${CARD_CONTENT_HEIGHT} p-3 space-y-2`}>
-                            <div className="h-3 bg-gradient-to-br from-gray-100 to-gray-200 rounded w-3/4"></div>
-                            <div className="h-2 bg-gradient-to-br from-gray-100 to-gray-200 rounded w-full"></div>
-                            <div className="h-2 bg-gradient-to-br from-gray-100 to-gray-200 rounded w-2/3"></div>
-                          </div>
-                        </div>
-                      ))}
-                    </motion.div>
-                  ) : activeSection === 'enrolled' ? (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
                       className="course-container"
                     >
                       {enrolledCoursesList.length === 0 ? (
@@ -288,74 +270,77 @@ const Dashboard = () => {
                           </button>
                         </motion.div>
                       ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
-                          {currentEnrolledCourses.map((course) => (
-                            <motion.div
-                              key={course.id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              whileHover={{ y: -3, transition: { duration: 0.2 } }}
-                              className="group"
-                            >
-                              <Link 
-                                to={`/course/${course.id}`} 
-                                className={`block bg-white/50 backdrop-blur-sm rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border border-gray-100/50 ${CARD_HEIGHT}`}
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
+                            {currentEnrolledCourses.map((course) => (
+                              <motion.div
+                                key={course.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                                className="group"
                               >
-                                <div className={`relative ${CARD_IMAGE_HEIGHT} overflow-hidden`}>
-                                  {course.imageUrl ? (
-                                    <img
-                                      src={course.imageUrl}
-                                      alt={course.course}
-                                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                  ) : (
-                                    <div className="h-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                                      <div className="text-2xl text-blue-200">
-                                        <i className='bi bi-image'></i>
+                                <Link 
+                                  to={`/course/${course.id}`} 
+                                  className={`block bg-white/50 backdrop-blur-sm rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border border-gray-100/50 ${CARD_HEIGHT}`}
+                                >
+                                  <div className={`relative ${CARD_IMAGE_HEIGHT} overflow-hidden`}>
+                                    {course.imageUrl ? (
+                                      <img
+                                        src={course.imageUrl}
+                                        alt={course.course}
+                                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                                      />
+                                    ) : (
+                                      <div className="h-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+                                        <div className="text-2xl text-blue-200">
+                                          <i className='bi bi-image'></i>
+                                        </div>
                                       </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="absolute top-2 right-2">
+                                      <span className="px-1.5 py-0.5 text-xs font-medium text-white bg-blue-500/90 rounded-full backdrop-blur-sm">
+                                        Enrolled
+                                      </span>
                                     </div>
-                                  )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                  <div className="absolute top-2 right-2">
-                                    <span className="px-1.5 py-0.5 text-xs font-medium text-white bg-blue-500/90 rounded-full backdrop-blur-sm">
-                                      Enrolled
-                                    </span>
                                   </div>
-                                </div>
-                                <div className={`${CARD_CONTENT_HEIGHT} p-3 flex flex-col`}>
-                                  <h2 className="text-base font-semibold text-gray-800 mb-1.5 line-clamp-1">{course.course}</h2>
-                                  <p className="text-xs text-gray-600 mb-2 line-clamp-2 flex-grow">{course.description || 'No description available'}</p>
-                                  <div className="flex items-center text-xs text-gray-500 mt-auto">
-                                    <i className="bi bi-person-circle mr-1.5 text-blue-500"></i>
-                                    {course.createdByName || 'Unknown Instructor'}
+                                  <div className={`${CARD_CONTENT_HEIGHT} p-3 flex flex-col`}>
+                                    <h2 className="text-base font-semibold text-gray-800 mb-1.5 line-clamp-1">{course.course}</h2>
+                                    <p className="text-xs text-gray-600 mb-2 line-clamp-2 flex-grow">{course.description || 'No description available'}</p>
+                                    <div className="flex items-center text-xs text-gray-500 mt-auto">
+                                      <i className="bi bi-person-circle mr-1.5 text-blue-500"></i>
+                                      {course.createdByName || 'Unknown Instructor'}
+                                    </div>
                                   </div>
-                                </div>
-                              </Link>
-                            </motion.div>
-                          ))}
-                        </div>
-                      )}
-                      {enrolledCoursesList.length > 0 && (
-                        <div className="flex justify-center mt-4 gap-1.5">
-                          {Array.from({ length: Math.ceil(enrolledCoursesList.length / cardsPerRow) }, (_, index) => (
-                            <button
-                              key={index}
-                              onClick={() => handleDotClick(index)}
-                              className={`h-1.5 rounded-full transition-all duration-300 ${
-                                currentPage === index 
-                                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500 w-6' 
-                                  : 'bg-gray-200 w-1.5 hover:bg-gray-300'
-                              }`}
-                            ></button>
-                          ))}
-                        </div>
+                                </Link>
+                              </motion.div>
+                            ))}
+                          </div>
+                          {enrolledCoursesList.length > 0 && (
+                            <div className="flex justify-center mt-4 gap-1.5">
+                              {Array.from({ length: Math.ceil(enrolledCoursesList.length / cardsPerRow) }, (_, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => handleDotClick(index)}
+                                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                                    currentPage === index 
+                                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 w-6' 
+                                      : 'bg-gray-200 w-1.5 hover:bg-gray-300'
+                                  }`}
+                                ></button>
+                              ))}
+                            </div>
+                          )}
+                        </>
                       )}
                     </motion.div>
                   ) : (
                     <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
+                      key="other"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
                       className="course-container"
                     >
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">

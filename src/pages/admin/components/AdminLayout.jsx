@@ -1,30 +1,22 @@
-import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import AdminSidebar from './AdminSidebar';
-import AdminHeader from './AdminHeader';
+import InstructorHeader from './AdminHeader';
 
 export default function AdminLayout() {
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1200);
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsSidebarOpen(window.innerWidth > 1200);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
     <>
-      <AdminHeader toggleSidebar={toggleSidebar} />
-      <AdminSidebar isOpen={isSidebarOpen} />
-      <main>
-        <div className={`content ${isSidebarOpen ? '' : 'collapsed'}`}>
-          <Outlet />
-        </div>
+      <InstructorHeader />
+      <main 
+        style={{
+
+          marginTop: '60px', // Adjust this value based on your header height
+          minHeight: 'calc(100vh - 60px)', // Full viewport height minus header height
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
+        <Outlet />
       </main>
     </>
   );

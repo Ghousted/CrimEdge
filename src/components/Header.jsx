@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../auth/components/authContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { authControl } from '../auth/components/authControl';
+import ReviewHubLogo from '../assets/ReviewHub.png';
 
 export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -63,7 +64,7 @@ export default function Header() {
       <div className="flex items-center gap-[18px]">
         <Link to="/dashboard" className="no-underline">
           <span className="font-bold text-3xl text-[#2d2f31] font-sans tracking-[-2px]  flex items-center cursor-pointer">
-            <img src="src/assets/ReviewHub.png" alt="Logo" className="w-40 mb-2" />
+            <img src={ReviewHubLogo} alt="Logo" className="w-40 mb-2" />
           </span>
         </Link>
       </div>
@@ -104,11 +105,19 @@ export default function Header() {
 
         {/* User Dropdown */}
         <div className="relative" ref={dropdownRef}>
-          <div
-            className="flex items-center justify-center cursor-pointer bg-[#a435f0] text-white rounded-full w-9 h-9 font-bold text-lg ml-1.5"
+          <div 
+            className="flex items-center gap-2 cursor-pointer" 
             onClick={() => setDropdownOpen((open) => !open)}
           >
-            {initials || 'U'}
+            <div
+              className="flex items-center justify-center bg-[#a435f0] text-white rounded-full w-9 h-9 font-bold text-lg"
+            >
+              {initials || 'U'}
+            </div>
+            <div className="hidden md:flex items-center gap-1">
+              <span className="text-[#2d2f31] font-medium text-sm">{name}</span>
+              <i className={`bi bi-chevron-right text-[#2d2f31] transition-transform duration-200 ${dropdownOpen ? 'rotate-90' : ''}`}></i>
+            </div>
           </div>
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-70 bg-white rounded-lg shadow-lg z-50 border border-gray-100">
@@ -117,23 +126,23 @@ export default function Header() {
                   {initials || 'U'}
                 </div>
                 <div>
-                  <div className="font-semibold text-[#2d2f31]">{name}</div>
+                  <div className="font-medium text-[#2d2f31]">{name}</div>
                   <div className="text-sm text-gray-500">{email}</div>
                 </div>
               </div>
               <ul className="m-0 p-0 list-none">
                 <Link to="/certification" className="no-underline">
-                  <li className="px-[18px] py-2.5 cursor-pointer text-[#2d2f31] font-medium border-b border-gray-100 hover:bg-gray-100 transition-colors duration-200">Certification</li>
+                  <li className="px-[18px] py-2.5 cursor-pointer text-[#2d2f31] text-sm font-medium border-b border-gray-100 hover:bg-gray-100 transition-colors duration-200">Certification</li>
                 </Link>
                 <Link to="/support" className="no-underline">
-                  <li className="px-[18px] py-2.5 cursor-pointer text-[#2d2f31] font-medium border-b border-gray-100 hover:bg-gray-100 transition-colors duration-200">Support</li>
+                  <li className="px-[18px] py-2.5 cursor-pointer text-[#2d2f31] text-sm font-medium border-b border-gray-100 hover:bg-gray-100 transition-colors duration-200">Support</li>
                 </Link>
                 <Link to="/account" className="no-underline">
-                  <li className="px-[18px] py-2.5 cursor-pointer text-[#2d2f31] font-medium border-b border-gray-100 hover:bg-gray-100 transition-colors duration-200">Account settings</li>
+                  <li className="px-[18px] py-2.5 cursor-pointer text-[#2d2f31] text-sm font-medium border-b border-gray-100 hover:bg-gray-100 transition-colors duration-200">Account settings</li>
                 </Link>
                 <li 
                   onClick={handleLogout}
-                  className="px-[18px] py-2.5 cursor-pointer text-red-500 font-medium hover:bg-red-50 transition-colors duration-200"
+                  className="px-[18px] py-2.5 cursor-pointer text-red-500 text-sm font-medium hover:bg-red-50 transition-colors duration-200"
                 >
                   Sign out
                 </li>
