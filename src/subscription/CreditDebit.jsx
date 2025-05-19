@@ -2,12 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authControl } from '../auth/components/authControl';
+import Loading from '../components/Loading';
 
 export default function CreditDebit() {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = authControl();
   const [agreed, setAgreed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Set the background styling
@@ -42,23 +44,47 @@ export default function CreditDebit() {
 
   const price = getPriceForPlan(plan);
 
-  const handleStartMembership = () => {
-    // Add your membership start logic here
-    console.log(`Starting ${plan} membership with payment of ${price}`);
-    navigate('/dashboard');
+  const handleStartMembership = async () => {
+    setIsLoading(true);
+    try {
+      // Add your membership start logic here
+      console.log(`Starting ${plan} membership with payment of ${price}`);
+      // Add a small delay to ensure loading screen shows
+      await new Promise(resolve => setTimeout(resolve, 500));
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error starting membership:', error);
+      setIsLoading(false);
+    }
   };
 
-  const handleChangePlan = () => {
-    navigate('/membership');
+  const handleChangePlan = async () => {
+    setIsLoading(true);
+    try {
+      // Add a small delay to ensure loading screen shows
+      await new Promise(resolve => setTimeout(resolve, 500));
+      navigate('/membership');
+    } catch (error) {
+      console.error("Error changing plan:", error);
+      setIsLoading(false);
+    }
   };
 
   const handleSignOut = async () => {
+    setIsLoading(true);
     try {
+      // Add a small delay to ensure loading screen shows
+      await new Promise(resolve => setTimeout(resolve, 500));
       await logout();
     } catch (error) {
       console.error("Error signing out:", error.message);
+      setIsLoading(false);
     }
   };
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <section className="min-h-screen bg-gradient-to-r from-gray-100 to-gray-200">

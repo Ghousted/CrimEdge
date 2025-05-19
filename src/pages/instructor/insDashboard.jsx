@@ -3,6 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
 import { useHandleCourses } from '../../hooks/useHandleCourses';
 import { useHandleStorage } from '../../hooks/useHandleStorage';
+import { motion, AnimatePresence } from 'framer-motion';
+import Loading from '../../components/Loading';
+import { auth, db } from '../../../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function InstructorDashboard() {
   const [target, setTarget] = useState('All');
@@ -17,6 +22,10 @@ export default function InstructorDashboard() {
   const [deleteType, setDeleteType] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [coursesWithImages, setCoursesWithImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [cardsPerRow, setCardsPerRow] = useState(3);
+  const [user, setUser] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const { id } = useParams();
   const courseId = id;
@@ -44,6 +53,17 @@ export default function InstructorDashboard() {
     getCourses
   } = useHandleCourses();
 
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchImagesForCourses = async () => {
       const coursesWithUrls = await Promise.all(
@@ -53,26 +73,63 @@ export default function InstructorDashboard() {
         })
       );
       setCoursesWithImages(coursesWithUrls);
+      setIsLoading(false);
     };
 
     if (courses.length > 0) {
       fetchImagesForCourses();
     } else {
       setCoursesWithImages([]);
+      setIsLoading(false);
     }
   }, [courses]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setCardsPerRow(getCardsPerRow());
+    };
+
+    setCardsPerRow(getCardsPerRow());
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
+      if (userAuth) {
+        // Fetch user data from Firestore
+        const userDocRef = doc(db, 'users', userAuth.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setUser(userDocSnap.data());
+        }
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const getCardsPerRow = () => {
+    if (window.innerWidth >= 1536) return 4; // 2xl screens
+    if (window.innerWidth >= 1280) return 3; // xl screens
+    if (window.innerWidth >= 1024) return 3; // lg screens
+    if (window.innerWidth >= 768) return 2;  // md screens
+    return 1; // sm and xs screens
+  };
+
   const handleAddCourse = async () => {
-    // First add the new course to get its id
     await addNewCourse(courseName, courseDescription);
 
-    // Then upload the image if present with the new course name
     if (courseImage && courseName) {
       await uploadCourseImages(courseImage, courseName);
     }
 
-    // Refresh courses list after adding
-    window.location.reload(); // Reload the page to fetch new data
+    window.location.reload();
 
     setCourseName('');
     setCourseDescription('');
@@ -104,7 +161,7 @@ export default function InstructorDashboard() {
     setShowDeleteModal(false);
     setDeleteTarget(null);
     setDeleteType('');
-    window.location.reload(); // Reload the page to fetch new data
+    window.location.reload();
 
     if (courseId) {
       getCourses();
@@ -146,24 +203,74 @@ export default function InstructorDashboard() {
     setDropdownOpen(dropdownOpen === id ? null : id);
   };
 
+  // Constants for card dimensions
+  const CARD_HEIGHT = 'h-[240px]';
+  const CARD_IMAGE_HEIGHT = 'h-[120px]';
+  const CARD_CONTENT_HEIGHT = 'h-[120px]';
+
   return (
-    <section className="p-8 sm:px-4 lg:px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left Side - Courses Section */}
-          <div className="flex flex-col w-full gap-4 lg:col-span-2">
-            {/* Add Course */}
-            <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100">
-              <h2 className="text-xl font-medium mb-2 text-gray-800 flex items-center gap-2">
+    <section className="relative p-4">
+      {isLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex items-center justify-center"
+        >
+          <div className="relative">
+            <div className="absolute -inset-4 rounded-full bg-blue-500/10 animate-pulse"></div>
+            <Loading />
+          </div>
+        </motion.div>
+      )}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col gap-3 w-full lg:w-3/4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden rounded-xl grd-bg2 p-5 shadow-lg"
+            >
+              <div className="absolute inset-0 bg-grid-white/[0.1] bg-[size:16px_16px]"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+                  <span className="text-xs text-blue-50 font-medium">Instructor Dashboard</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                  Welcome back, {user ? `${user.firstName} ${user.lastName}` : 'Instructor'}!
+                </h2>
+                <p className="text-sm text-blue-50/90 font-medium">
+                  Manage your courses and announcements with Crim Edge
+                </p>
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-blue-50/90">
+                    <i className="bi bi-calendar-check text-sm"></i>
+                    <span className="text-xs">{currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                  </div>
+                  <div className="h-3 w-px bg-blue-50/30"></div>
+                  <div className="flex items-center gap-1.5 text-blue-50/90">
+                    <i className="bi bi-clock text-sm"></i>
+                    <span className="text-xs">{currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Add Course Section */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-4 border border-gray-100/50">
+              <h2 className="text-lg  mb-3 text-gray-800 flex items-center gap-2">
+                <i className="bi bi-plus-circle-fill text-blue-600"></i>
                 Add New Course
               </h2>
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col md:flex-row gap-3">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col md:flex-row gap-2">
                   <input
                     type="text"
                     required
                     placeholder="Enter course code"
-                    className="flex-1 p-1.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
                     value={courseName}
                     onChange={(e) => setCourseName(e.target.value)}
                   />
@@ -171,17 +278,17 @@ export default function InstructorDashboard() {
                     type="text"
                     required
                     placeholder="Enter course description"
-                    className="flex-1 p-1.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
                     value={courseDescription}
                     onChange={(e) => setCourseDescription(e.target.value)}
                   />
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="courseImage"
-                      className="cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-all duration-200 flex items-center gap-1.5 font-medium text-sm"
+                      className="cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 font-medium text-sm"
                     >
-                      <i className='bi bi-card-image text-base'></i>
-                      <span>Upload Image</span>
+                      <i className='bi bi-card-image'></i>
+                      Upload Image
                     </label>
                     <input
                       id="courseImage"
@@ -194,18 +301,18 @@ export default function InstructorDashboard() {
                 </div>
 
                 {courseImage && (
-                  <div className="flex items-center gap-3 bg-gray-50 border-2 border-gray-200 rounded-md">
+                  <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg">
                     <div className='flex justify-between w-full items-center'>
-                      <div className='flex items-center gap-4'>
+                      <div className='flex items-center gap-3'>
                         <img
                           src={URL.createObjectURL(courseImage)}
                           alt="Preview"
-                          className="w-28 h-16 object-cover rounded-l-md shadow-md"
+                          className="w-24 h-14 object-cover rounded-l-lg"
                         />
-                        <span className="text-gray-700 text-base font-medium">{courseImage.name}</span>
+                        <span className="text-gray-700 text-sm">{courseImage.name}</span>
                       </div>
                       <button
-                        className='text-red-600 hover:text-red-800 transition-colors duration-200 flex items-center gap-1.5 mr-4 text-sm'
+                        className='text-red-600 hover:text-red-800 transition-colors duration-200 flex items-center gap-2 mr-3 text-sm'
                         onClick={handleRemoveFile}
                       >
                         <i className="bi bi-trash"></i>
@@ -217,7 +324,7 @@ export default function InstructorDashboard() {
 
                 <button
                   onClick={handleAddCourse}
-                  className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 rounded-md hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 font-medium shadow-md shadow-blue-500/20 text-sm"
+                  className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium shadow-md text-sm"
                   disabled={!courseName.trim() || !courseDescription.trim()}
                 >
                   <i className="bi bi-plus-circle"></i>
@@ -227,7 +334,11 @@ export default function InstructorDashboard() {
             </div>
 
             {/* Display Courses */}
-            <div className="">
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-4 border border-gray-100/50">
+              <h2 className="text-lg font-bold mb-3 text-gray-800 flex items-center gap-2">
+                <i className="bi bi-collection-fill text-blue-600"></i>
+                Your Courses
+              </h2>
               {coursesLoading ? (
                 <div className="flex justify-center items-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -235,56 +346,69 @@ export default function InstructorDashboard() {
               ) : coursesWithImages.length === 0 ? (
                 <div className="text-center py-8 bg-gray-50 rounded-lg">
                   <i className="bi bi-book text-4xl text-gray-400 mb-3"></i>
-                  <p className="text-gray-500 text-base">You have not created any courses yet.</p>
+                  <p className="text-gray-500">You have not created any courses yet.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {coursesWithImages.map((course, index) => (
-                    <div key={course.id} className="bg-white rounded-lg overflow-hidden transform hover:scale-105 transition-all duration-200 border border-gray-200 shadow-md hover:shadow-lg">
-                      <Link to={`/course-page/${course.id}`} className="block">
-                        {course.imageUrl ? (
-                          <img
-                            src={course.imageUrl}
-                            alt={course.course}
-                            className="w-full h-36 object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-36 bg-gray-100 flex items-center justify-center">
-                            <i className="bi bi-image text-4xl text-gray-400"></i>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
+                  {coursesWithImages.map((course) => (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                      className="group"
+                    >
+                      <Link
+                        to={`/course-page/${course.id}`}
+                        className={`block bg-white/50 backdrop-blur-sm rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border border-gray-100/50 ${CARD_HEIGHT}`}
+                      >
+                        <div className={`relative ${CARD_IMAGE_HEIGHT} overflow-hidden`}>
+                          {course.imageUrl ? (
+                            <img
+                              src={course.imageUrl}
+                              alt={course.course}
+                              className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="h-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+                              <div className="text-2xl text-blue-200">
+                                <i className='bi bi-image'></i>
+                              </div>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <div className="absolute top-2 right-2">
+                            <button
+                              className="text-gray-500 hover:text-gray-700 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-md hover:shadow-lg transition-all duration-200"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleDropdown(`course-${course.id}`);
+                              }}
+                            >
+                              <i className="bi bi-three-dots-vertical"></i>
+                            </button>
+                            {dropdownOpen === `course-${course.id}` && (
+                              <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                <button
+                                  className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-50 text-red-600 transition-colors duration-200"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    openDeleteModal(course, 'course');
+                                  }}
+                                >
+                                  <i className="bi bi-trash"></i>
+                                  Delete
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        <div className="p-4">
-                          <h3 className="text-lg font-bold text-gray-800 mb-1">{course.course}</h3>
-                          <p className="text-gray-600 text-sm">{course.description}</p>
+                        </div>
+                        <div className={`${CARD_CONTENT_HEIGHT} p-3 flex flex-col`}>
+                          <h3 className="text-base font-semibold text-gray-800 mb-1">{course.course}</h3>
+                          <p className="text-xs text-gray-600 line-clamp-2">{course.description}</p>
                         </div>
                       </Link>
-                      <div className="absolute top-3 right-3">
-                        <button 
-                          className="text-gray-500 hover:text-gray-700 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-md hover:shadow-lg transition-all duration-200" 
-                          onClick={() => toggleDropdown(`course-${course.id}`)}
-                        >
-                          <i className="bi bi-three-dots-vertical"></i>
-                        </button>
-                        {dropdownOpen === `course-${course.id}` && (
-                          <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-10 overflow-hidden">
-                            <button
-                              className="flex items-center gap-1.5 w-full px-3 py-2 hover:bg-gray-50 text-gray-700 transition-colors duration-200 text-sm"
-                              onClick={() => console.log('Edit course', course.id)}
-                            >
-                              <i className="bi bi-pencil"></i>
-                              Edit
-                            </button>
-                            <button
-                              className="flex items-center gap-1.5 w-full px-3 py-2 hover:bg-gray-50 text-red-600 transition-colors duration-200 text-sm"
-                              onClick={() => openDeleteModal(course, 'course')}
-                            >
-                              <i className="bi bi-trash"></i>
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
@@ -292,144 +416,125 @@ export default function InstructorDashboard() {
           </div>
 
           {/* Right Side - Announcements Section */}
-          <div className="flex flex-col w-full gap-4">
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                <i className="bi bi-megaphone-fill text-blue-600"></i>
-                Add Announcement
-              </h2>
-              <textarea
-                className="w-full p-3 h-24 border border-gray-200 rounded-lg resize-none mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
-                placeholder="Write your announcement here..."
-                value={announcement}
-                onChange={(e) => setAnnouncement(e.target.value)}
-                required
-              />
-              <div className="mb-4">
-                <label htmlFor="audience" className="block mb-1.5 font-medium text-gray-700 text-sm">Target Audience</label>
-                <select
-                  id="audience"
-                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                >
-                  <option value="All">All</option>
-                  <option value="Free">Free</option>
-                  <option value="Basic Plan">Basic Plan</option>
-                  <option value="Premium Plan">Premium Plan</option>
-                </select>
+          <div className="w-full lg:w-1/4">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-4 sticky top-6 border border-gray-100/50"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
+                  <i className="bi bi-megaphone text-base text-blue-500"></i>
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-gray-800">Announcements</h2>
+                </div>
               </div>
-              <button
-                onClick={handleAddAnnouncement}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 font-medium shadow-md shadow-blue-500/20 text-sm"
-                disabled={!announcement.trim()}
-              >
-                <i className="bi bi-plus-circle"></i>
-                Add Announcement
-              </button>
-            </div>
 
-            {/* List Announcements */}
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                <i className="bi bi-bell-fill text-blue-600"></i>
-                Your Announcements
-              </h2>
-              {createdAnnouncements.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <i className="bi bi-megaphone text-4xl text-gray-400 mb-3"></i>
-                  <p className="text-gray-500 text-base">You have not created any announcements yet.</p>
+              <div className="mb-4">
+                <textarea
+                  className="w-full p-2 h-20 border border-gray-200 rounded-lg resize-none mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
+                  placeholder="Write your announcement here..."
+                  value={announcement}
+                  onChange={(e) => setAnnouncement(e.target.value)}
+                  required
+                />
+                <div className="mb-2">
+                  <label className="block mb-1 text-xs font-medium text-gray-700">Target Audience</label>
+                  <select
+                    className="w-full p-1.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
+                    value={target}
+                    onChange={(e) => setTarget(e.target.value)}
+                  >
+                    <option value="All">All</option>
+                    <option value="Free">Free</option>
+                    <option value="Basic Plan">Basic Plan</option>
+                    <option value="Premium Plan">Premium Plan</option>
+                  </select>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {createdAnnouncements.map((announcement, index) => (
-                    <div key={announcement.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 relative transform hover:scale-102 transition-all duration-200">
-                      <div className="absolute top-3 right-3">
-                        <button 
-                          className="text-gray-500 hover:text-gray-700 bg-white rounded-full p-1.5 shadow-md hover:shadow-lg transition-all duration-200" 
-                          onClick={() => toggleDropdown(`announcement-${announcement.id}`)}
-                        >
-                          <i className="bi bi-three-dots-vertical"></i>
-                        </button>
-                        {dropdownOpen === `announcement-${announcement.id}` && (
-                          <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-10 overflow-hidden">
-                            <button
-                              className="flex items-center gap-1.5 w-full px-3 py-2 hover:bg-gray-50 text-gray-700 transition-colors duration-200 text-sm"
-                              onClick={() => openEditModal(announcement)}
-                            >
-                              <i className="bi bi-pencil"></i>
-                              Edit
-                            </button>
-                            <button
-                              className="flex items-center gap-1.5 w-full px-3 py-2 hover:bg-gray-50 text-red-600 transition-colors duration-200 text-sm"
-                              onClick={() => openDeleteModal(announcement, 'announcement')}
-                            >
-                              <i className="bi bi-trash"></i>
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <i className="bi bi-people-fill text-blue-600"></i>
-                        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                          {announcement.target}
-                        </span>
-                      </div>
-                      <p className="text-gray-700 text-sm">{announcement.announcement}</p>
+                <button
+                  onClick={handleAddAnnouncement}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium text-sm"
+                  disabled={!announcement.trim()}
+                >
+                  <i className="bi bi-plus-circle"></i>
+                  Add Announcement
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {createdAnnouncements.map((announcement) => (
+                  <motion.div
+                    key={announcement.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 bg-gradient-to-br from-blue-100/50 to-indigo-50/100 rounded-lg relative group hover:from-blue-50 hover:to-indigo-50 transition-colors duration-200"
+                  >
+                    <div className="mb-1.5">
+                      <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                        {announcement.target}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <p className="text-xs text-gray-700">{announcement.announcement}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>
 
       {/* Delete Modal */}
       {showDeleteModal && (
-        <div className="modal-overlay">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-sm transform transition-all">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-sm"
+          >
             <h2 className="text-xl font-bold mb-3 text-gray-800">Confirm Deletion</h2>
-            <p className="text-gray-700 mb-6 text-sm">
-              Are you sure you want to delete this {deleteType === 'course' ? 'course' : 'announcement'}? This action cannot be undone.
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete this {deleteType}? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={closeDeleteModal}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium text-sm"
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 flex items-center gap-1.5 font-medium shadow-md shadow-red-500/20 text-sm"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 flex items-center gap-2"
               >
                 <i className="bi bi-trash"></i>
                 Delete
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="modal-overlay">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-sm transform transition-all">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-sm"
+          >
             <h2 className="text-xl font-bold mb-4 text-gray-800">Edit Announcement</h2>
             <textarea
-              className="w-full p-3 h-24 border border-gray-200 rounded-lg resize-none mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
+              className="w-full p-3 h-24 border border-gray-200 rounded-lg resize-none mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50"
               placeholder="Write your announcement here..."
               value={announcement}
               onChange={(e) => setAnnouncement(e.target.value)}
               required
             />
             <div className="mb-4">
-              <label htmlFor="editAudience" className="block mb-1.5 font-medium text-gray-700 text-sm">Target Audience</label>
+              <label className="block mb-1.5 text-sm font-medium text-gray-700">Target Audience</label>
               <select
-                id="editAudience"
-                className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
+                className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50"
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
               >
@@ -442,19 +547,19 @@ export default function InstructorDashboard() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={closeEditModal}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium text-sm"
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleEditAnnouncement}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center gap-1.5 font-medium shadow-md shadow-blue-500/20 text-sm"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center gap-2"
               >
                 <i className="bi bi-check-lg"></i>
                 Save Changes
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </section>

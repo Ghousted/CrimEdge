@@ -35,6 +35,7 @@ import AdminSetting from './pages/admin/adminSetting';
 import UserManagement from './pages/admin/UserManagement';
 import InstructorDashboard from './pages/instructor/insDashboard';
 import CoursePage from './pages/instructor/CoursePage';
+import Assessment from './pages/instructor/AssessmentPage';
 
 // Routes
 import PublicRoute from '../src/auth/components/PublicRoute';
@@ -82,6 +83,7 @@ const App = () => {
       <Route element={<InstructorLayout />}>
         <Route path="/insdashboard" element={<PrivateRoute element={<InstructorDashboard />} requiredRole="instructor" />} />
         <Route path="/course-page/:id" element={<PrivateRoute element={<CoursePage />} requiredRole="instructor" />} />
+        <Route path="/assessment-page/:courseId/:type" element={<PrivateRoute element={<Assessment />} requiredRole="instructor" />} />
       </Route>
     </Routes>
   );

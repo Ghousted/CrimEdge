@@ -111,11 +111,14 @@ export const authControl = () => {
                 });
             }
 
+            // Add a delay before navigation to show loading screen
+            await new Promise(resolve => setTimeout(resolve, 1500));
             await handleUserLogin(user);
 
         } catch (err) {
             console.error("Email/password sign-in error:", err);
             alert("Invalid credentials or user does not exist.");
+            throw err; // Re-throw the error to be caught by the SignIn component
         }
     };
 

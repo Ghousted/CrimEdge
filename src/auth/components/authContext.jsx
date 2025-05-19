@@ -9,6 +9,7 @@ import {
   where,
   getDocs,
 } from 'firebase/firestore';
+import Loading from '../../components/Loading';
 
 const AuthContext = createContext();
 
@@ -101,7 +102,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading />
+      </div>
+    );
   }
 
   return (
