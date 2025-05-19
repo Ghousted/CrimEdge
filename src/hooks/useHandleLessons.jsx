@@ -59,7 +59,7 @@ export const useHandleLessons = (courseId) => {
     }
   };
 
-  const addNewLecture = async (lessonId, title, content, fileData = null) => {
+  const addNewLecture = async (lessonId, title, content, lessonFile) => {
     try {
       if (!currentUser) {
         throw new Error('You must be logged in to add a new lecture');
@@ -71,6 +71,33 @@ export const useHandleLessons = (courseId) => {
         throw new Error('Invalid lecture: Section ID, title, and content are required');
       }
       setError(null);
+      let fileData = null;
+      if (lessonFile) {
+        // Create a unique file name
+        const fileName = `${Date.now()}_${lessonFile.name}`;
+        const storagePath = `lectures/${courseId}/${fileName}`;
+        const storageRef = ref(storage, storagePath);
+
+        console.log('Uploading file to Firebase Storage:', {
+          path: storagePath,
+          fileName: lessonFile.name,
+          fileType: lessonFile.type,
+          fileSize: lessonFile.size
+        });
+
+        // Upload file to Firebase Storage
+        const snapshot = await uploadBytes(storageRef, lessonFile);
+        const fileUrl = await getDownloadURL(snapshot.ref);
+
+        fileData = {
+          fileName: lessonFile.name,
+          fileType: lessonFile.type,
+          fileSize: lessonFile.size,
+          fileUrl: fileUrl
+        };
+
+        console.log('File uploaded successfully:', fileData);
+      }
 
       console.log('Creating new lecture:', {
         lessonId,
@@ -78,15 +105,17 @@ export const useHandleLessons = (courseId) => {
         hasFile: !!fileData
       });
 
-      const lectureRef = await addDoc(lecturesRef, {
+      const lectureData = {
         title,
         content,
         isCompleted: false,
         createdBy: currentUser.uid,
         createdByName: `${userData.firstName} ${userData.lastName}`,
         createdAt: new Date(),
-        lectureFiles: fileData ? [fileData] : []
-      });
+        ...(fileData && { lectureFiles: [fileData] })
+      };
+
+      const lectureRef = await addDoc(lecturesRef, lectureData);
 
       console.log('Lecture document created:', lectureRef.id);
 
@@ -229,12 +258,18 @@ export const useHandleLessons = (courseId) => {
           const lectureSnapshot = await getDocs(lectureQuery);
           lectureSnapshot.forEach((doc) => {
             const lectureData = doc.data();
+            const fileData = lectureData.lectureFiles?.[0] || null;
+            const fileUrl = fileData?.fileUrl || null;
+
             console.log('Fetched lecture data:', lectureData);
+
             fetchedLectures.push({
               title: lectureData.title || "Untitled Lecture",
               content: lectureData.content || "",
               completed: lectureData.isCompleted || false,
-              id: doc.id
+              id: doc.id,
+              fileUrl: fileUrl, // ← ✅ add video URL here
+              fileData: fileData || null,
             });
           });
         }
