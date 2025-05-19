@@ -475,36 +475,13 @@ export default function CoursePage() {
       }
 
       try {
-        // Create a unique file name
-        const fileName = `${Date.now()}_${uploadFile.name}`;
-        // Update storage path to match existing rules structure
-        const storagePath = `lessons/${courseId}/${fileName}`;
-        const storageRef = ref(storage, storagePath);
-
-        console.log('Uploading learning material:', {
-          path: storagePath,
-          fileName: uploadFile.name,
-          fileType: uploadFile.type,
-          fileSize: uploadFile.size
-        });
-
-        // Upload file to Firebase Storage
-        const snapshot = await uploadBytes(storageRef, uploadFile);
-        const fileUrl = await getDownloadURL(snapshot.ref);
-
-        const fileData = {
-          fileName: uploadFile.name,
-          fileType: uploadFile.type,
-          fileSize: uploadFile.size,
-          fileUrl: fileUrl
-        };
-
+       
         // Create a new lecture with the uploaded file
         const success = await addNewLecture(
           lessons[0]?.id || '', // Use the first section's ID or create a new section
           uploadTitle,
           uploadDescription,
-          fileData
+          uploadFile
         );
 
         if (success) {
