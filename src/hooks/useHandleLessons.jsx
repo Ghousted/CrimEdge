@@ -59,7 +59,7 @@ export const useHandleLessons = (courseId) => {
     }
   };
 
-  const addNewLecture = async (lessonId, title, content, lectureFile = null) => {
+  const addNewLecture = async (lessonId, title, content, fileData = null) => {
     try {
       if (!currentUser) {
         throw new Error('You must be logged in to add a new lecture');
@@ -71,22 +71,34 @@ export const useHandleLessons = (courseId) => {
         throw new Error('Invalid lecture: Section ID, title, and content are required');
       }
       setError(null);
+
+      console.log('Creating new lecture:', {
+        lessonId,
+        title,
+        hasFile: !!fileData
+      });
+
       const lectureRef = await addDoc(lecturesRef, {
         title,
         content,
         isCompleted: false,
         createdBy: currentUser.uid,
-        lectureFiles: lectureFile ? [lectureFile] : [],
         createdByName: `${userData.firstName} ${userData.lastName}`,
-        createdAt: new Date()
+        createdAt: new Date(),
+        lectureFiles: fileData ? [fileData] : []
       });
 
+      console.log('Lecture document created:', lectureRef.id);
 
       const lessonDocRef = doc(db, "lessons", lessonId);
-
       await updateDoc(lessonDocRef, {
         lectures: arrayUnion(lectureRef.id)
       });
+
+      console.log('Lesson document updated with new lecture');
+
+      // Refresh lessons list
+      await getLessons();
       return true;
     }
     catch (error) {
