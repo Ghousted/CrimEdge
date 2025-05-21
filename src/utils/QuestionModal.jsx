@@ -6,7 +6,10 @@ export default function QuestionModal({
   question,
   setQuestion,
   onSubmit,
-  error
+  error,
+  lessons,
+  selectedLectureId,
+  setSelectedLectureId,
 }) {
   return (
     showModal && (
@@ -40,6 +43,25 @@ export default function QuestionModal({
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
             />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Select Lecture</label>
+            <select
+              className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
+              value={selectedLectureId}
+              onChange={(e) => setSelectedLectureId(e.target.value)}
+            >
+              <option value="" disabled>Select a lecture</option>
+              {lessons?.map((lesson) => (
+                <optgroup key={lesson.id} label={lesson.title}>
+                  {lesson.lectures?.map((lecture) => (
+                    <option key={lecture.id} value={lecture.id}>
+                      {lecture.title}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
           </div>
           <div className="flex justify-end gap-3">
             <button
