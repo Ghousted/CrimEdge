@@ -9,10 +9,14 @@ import { useHandleStorage } from '../hooks/useHandleStorage';
 import { motion, AnimatePresence } from 'framer-motion'; // Add framer-motion for animations
 import Loading from '../components/Loading'; // Import Loading component
 
+
+import { useDarkMode } from '../components/DarkModeContext';
+
 const Dashboard = () => {
   const { courses, enrolledCourses } = useHandleCourses();
   const { announcements, loading: announcementsLoading } = useHandleAnnouncements();
   const { fetchCourseImages } = useHandleStorage();
+  const { darkMode } = useDarkMode();
 
   const [coursesWithImages, setCoursesWithImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,59 +184,118 @@ const Dashboard = () => {
               </div>
             </motion.div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm overflow-hidden border border-gray-100/50">
-              <div className="border-b border-gray-100/50">
+            {/* Fix: Use useDarkMode and correct JSX string interpolation */}
+            <div
+              className={`rounded-lg border ${
+                darkMode
+                  ? 'bg-[#242526] border-[#3E4042]'
+                  : 'bg-[#F0F2F5] border-[#CED0D4]'
+              }`}
+            >
+              <div className={`border-b ${darkMode ? 'border-[#3E4042]' : 'border-[#CED0D4]'}`}>
                 <div className="flex">
                   <button
-                    className={`flex-1 px-4 py-3 transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 relative ${
-                      activeSection === 'enrolled' 
-                        ? 'text-white' 
-                        : 'text-gray-600 hover:bg-gray-50/80'
+                    className={`flex-1 px-4 py-3 transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 relative rounded-tl-lg ${
+                      activeSection === 'enrolled'
+                        ? 'bg-gradient-to-r from-white to-blue-200 text-transparent bg-clip-text' // gradient text
+                        : darkMode
+                          ? 'text-[#B0B3B8] hover:bg-[#23243a] hover:text-white cursor-pointer'
+                          : 'text-[#65676B] hover:bg-blue-50 hover:text-blue-700 cursor-pointer'
                     }`}
                     onClick={() => setActiveSection('enrolled')}
                   >
                     {activeSection === 'enrolled' && (
-                      <motion.div 
+                      <motion.div
                         layoutId="activeTab"
-                        className="absolute inset-0 grd-bg2"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        className="absolute inset-0 grd-bg2 rounded-tl-lg cursor-pointer"
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                       />
                     )}
                     <div className="relative flex items-center gap-1.5">
-                      <i className={`bi bi-book ${activeSection === 'enrolled' ? 'text-white' : 'text-blue-500'}`}></i>
-                      <span>Enrolled Courses</span>
-                      <span className={`px-1.5 py-0.5 text-xs rounded-full ${
-                        activeSection === 'enrolled' 
-                          ? 'bg-white/20 text-white' 
-                          : 'bg-blue-50 text-blue-600'
-                      }`}>
+                      <i
+                        className={`bi bi-book ${
+                          activeSection === 'enrolled'
+                            ? 'text-white drop-shadow-[0_1px_4px_rgba(30,144,255,0.5)]' // white icon with blue shadow
+                            : darkMode
+                              ? 'text-[#B0B3B8]'
+                              : 'text-[#606770]'
+                        }`}
+                      ></i>
+                      <span
+                        className={
+                          activeSection === 'enrolled'
+                            ? 'bg-gradient-to-r from-white to-blue-200 text-transparent bg-clip-text font-bold'
+                            : darkMode
+                              ? 'text-[#B0B3B8]'
+                              : 'text-[#65676B]'
+                        }
+                      >
+                        Enrolled Courses
+                      </span>
+                      <span
+                        className={`px-1.5 py-0.5 text-xs rounded-full font-semibold ${
+                          activeSection === 'enrolled'
+                            ? darkMode
+                              ? 'bg-[#2374E1]/30 text-[#E4E6EB]'
+                              : 'bg-[#1877F2]/10 text-[#1877F2]'
+                            : darkMode
+                              ? 'bg-[#3E4042] text-[#B0B3B8]'
+                              : 'bg-[#CED0D4] text-[#606770]'
+                        }`}
+                      >
                         {enrolledCoursesList.length}
                       </span>
                     </div>
                   </button>
                   <button
-                    className={`flex-1 px-4 py-3 transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 relative ${
-                      activeSection === 'other' 
-                        ? 'text-white' 
-                        : 'text-gray-600 hover:bg-gray-50/80'
+                    className={`flex-1 px-4 py-3 transition-all duration-300 text-sm font-medium flex items-center justify-center gap-2 relative rounded-tr-lg ${
+                      activeSection === 'other'
+                        ? 'bg-gradient-to-r from-white to-blue-200 text-transparent bg-clip-text' // gradient text
+                        : darkMode
+                          ? 'text-[#B0B3B8] hover:bg-[#23243a] hover:text-white cursor-pointer'
+                          : 'text-[#65676B] hover:bg-blue-50 hover:text-blue-700 cursor-pointer'
                     }`}
                     onClick={() => setActiveSection('other')}
                   >
                     {activeSection === 'other' && (
-                      <motion.div 
+                      <motion.div
                         layoutId="activeTab"
-                        className="absolute inset-0 grd-bg2"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        className="absolute inset-0 grd-bg2 rounded-tr-lg cursor-pointer"
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                       />
                     )}
-                    <div className="relative flex items-center gap-1.5">
-                      <i className={`bi bi-grid ${activeSection === 'other' ? 'text-white' : 'text-blue-500'}`}></i>
-                      <span>Available Courses</span>
-                      <span className={`px-1.5 py-0.5 text-xs rounded-full ${
-                        activeSection === 'other' 
-                          ? 'bg-white/20 text-white' 
-                          : 'bg-blue-50 text-blue-600'
-                      }`}>
+                    <div className="relative flex items-center gap-1.5 ">
+                      <i
+                        className={`bi bi-grid ${
+                          activeSection === 'other'
+                            ? 'text-white drop-shadow-[0_1px_4px_rgba(30,144,255,0.5)] curosr-pointer' // white icon with blue shadow
+                            : darkMode
+                              ? 'text-[#B0B3B8] curosr-pointer'
+                              : 'text-[#606770] curosr-pointer'
+                        }`}
+                      ></i>
+                      <span
+                        className={
+                          activeSection === 'other'
+                            ? 'bg-gradient-to-r from-white to-blue-200 text-transparent bg-clip-text font-bold curosr-pointer'
+                            : darkMode
+                              ? 'text-[#B0B3B8] curosr-pointer'
+                              : 'text-[#65676B] curosr-pointer'
+                        }
+                      >
+                        Available Courses
+                      </span>
+                      <span
+                        className={`px-1.5 py-0.5 text-xs rounded-full font-semibold curosr-pointer ${
+                          activeSection === 'other'
+                            ? darkMode
+                              ? 'bg-[#2374E1]/30 text-[#E4E6EB] curosr-pointer'
+                              : 'bg-[#1877F2]/10 text-[#1877F2] curosr-pointer'
+                            : darkMode
+                              ? 'bg-[#3E4042] text-[#B0B3B8] curosr-pointer'
+                              : 'bg-[#CED0D4] text-[#606770] curosr-pointer'
+                        }`}
+                      >
                         {otherCoursesList.length}
                       </span>
                     </div>
@@ -254,13 +317,13 @@ const Dashboard = () => {
                         <motion.div 
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="bg-white/50 backdrop-blur-sm rounded-lg shadow-sm p-6 text-center"
+                          className={`rounded-lg shadow-sm p-6 text-center backdrop-blur-sm ${darkMode ? 'bg-[#242526] text-[#E4E6EB]' : 'bg-white/50 text-gray-800'}`}
                         >
                           <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full flex items-center justify-center mx-auto mb-3">
                             <i className="bi bi-book text-2xl text-blue-500"></i>
                           </div>
-                          <h3 className="text-base font-semibold text-gray-800 mb-2">No Enrolled Courses</h3>
-                          <p className="text-sm text-gray-600 mb-4 max-w-sm mx-auto">Start your learning journey by exploring our available courses.</p>
+                          <h3 className={`text-base font-semibold mb-2 ${darkMode ? 'text-[#E4E6EB]' : 'text-gray-800'}`}>No Enrolled Courses</h3>
+                          <p className={`text-sm mb-4 max-w-sm mx-auto ${darkMode ? 'text-[#B0B3B8]' : 'text-gray-600'}`}>Start your learning journey by exploring our available courses.</p>
                           <button 
                             onClick={() => setActiveSection('other')}
                             className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all shadow-sm hover:shadow-md"
@@ -281,8 +344,8 @@ const Dashboard = () => {
                                 className="group"
                               >
                                 <Link 
-                                  to={`/course/${course.id}`} 
-                                  className={`block bg-white/50 backdrop-blur-sm rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border border-gray-100/50 ${CARD_HEIGHT}`}
+                                  to={`/course/${course.id}`}
+                                  className={`block rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 ${CARD_HEIGHT} border ${darkMode ? 'bg-[#242526] border-[#3E4042]' : 'bg-white/50 border-gray-100/50 backdrop-blur-sm'}`}
                                 >
                                   <div className={`relative ${CARD_IMAGE_HEIGHT} overflow-hidden`}>
                                     {course.imageUrl ? (
@@ -292,8 +355,8 @@ const Dashboard = () => {
                                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                                       />
                                     ) : (
-                                      <div className="h-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                                        <div className="text-2xl text-blue-200">
+                                      <div className={`h-full flex items-center justify-center ${darkMode ? 'bg-[#18191A]' : 'bg-gradient-to-br from-blue-50 to-indigo-50'}`}>
+                                        <div className={`text-2xl ${darkMode ? 'text-[#3E4042]' : 'text-blue-200'}`}>
                                           <i className='bi bi-image'></i>
                                         </div>
                                       </div>
@@ -306,10 +369,10 @@ const Dashboard = () => {
                                     </div>
                                   </div>
                                   <div className={`${CARD_CONTENT_HEIGHT} p-3 flex flex-col`}>
-                                    <h2 className="text-base font-semibold text-gray-800 mb-1.5 line-clamp-1">{course.course}</h2>
-                                    <p className="text-xs text-gray-600 mb-2 line-clamp-2 flex-grow">{course.description || 'No description available'}</p>
-                                    <div className="flex items-center text-xs text-gray-500 mt-auto">
-                                      <i className="bi bi-person-circle mr-1.5 text-blue-500"></i>
+                                    <h2 className={`text-base font-semibold mb-1.5 line-clamp-1 ${darkMode ? 'text-[#E4E6EB]' : 'text-gray-800'}`}>{course.course}</h2>
+                                    <p className={`text-xs mb-2 line-clamp-2 flex-grow ${darkMode ? 'text-[#B0B3B8]' : 'text-gray-600'}`}>{course.description || 'No description available'}</p>
+                                    <div className={`flex items-center text-xs mt-auto ${darkMode ? 'text-[#B0B3B8]' : 'text-gray-500'}`}>
+                                      <i className={`bi bi-person-circle mr-1.5 ${darkMode ? 'text-[#2374E1]' : 'text-blue-500'}`}></i>
                                       {course.createdByName || 'Unknown Instructor'}
                                     </div>
                                   </div>
@@ -352,9 +415,9 @@ const Dashboard = () => {
                             whileHover={{ y: -3, transition: { duration: 0.2 } }}
                             className="group"
                           >
-                            <Link 
-                              to={`/course/${course.id}`} 
-                              className={`block bg-white/50 backdrop-blur-sm rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border border-gray-100/50 ${CARD_HEIGHT}`}
+                            <Link
+                              to={`/course/${course.id}`}
+                              className={`block rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 ${CARD_HEIGHT} border ${darkMode ? 'bg-[#242526] border-[#3E4042]' : 'bg-white/50 border-gray-100/50 backdrop-blur-sm'}`}
                             >
                               <div className={`relative ${CARD_IMAGE_HEIGHT} overflow-hidden`}>
                                 {course.imageUrl ? (
@@ -364,8 +427,8 @@ const Dashboard = () => {
                                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                                   />
                                 ) : (
-                                  <div className="h-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                                    <div className="text-2xl text-blue-200">
+                                  <div className={`h-full flex items-center justify-center ${darkMode ? 'bg-[#18191A]' : 'bg-gradient-to-br from-blue-50 to-indigo-50'}`}>
+                                    <div className={`text-2xl ${darkMode ? 'text-[#3E4042]' : 'text-blue-200'}`}>
                                       <i className='bi bi-image'></i>
                                     </div>
                                   </div>
@@ -373,10 +436,10 @@ const Dashboard = () => {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                               </div>
                               <div className={`${CARD_CONTENT_HEIGHT} p-3 flex flex-col`}>
-                                <h2 className="text-base font-semibold text-gray-800 mb-1.5 line-clamp-1">{course.course}</h2>
-                                <p className="text-xs text-gray-600 mb-2 line-clamp-2 flex-grow">{course.description || 'No description available'}</p>
-                                <div className="flex items-center text-xs text-gray-500 mt-auto">
-                                  <i className="bi bi-person-circle mr-1.5 text-blue-500"></i>
+                                <h2 className={`text-base font-semibold mb-1.5 line-clamp-1 ${darkMode ? 'text-[#E4E6EB]' : 'text-gray-800'}`}>{course.course}</h2>
+                                <p className={`text-xs mb-2 line-clamp-2 flex-grow ${darkMode ? 'text-[#B0B3B8]' : 'text-gray-600'}`}>{course.description || 'No description available'}</p>
+                                <div className={`flex items-center text-xs mt-auto ${darkMode ? 'text-[#B0B3B8]' : 'text-gray-500'}`}>
+                                  <i className={`bi bi-person-circle mr-1.5 ${darkMode ? 'text-[#2374E1]' : 'text-blue-500'}`}></i>
                                   {course.createdByName || 'Unknown Instructor'}
                                 </div>
                               </div>
@@ -403,32 +466,44 @@ const Dashboard = () => {
           </div>
 
           <div className="w-full lg:w-1/4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-4 sticky top-6 border border-gray-100/50"
+              className={`rounded-xl shadow-sm p-4 sticky top-6 border backdrop-blur-sm ${
+                darkMode
+                  ? 'bg-[#242526]/90 border-[#3E4042]'
+                  : 'bg-white/80 border-gray-100/50'
+              }`}
             >
               <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
-                  <i className="bi bi-megaphone text-lg text-blue-500"></i>
+                <div className={
+                  darkMode
+                    ? 'p-1.5 bg-gradient-to-br from-[#18191A] to-[#2374E1]/20 rounded-lg'
+                    : 'p-1.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg'
+                }>
+                  <i className={`bi bi-megaphone text-lg ${darkMode ? 'text-[#2374E1]' : 'text-blue-500'}`}></i>
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold text-gray-800">Announcements</h2>
-                  <p className="text-xs text-gray-500">Latest updates</p>
+                  <h2 className={`text-base font-semibold ${darkMode ? 'text-[#E4E6EB]' : 'text-gray-800'}`}>Announcements</h2>
+                  <p className={`text-xs ${darkMode ? 'text-[#B0B3B8]' : 'text-gray-500'}`}>Latest updates</p>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 {announcements.length === 0 ? (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="text-center py-4"
                   >
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <i className="bi bi-megaphone text-xl text-blue-400"></i>
+                    <div className={
+                      darkMode
+                        ? 'w-12 h-12 bg-gradient-to-br from-[#18191A] to-[#2374E1]/20 rounded-full flex items-center justify-center mx-auto mb-2'
+                        : 'w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full flex items-center justify-center mx-auto mb-2'
+                    }>
+                      <i className={`bi bi-megaphone text-xl ${darkMode ? 'text-[#2374E1]' : 'text-blue-400'}`}></i>
                     </div>
-                    <p className="text-xs text-gray-500">No announcements at the moment</p>
+                    <p className={`text-xs ${darkMode ? 'text-[#B0B3B8]' : 'text-gray-500'}`}>No announcements at the moment</p>
                   </motion.div>
                 ) : (
                   announcements.map((announcement, index) => (
@@ -437,23 +512,31 @@ const Dashboard = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="p-3 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-lg hover:from-blue-50 hover:to-indigo-50 transition-colors duration-200 border border-blue-100/50"
+                      className={`p-3 rounded-lg transition-colors duration-200 border ${
+                        darkMode
+                          ? 'bg-gradient-to-br from-[#18191A]/80 to-[#2374E1]/10 hover:from-[#18191A]/90 hover:to-[#2374E1]/20 border-[#3E4042]'
+                          : 'bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:from-blue-50 hover:to-indigo-50 border-blue-100/50'
+                      }`}
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
-                            <i className="bi bi-person text-xs text-blue-500"></i>
+                          <div className={
+                            darkMode
+                              ? 'w-6 h-6 bg-gradient-to-br from-[#242526] to-[#2374E1]/20 rounded-full flex items-center justify-center'
+                              : 'w-6 h-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center'
+                          }>
+                            <i className={`bi bi-person text-xs ${darkMode ? 'text-[#2374E1]' : 'text-blue-500'}`}></i>
                           </div>
-                          <p className="text-xs font-medium text-gray-700">{announcement.createdByName}</p>
+                          <p className={`text-xs font-medium ${darkMode ? 'text-[#E4E6EB]' : 'text-gray-700'}`}>{announcement.createdByName}</p>
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className={`text-xs ${darkMode ? 'text-[#B0B3B8]' : 'text-gray-500'}`}>
                           {announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric'
                           }) : ''}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-600 leading-relaxed">{announcement.announcement}</p>
+                      <p className={`text-xs leading-relaxed ${darkMode ? 'text-[#B0B3B8]' : 'text-gray-600'}`}>{announcement.announcement}</p>
                     </motion.div>
                   ))
                 )}

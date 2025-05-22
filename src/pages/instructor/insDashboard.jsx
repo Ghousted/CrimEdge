@@ -8,6 +8,7 @@ import Loading from '../../components/Loading';
 import { auth, db } from '../../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { useDarkMode } from '../../components/DarkModeContext';
 
 export default function InstructorDashboard() {
   const [target, setTarget] = useState('All');
@@ -26,6 +27,8 @@ export default function InstructorDashboard() {
   const [cardsPerRow, setCardsPerRow] = useState(3);
   const [user, setUser] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const { darkMode } = useDarkMode();
 
   const { id } = useParams();
   const courseId = id;
@@ -53,11 +56,10 @@ export default function InstructorDashboard() {
     getCourses
   } = useHandleCourses();
 
-  // Update time every minute
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000); // Update every minute
+    }, 60000);
 
     return () => {
       clearInterval(timer);
@@ -100,7 +102,6 @@ export default function InstructorDashboard() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
       if (userAuth) {
-        // Fetch user data from Firestore
         const userDocRef = doc(db, 'users', userAuth.uid);
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
@@ -115,11 +116,11 @@ export default function InstructorDashboard() {
   }, []);
 
   const getCardsPerRow = () => {
-    if (window.innerWidth >= 1536) return 4; // 2xl screens
-    if (window.innerWidth >= 1280) return 3; // xl screens
-    if (window.innerWidth >= 1024) return 3; // lg screens
-    if (window.innerWidth >= 768) return 2;  // md screens
-    return 1; // sm and xs screens
+    if (window.innerWidth >= 1536) return 4;
+    if (window.innerWidth >= 1280) return 3;
+    if (window.innerWidth >= 1024) return 3;
+    if (window.innerWidth >= 768) return 2;
+    return 1;
   };
 
   const handleAddCourse = async () => {
@@ -203,13 +204,12 @@ export default function InstructorDashboard() {
     setDropdownOpen(dropdownOpen === id ? null : id);
   };
 
-  // Constants for card dimensions
   const CARD_HEIGHT = 'h-[240px]';
   const CARD_IMAGE_HEIGHT = 'h-[120px]';
   const CARD_CONTENT_HEIGHT = 'h-[120px]';
 
   return (
-    <section className="relative p-4">
+    <section className={`relative p-4 `}>
       {isLoading && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -229,7 +229,7 @@ export default function InstructorDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-xl grd-bg2 p-5 shadow-lg"
+              className={`relative overflow-hidden rounded-xl p-5 shadow-lg grd-bg2`}
             >
               <div className="absolute inset-0 bg-grid-white/[0.1] bg-[size:16px_16px]"></div>
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
@@ -238,7 +238,7 @@ export default function InstructorDashboard() {
                   <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
                   <span className="text-xs text-blue-50 font-medium">Instructor Dashboard</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-white">
                   Welcome back, {user ? `${user.firstName} ${user.lastName}` : 'Instructor'}!
                 </h2>
                 <p className="text-sm text-blue-50/90 font-medium">
@@ -259,8 +259,8 @@ export default function InstructorDashboard() {
             </motion.div>
 
             {/* Add Course Section */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-4 border border-gray-100/50">
-              <h2 className="text-lg  mb-3 text-gray-800 flex items-center gap-2">
+            <div className={`rounded-xl shadow-sm p-4 border ${darkMode ? 'bg-[#242526] border-gray-700' : 'bg-white/80 border-gray-100/50'}`}>
+              <h2 className={`text-lg mb-3 flex items-center gap-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                 <i className="bi bi-plus-circle-fill text-blue-600"></i>
                 Add New Course
               </h2>
@@ -270,7 +270,7 @@ export default function InstructorDashboard() {
                     type="text"
                     required
                     placeholder="Enter course code"
-                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
+                    className={`flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm ${darkMode ? 'bg-[#242526] border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
                     value={courseName}
                     onChange={(e) => setCourseName(e.target.value)}
                   />
@@ -278,14 +278,14 @@ export default function InstructorDashboard() {
                     type="text"
                     required
                     placeholder="Enter course description"
-                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
+                    className={`flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm ${darkMode ? 'bg-[#242526] border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
                     value={courseDescription}
                     onChange={(e) => setCourseDescription(e.target.value)}
                   />
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="courseImage"
-                      className="cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 font-medium text-sm"
+                      className={`flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200 rounded-lg p-2 border ${darkMode ? 'bg-[#242526] border-gray-600' : 'bg-gray-50 border-gray-200'}`}
                     >
                       <i className='bi bi-card-image'></i>
                       Upload Image
@@ -301,7 +301,7 @@ export default function InstructorDashboard() {
                 </div>
 
                 {courseImage && (
-                  <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className={`flex items-center gap-3 rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
                     <div className='flex justify-between w-full items-center'>
                       <div className='flex items-center gap-3'>
                         <img
@@ -309,7 +309,7 @@ export default function InstructorDashboard() {
                           alt="Preview"
                           className="w-24 h-14 object-cover rounded-l-lg"
                         />
-                        <span className="text-gray-700 text-sm">{courseImage.name}</span>
+                        <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{courseImage.name}</span>
                       </div>
                       <button
                         className='text-red-600 hover:text-red-800 transition-colors duration-200 flex items-center gap-2 mr-3 text-sm'
@@ -334,8 +334,8 @@ export default function InstructorDashboard() {
             </div>
 
             {/* Display Courses */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-4 border border-gray-100/50">
-              <h2 className="text-lg font-bold mb-3 text-gray-800 flex items-center gap-2">
+            <div className={`rounded-xl shadow-sm p-4 border ${darkMode ? 'bg-[#242526] border-gray-700' : 'bg-white/80 border-gray-100/50'}`}>
+              <h2 className={`text-lg font-bold mb-3 flex items-center gap-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                 <i className="bi bi-collection-fill text-blue-600"></i>
                 Your Courses
               </h2>
@@ -360,7 +360,7 @@ export default function InstructorDashboard() {
                     >
                       <Link
                         to={`/course-page/${course.id}`}
-                        className={`block bg-white/50 backdrop-blur-sm rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border border-gray-100/50 ${CARD_HEIGHT}`}
+                        className={`block rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 border ${darkMode ? 'bg-[#242526] border-gray-600' : 'bg-white/50 border-gray-100/50'} ${CARD_HEIGHT}`}
                       >
                         <div className={`relative ${CARD_IMAGE_HEIGHT} overflow-hidden`}>
                           {course.imageUrl ? (
@@ -379,7 +379,7 @@ export default function InstructorDashboard() {
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                           <div className="absolute top-2 right-2">
                             <button
-                              className="text-gray-500 hover:text-gray-700 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-md hover:shadow-lg transition-all duration-200"
+                              className={`text-gray-500 hover:text-gray-700 rounded-full p-1.5 shadow-md hover:shadow-lg transition-all duration-200 ${darkMode ? 'bg-white/20' : 'bg-white/90'}`}
                               onClick={(e) => {
                                 e.preventDefault();
                                 toggleDropdown(`course-${course.id}`);
@@ -388,9 +388,9 @@ export default function InstructorDashboard() {
                               <i className="bi bi-three-dots-vertical"></i>
                             </button>
                             {dropdownOpen === `course-${course.id}` && (
-                              <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                              <div className={`absolute right-0 mt-2 w-40 rounded-lg shadow-lg border z-10 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
                                 <button
-                                  className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-50 text-red-600 transition-colors duration-200"
+                                  className={`flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-50 text-red-600 transition-colors duration-200 ${darkMode ? 'hover:bg-gray-600' : ''}`}
                                   onClick={(e) => {
                                     e.preventDefault();
                                     openDeleteModal(course, 'course');
@@ -404,8 +404,8 @@ export default function InstructorDashboard() {
                           </div>
                         </div>
                         <div className={`${CARD_CONTENT_HEIGHT} p-3 flex flex-col`}>
-                          <h3 className="text-base font-semibold text-gray-800 mb-1">{course.course}</h3>
-                          <p className="text-xs text-gray-600 line-clamp-2">{course.description}</p>
+                          <h3 className={`text-base font-semibold mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{course.course}</h3>
+                          <p className={`text-xs line-clamp-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{course.description}</p>
                         </div>
                       </Link>
                     </motion.div>
@@ -420,29 +420,29 @@ export default function InstructorDashboard() {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-4 sticky top-6 border border-gray-100/50"
+              className={`rounded-xl shadow-sm p-4 sticky top-6 border ${darkMode ? 'bg-[#242526] border-gray-700' : 'bg-white/80 border-gray-100/50'}`}
             >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
-                  <i className="bi bi-megaphone text-base text-blue-500"></i>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="">
+                  <i className="bi bi-megaphone text-base text-blue-500 mr-2 "></i>
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold text-gray-800">Announcements</h2>
+                  <h2 className={`text-base font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Announcements</h2>
                 </div>
               </div>
 
               <div className="mb-4">
                 <textarea
-                  className="w-full p-2 h-20 border border-gray-200 rounded-lg resize-none mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
+                  className={`w-full p-2 h-20 border rounded-lg resize-none mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
                   placeholder="Write your announcement here..."
                   value={announcement}
                   onChange={(e) => setAnnouncement(e.target.value)}
                   required
                 />
-                <div className="mb-2">
-                  <label className="block mb-1 text-xs font-medium text-gray-700">Target Audience</label>
+                <div className="mb-4">
+                  <label className={`block mb-1 text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Target Audience</label>
                   <select
-                    className="w-full p-1.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
+                    className={`w-full p-1.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
                     value={target}
                     onChange={(e) => setTarget(e.target.value)}
                   >
@@ -468,14 +468,18 @@ export default function InstructorDashboard() {
                     key={announcement.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-3 bg-gradient-to-br from-blue-100/50 to-indigo-50/100 rounded-lg relative group hover:from-blue-50 hover:to-indigo-50 transition-colors duration-200"
+                   className={`p-3 rounded-lg transition-colors duration-200 border ${
+                        darkMode
+                          ? 'bg-gradient-to-br from-[#18191A]/80 to-[#2374E1]/10 hover:from-[#18191A]/90 hover:to-[#2374E1]/20 border-[#3E4042]'
+                          : 'bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:from-blue-50 hover:to-indigo-50 border-blue-100/50'
+                      }`}
                   >
                     <div className="mb-1.5">
                       <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
                         {announcement.target}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-700">{announcement.announcement}</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{announcement.announcement}</p>
                   </motion.div>
                 ))}
               </div>
@@ -490,16 +494,16 @@ export default function InstructorDashboard() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-sm"
+            className={`p-6 rounded-xl shadow-xl w-[90%] max-w-sm ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
           >
-            <h2 className="text-xl font-bold mb-3 text-gray-800">Confirm Deletion</h2>
-            <p className="text-gray-700 mb-6">
+            <h2 className="text-xl font-bold mb-3">Confirm Deletion</h2>
+            <p className="mb-6">
               Are you sure you want to delete this {deleteType}? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={closeDeleteModal}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200"
+                className={`px-4 py-2 rounded-lg transition-all duration-200 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
               >
                 Cancel
               </button>
@@ -521,20 +525,20 @@ export default function InstructorDashboard() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-sm"
+            className={`p-6 rounded-xl shadow-xl w-[90%] max-w-sm ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
           >
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Edit Announcement</h2>
+            <h2 className="text-xl font-bold mb-4">Edit Announcement</h2>
             <textarea
-              className="w-full p-3 h-24 border border-gray-200 rounded-lg resize-none mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50"
+              className={`w-full p-3 h-24 border rounded-lg resize-none mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
               placeholder="Write your announcement here..."
               value={announcement}
               onChange={(e) => setAnnouncement(e.target.value)}
               required
             />
             <div className="mb-4">
-              <label className="block mb-1.5 text-sm font-medium text-gray-700">Target Audience</label>
+              <label className={`block mb-1.5 text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Target Audience</label>
               <select
-                className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50"
+                className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
               >
@@ -547,7 +551,7 @@ export default function InstructorDashboard() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={closeEditModal}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200"
+                className={`px-4 py-2 rounded-lg transition-all duration-200 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
               >
                 Cancel
               </button>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -19,8 +19,8 @@ import Account from './pages/Account';
 import Landing from './auth/Landing';
 import SignIn from './auth/signIn';
 import SignUp from './auth/signUp';
-import ForgotPassword from './auth/ForgotPassword';
-import VerifyEmailNotice from './auth/VerifyEmailNotice';
+import ForgotPassword from './auth/utils/ForgotPassword';
+import VerifyEmailNotice from './auth/utils/VerifyEmailNotice';
 
 // Subscriptions
 import CreditDebit from './subscription/CreditDebit';
@@ -33,6 +33,7 @@ import UpgradePlan from './subscription/UpgradePlan';
 import AdminDashboard from './pages/admin/adminDashboard';
 import AdminSetting from './pages/admin/adminSetting';
 import UserManagement from './pages/admin/UserManagement';
+import DownloadsPreview from './pages/admin/DownloardsPreview';
 import InstructorDashboard from './pages/instructor/insDashboard';
 import CoursePage from './pages/instructor/CoursePage';
 import Assessment from './pages/instructor/AssessmentPage';
@@ -41,7 +42,20 @@ import Assessment from './pages/instructor/AssessmentPage';
 import PublicRoute from '../src/auth/components/PublicRoute';
 import PrivateRoute from '../src/auth/components/PrivateRoute';
 
-const App = () => {
+// Dark Mode Context
+import { DarkModeProvider, useDarkMode } from './components/DarkModeContext';
+
+const AppContent = () => {
+  const { darkMode } = useDarkMode();
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   return (
     <Routes>
       {/* Redirect root path to landing */}
@@ -71,12 +85,12 @@ const App = () => {
       <Route path="/payment" element={<PrivateRoute element={<Payment />} requiredRole="user" />} />
       <Route path="/upgrade-plan" element={<PrivateRoute element={<UpgradePlan />} requiredRole="user" />} />
 
-
       {/* Admin-only layout */}
       <Route element={<AdminLayout />}>
         <Route path="/admin/dashboard" element={<PrivateRoute element={<AdminDashboard />} requiredRole="admin" />} />
         <Route path="/admin/settings" element={<PrivateRoute element={<AdminSetting />} requiredRole="admin" />} />
         <Route path="/admin/users" element={<PrivateRoute element={<UserManagement />} requiredRole="admin" />} />
+        <Route path="/admin/downloads" element={<PrivateRoute element={<DownloadsPreview />} requiredRole="admin" />} />
       </Route>
 
       {/* Instructor-only layout */}
@@ -86,6 +100,14 @@ const App = () => {
         <Route path="/assessment-page/:courseId/:type" element={<PrivateRoute element={<Assessment />} requiredRole="instructor" />} />
       </Route>
     </Routes>
+  );
+};
+
+const App = () => {
+  return (
+    <DarkModeProvider>
+      <AppContent />
+    </DarkModeProvider>
   );
 };
 
