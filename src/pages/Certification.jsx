@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useDarkMode } from '../components/DarkModeContext';
 
 export default function Certification() {
-  
-  return (
-    <section className='p-6 flex'>
-        <div className="page-title mb-4 text-2xl">Certification</div>
-        
+  const { darkMode } = useDarkMode();
 
+  return (
+    <section className="p-6 flex">
+      <h1 className={`${darkMode ? 'text-gray-200' : 'text-gray-700'} text-3xl whitespace-pre-wrap`}>
+        Certification
+      </h1>
     </section>
   );
 }

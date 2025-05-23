@@ -1,23 +1,32 @@
 import { Outlet, useLocation } from 'react-router-dom';
-import InstructorHeader from './AdminHeader';
+import AdminHeader from './AdminHeader';
+import AdminSidebar from './AdminSidebar';
+import { useState } from 'react';
 
 export default function AdminLayout() {
   const location = useLocation();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
 
   return (
-    <>
-      <InstructorHeader />
-      <main 
-        style={{
-
-          marginTop: '60px', // Adjust this value based on your header height
-          minHeight: 'calc(100vh - 60px)', // Full viewport height minus header height
-          width: '100%',
-          boxSizing: 'border-box'
-        }}
-      >
-        <Outlet />
-      </main>
-    </>
+    <div className="flex flex-col h-screen">
+      <AdminHeader toggleSidebar={toggleSidebar} />
+      <div className="flex flex-1 overflow-hidden">
+        <AdminSidebar collapsed={sidebarCollapsed} />
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{
+            marginTop: '60px',
+            marginLeft: sidebarCollapsed ? '60px' : '220px',
+            transition: 'margin-left 0.2s ease',
+          }}
+        >
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 }

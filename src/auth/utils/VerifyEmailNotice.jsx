@@ -1,14 +1,16 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { FiMail, FiArrowRight } from "react-icons/fi";
-import { authControl } from "./components/authControl";
+import { authControl } from "../components/authControl";
 
-const VerifyEmailNotice = () => {
-  const navigate = useNavigate();
+const VerifyEmailModal = ({ show, onClose }) => {
   const { logout } = authControl();
 
+  if (!show) {
+    return null;
+  }
+
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
+    <div className="modal-overlay">
       <div className="bg-white shadow-md rounded-lg max-w-md w-full p-8 text-center">
         <div className="flex justify-center items-center w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full">
           <FiMail className="text-blue-600 text-2xl" />
@@ -25,9 +27,8 @@ const VerifyEmailNotice = () => {
         <button
           onClick={async () => {
             await logout();
-            navigate("/signin");
+            onClose();
           }}
-
           className="flex items-center gap-2 justify-center bg-blue-600 text-white px-5 py-2 rounded-md hover:bg-blue-700 transition-all"
         >
           Go to Sign In <FiArrowRight />
@@ -37,4 +38,4 @@ const VerifyEmailNotice = () => {
   );
 };
 
-export default VerifyEmailNotice;
+export default VerifyEmailModal;

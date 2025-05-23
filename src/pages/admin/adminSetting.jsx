@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useEditAdminSettings } from '../../hooks/useEditAdminSettings';
+import { useDarkMode } from '../../components/DarkModeContext';
 
 const AdminSettings = () => {
     const { removePlan, editCurrentPlan, subscriptionPlans } = useEditAdminSettings();
+    const { darkMode } = useDarkMode();
     const [planName, setPlanName] = useState('');
     const [price, setPrice] = useState(0);
 
@@ -54,16 +56,16 @@ const AdminSettings = () => {
     };
 
     return (
-        <section className='p-8 flex flex-col w-full bg-gray-50 min-h-screen'>
+        <section className={`p-8 flex flex-col w-full min-h-screen ${darkMode ? 'bg-[#242526] text-white' : 'bg-gray-50 text-gray-900'}`}>
             <div className="max-w-7xl mx-auto w-full">
                 <div className="page-title mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Subscription Plan Settings</h1>
-                    <p className="text-gray-600 mt-2">Manage subscription plans and pricing</p>
+                    <h1 className={`text-3xl font-bold ${darkMode ? 'text-[#E4E6EB]' : 'text-[#050505]'}`}>Subscription Plan Settings</h1>
+                    <p className={`${darkMode ? 'text-[#B0B3B8]' : 'text-[#65676B]'} mt-2`}>Manage subscription plans and pricing</p>
                 </div>
 
                 {/* Plan List */}
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                    <h2 className="text-xl font-semibold mb-6 text-gray-800 flex items-center">
+                <div className={`rounded-xl shadow-sm p-6 ${darkMode ? 'bg-[#3A3B3C] border-[#3E4042]' : 'bg-white border-gray-200'}`}>
+                    <h2 className={`text-xl font-semibold mb-6 flex items-center ${darkMode ? 'text-[#E4E6EB]' : 'text-[#050505]'}`}>
                         <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
@@ -71,17 +73,17 @@ const AdminSettings = () => {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {(subscriptionPlans || []).map((plan) => (
-                            <div key={plan.id} className="bg-white border border-gray-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                            <div key={plan.id} className={`p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ${darkMode ? 'bg-[#242526] border-[#3E4042]' : 'bg-white border border-gray-200'}`}>
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <p className="font-semibold text-gray-900 text-xl">{plan.plan}</p>
-                                        <p className="text-lg font-medium text-blue-600 mt-1">₱{plan.price}<span className="text-sm text-gray-500">/month</span></p>
+                                        <p className={`font-semibold text-xl ${darkMode ? 'text-[#E4E6EB]' : 'text-[#050505]'}`}>{plan.plan}</p>
+                                        <p className={`text-lg font-medium text-blue-600 mt-1 ${darkMode ? 'text-[#B0B3B8]' : 'text-[#65676B]'}`}>₱{plan.price}<span className="text-sm">/month</span></p>
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-3 mt-4">
                                     <button
                                         onClick={() => openModal(plan)}
-                                        className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200"
+                                        className={`inline-flex items-center px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors duration-200 ${darkMode ? 'bg-[#3A3B3C] text-[#B0B3B8]' : 'bg-blue-50 text-blue-600'}`}
                                         title="Edit this plan"
                                     >
                                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +93,7 @@ const AdminSettings = () => {
                                     </button>
                                     <button
                                         onClick={() => openDeleteModal(plan)}
-                                        className="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors duration-200"
+                                        className={`inline-flex items-center px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors duration-200 ${darkMode ? 'bg-[#3A3B3C] text-[#B0B3B8]' : 'bg-red-50 text-red-600'}`}
                                         title="Delete this plan"
                                     >
                                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,27 +110,27 @@ const AdminSettings = () => {
 
             {/* Edit Modal */}
             {showModal && selectedPlan && (
-                <div className="modal-overlay">
-                    <div className="bg-white p-8 rounded-xl shadow-xl w-[90%] max-w-md transform transition-all">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Plan</h2>
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4">
+                    <div className={`p-8 rounded-xl shadow-xl w-[90%] max-w-md transform transition-all ${darkMode ? 'bg-[#242526] text-white' : 'bg-white text-gray-900'}`}>
+                        <h2 className="text-2xl font-bold mb-6">Edit Plan</h2>
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Plan Name</label>
+                                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-[#B0B3B8]' : 'text-[#65676B]'}`}>Plan Name</label>
                                 <input
                                     type="text"
                                     value={planName}
                                     onChange={(e) => setPlanName(e.target.value)}
-                                    className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                    className={`w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${darkMode ? 'bg-[#3A3B3C] border-[#3E4042] text-white' : 'bg-white border-gray-300 text-black'}`}
                                     placeholder="Enter plan name"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Price (₱)</label>
+                                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-[#B0B3B8]' : 'text-[#65676B]'}`}>Price (₱)</label>
                                 <input
                                     type="number"
                                     value={price}
                                     onChange={(e) => setPrice(e.target.value)}
-                                    className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                    className={`w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${darkMode ? 'bg-[#3A3B3C] border-[#3E4042] text-white' : 'bg-white border-gray-300 text-black'}`}
                                     placeholder="Enter price"
                                 />
                             </div>
@@ -137,7 +139,7 @@ const AdminSettings = () => {
                         <div className="flex justify-end mt-8 gap-3">
                             <button
                                 onClick={closeModal}
-                                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                                className={`px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors duration-200 ${darkMode ? 'bg-[#3A3B3C] text-[#B0B3B8]' : 'bg-gray-100 text-gray-700'}`}
                             >
                                 Cancel
                             </button>
@@ -154,21 +156,21 @@ const AdminSettings = () => {
 
             {/* Delete Confirmation Modal */}
             {showDeleteModal && selectedPlan && (
-                <div className="modal-overlay">
-                    <div className="bg-white p-8 rounded-xl shadow-xl w-[90%] max-w-md transform transition-all">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4">
+                    <div className={`p-8 rounded-xl shadow-xl w-[90%] max-w-md transform transition-all ${darkMode ? 'bg-[#242526] text-white' : 'bg-white text-gray-900'}`}>
                         <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
                             <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">Delete Plan</h2>
-                        <p className="text-gray-600 text-center mb-8">
-                            Are you sure you want to delete the plan <strong className="text-gray-900">{selectedPlan.plan}</strong>? This action cannot be undone.
+                        <h2 className={`text-2xl font-bold text-center mb-4 ${darkMode ? 'text-[#E4E6EB]' : 'text-[#050505]'}`}>Delete Plan</h2>
+                        <p className={`text-center mb-8 ${darkMode ? 'text-[#B0B3B8]' : 'text-[#65676B]'}`}>
+                            Are you sure you want to delete the plan <strong className={`${darkMode ? 'text-[#E4E6EB]' : 'text-[#050505]'}`}>{selectedPlan.plan}</strong>? This action cannot be undone.
                         </p>
                         <div className="flex justify-center gap-3">
                             <button
                                 onClick={closeDeleteModal}
-                                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                                className={`px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors duration-200 ${darkMode ? 'bg-[#3A3B3C] text-[#B0B3B8]' : 'bg-gray-100 text-gray-700'}`}
                             >
                                 Cancel
                             </button>

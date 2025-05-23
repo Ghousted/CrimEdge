@@ -16,7 +16,7 @@
     "@zegocloud/zego-uikit-prebuilt": "^2.14.3-beta",
     "bootstrap": "^5.3.6",
     "bootstrap-icons": "^1.13.1",
-    "firebase": "^11.7.3",
+    "firebase": "^11.8.1",
     "framer-motion": "^12.12.1",
     "gsap": "^3.13.0",
     "install": "^0.13.0",

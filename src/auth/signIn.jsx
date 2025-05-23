@@ -1,33 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { authControl } from './components/authControl';
 import { useNavigate } from 'react-router-dom';
 import ReviewHubLogo from '../assets/ReviewHub.png';
 import Loading from '../components/Loading';
-import 'bootstrap-icons/font/bootstrap-icons.css'; // Import Bootstrap Icons
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import ForgotPasswordModal from './utils/ForgotPassword';
+import VerifyEmailModal from './utils/VerifyEmailNotice';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showVerifyEmail, setShowVerifyEmail] = useState(false);
   const { signIn } = authControl();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Set background color of body correctly here
-    document.body.style.background = "#ffffff";
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-    document.body.style.overflowX = "hidden";
-
-    // Cleanup on component unmount
-    return () => {
-      document.body.style.background = "";
-      document.body.style.margin = "";
-      document.body.style.padding = "";
-      document.body.style.overflowX = "";
-    };
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,12 +28,11 @@ export default function SignIn() {
     }
 
     try {
-      setIsSignedIn(true); // Set this before the sign-in attempt
+      setIsSignedIn(true);
       await signIn({
         email,
         password,
         onSuccess: () => {
-          // Navigation will be handled by authControl
           return;
         }
       });
@@ -61,7 +48,7 @@ export default function SignIn() {
   }
 
   return (
-    <section className="flex justify-center items-center min-h-screen p-2 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <section className="flex justify-center items-center min-h-screen p-2 bg-gradient-to-br from-blue-100 via-white to-purple-100">
       <div className="w-full max-w-md p-10 bg-white rounded-3xl shadow-xl border border-gray-100 transform transition-all duration-300 hover:shadow-2xl">
         <div className="flex justify-center mb-4">
           <button
@@ -73,7 +60,6 @@ export default function SignIn() {
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="group">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1.5 group-focus-within:text-blue-600 transition-colors duration-200">Email</label>
             <input
               type="email"
               id="email"
@@ -81,11 +67,10 @@ export default function SignIn() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
-              placeholder="john.doe@example.com"
+              placeholder="Email address"
             />
           </div>
           <div className="group">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-1.5 group-focus-within:text-blue-600 transition-colors duration-200">Password</label>
             <input
               type="password"
               id="password"
@@ -93,7 +78,7 @@ export default function SignIn() {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
-              placeholder="••••••••"
+              placeholder="Password"
             />
           </div>
           <button
@@ -107,12 +92,21 @@ export default function SignIn() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Signing In...
+                Signing In...\r\n
               </span>
             ) : (
               'Sign In'
             )}
           </button>
+          {/* Forgot password moved here */}
+          <div className="text-center text-sm text-gray-600">
+            <button
+              onClick={() => setShowForgotPassword(true)}
+              className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200 hover:underline"
+            >
+              Forgot password?
+            </button>
+          </div>
           <div className="flex items-center my-4">
             <div className="flex-grow border-t border-gray-300"></div>
             <span className="mx-4 text-gray-500">or</span>
@@ -121,17 +115,17 @@ export default function SignIn() {
           <div className="space-y-3">
             <button
               type="button"
-              className="w-full py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-xl border border-gray-300 hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center"
+              className="w-full py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-xl border border-gray-400 hover:bg-gray-100 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center"
             >
               <i className="bi bi-google mr-2"></i>
               Continue with Google
             </button>
             <button
               type="button"
-              className="w-full py-2.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center"
+              className="w-full py-2.5 bg-blue-700 text-white text-sm font-semibold rounded-xl hover:bg-blue-800 transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center"
             >
-              <i className="bi bi-apple mr-2"></i>
-              Continue with Apple
+              <i className="bi bi-facebook mr-2"></i>
+              Continue with Facebook
             </button>
           </div>
           <div className="text-center text-sm text-gray-600 space-y-3">
@@ -144,17 +138,11 @@ export default function SignIn() {
                 Sign Up
               </button>
             </div>
-            <div>
-              <button
-                onClick={() => navigate('/forgot-password')}
-                className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200 hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
           </div>
         </form>
       </div>
+      <ForgotPasswordModal show={showForgotPassword} onClose={() => setShowForgotPassword(false)} />
+      <VerifyEmailModal show={showVerifyEmail} onClose={() => setShowVerifyEmail(false)} />
     </section>
   );
 }

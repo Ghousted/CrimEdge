@@ -14,21 +14,6 @@ export default function SignUpPage() {
   const { signUp } = authControl();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Set background color of body correctly here
-    document.body.style.background = "#ffffff";
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-    document.body.style.overflowX = "hidden";
-
-    // Cleanup on component unmount
-    return () => {
-      document.body.style.background = "";
-      document.body.style.margin = "";
-      document.body.style.padding = "";
-      document.body.style.overflowX = "";
-    };
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,7 +42,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <section className="flex justify-center items-center min-h-screen p-2 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <section className="flex justify-center items-center min-h-screen p-2 bg-gradient-to-br from-blue-100 via-white to-purple-100">
       <div className="w-full max-w-md p-10 bg-white rounded-3xl shadow-xl border border-gray-100 transform transition-all duration-300 hover:shadow-2xl">
         <div className="flex justify-center mb-4">
           <button
@@ -70,7 +55,6 @@ export default function SignUpPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="group">
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-600 mb-1.5 group-focus-within:text-blue-600 transition-colors duration-200">First Name</label>
               <input
                 type="text"
                 id="firstName"
@@ -78,11 +62,10 @@ export default function SignUpPage() {
                 onChange={(e) => setFirstName(e.target.value)}
                 required
                 className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
-                placeholder="John"
+                placeholder="First Name"
               />
             </div>
             <div className="group">
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-600 mb-1.5 group-focus-within:text-blue-600 transition-colors duration-200">Last Name</label>
               <input
                 type="text"
                 id="lastName"
@@ -90,12 +73,11 @@ export default function SignUpPage() {
                 onChange={(e) => setLastName(e.target.value)}
                 required
                 className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
-                placeholder="Doe"
+                placeholder="Last Name"
               />
             </div>
           </div>
           <div className="group">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1.5 group-focus-within:text-blue-600 transition-colors duration-200">Email</label>
             <input
               type="email"
               id="email"
@@ -103,11 +85,10 @@ export default function SignUpPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
-              placeholder="john.doe@example.com"
+              placeholder="Email address"
             />
           </div>
           <div className="group">
-            <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-600 mb-1.5 group-focus-within:text-blue-600 transition-colors duration-200">Contact Number</label>
             <input
               type="tel"
               id="contactNumber"
@@ -115,11 +96,10 @@ export default function SignUpPage() {
               onChange={(e) => setContactNumber(e.target.value)}
               required
               className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
-              placeholder="+1234567890"
+              placeholder="Contact Number"
             />
           </div>
           <div className="group">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-1.5 group-focus-within:text-blue-600 transition-colors duration-200">Password</label>
             <input
               type="password"
               id="password"
@@ -127,11 +107,10 @@ export default function SignUpPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
-              placeholder="••••••••"
+              placeholder="Password"
             />
           </div>
           <div className="group">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-600 mb-1.5 group-focus-within:text-blue-600 transition-colors duration-200">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"
@@ -139,7 +118,7 @@ export default function SignUpPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
-              placeholder="••••••••"
+              placeholder="Confirm Password"
             />
           </div>
           <button

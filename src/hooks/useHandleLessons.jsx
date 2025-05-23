@@ -137,59 +137,50 @@ export const useHandleLessons = (courseId) => {
     }
   };
 
-  const uploadLessonFile = async (file, title, description) => {
+  const uploadLearningMaterial = async ( file, fileTitle, fileDescription) => {
     try {
       if (!currentUser) {
-        throw new Error('You must be logged in to upload lessons');
+        setError("You must be logged in to upload a file.");
+        return false;
       }
-
       if (userData?.role !== 'instructor') {
-        throw new Error('Only instructors can upload lessons');
+        setError("Only instructors can upload files.");
+        return false;
       }
-
-      if (!file || !file.name) {
-        throw new Error('Invalid file: File name is required');
+      if (!file) {
+        setError("Invalid input: Lesson ID and file are required.");
+        return false;
       }
-
       setError(null);
-      // Create a unique file name
       const fileName = `${Date.now()}_${file.name}`;
-      const storagePath = `lessons/${courseId}/${fileName}`;
+      const storagePath = `learningMaterials/${courseId}/${fileName}`;
       const storageRef = ref(storage, storagePath);
-
-      console.log('Uploading lesson file:', {
-        path: storagePath,
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size
-      });
-
-      // Upload file to Firebase Storage
       const snapshot = await uploadBytes(storageRef, file);
       const fileUrl = await getDownloadURL(snapshot.ref);
 
-      // Add lesson document to Firestore
-      await addDoc(lessonsRef, {
-        courseId,
-        title: title || file.name, // Use file name as title if not provided
-        description: description || '', // Use empty string if description not provided
+      const fileData = {
         fileName: file.name,
-        fileUrl,
         fileType: file.type,
-        createdBy: currentUser.uid,
-        createdByName: `${userData.firstName} ${userData.lastName}`,
-        createdAt: new Date()
-      });
+        fileSize: file.size,
+        fileUrl: fileUrl,
+        fileTitle,
+        fileDescription
+      };
 
-      // Refresh lessons list
-      await getLessons();
+
+      const courseDocRef = doc(db, "courses", courseId);
+      await updateDoc(courseDocRef, {
+        learningMaterials: arrayUnion(fileData)
+      });
+      console.log('Learning material uploaded successfully:', fileData);
       return true;
     } catch (error) {
-      console.error("Error uploading lesson file:", error);
+      console.error("Error uploading learning material:", error);
       setError(error.message);
       return false;
     }
   };
+
 
   const deleteLesson = async (lessonId, fileUrl) => {
     try {
@@ -297,10 +288,10 @@ export const useHandleLessons = (courseId) => {
   }, [courseId]);
 
   return {
-    uploadLessonFile,
     deleteLesson,
     addNewSection,
     addNewLecture,
+    uploadLearningMaterial,
     lessons,
     loading,
     error
