@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useHandleCourses } from '../hooks/useHandleCourses';
-import { useHandleAnnouncements } from '../hooks/useHandleAnnouncements';
-import { useHandleLessons } from '../hooks/useHandleLessons';
-import { useHandleQuizzes } from '../hooks/useHandleQuizzes';
-import { useHandleQuestions } from '../hooks/useHandleQuestions';
-import { useAuth } from '../auth/components/authContext';
-import QuizDisplay from '../utils/QuizDisplayModal';
-import QuestionModal from '../utils/QuestionModal';
-import { useDarkMode } from '../components/DarkModeContext'; // Import the useDarkMode hook
+import { useHandleCourses } from '../../hooks/useHandleCourses';
+import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
+import { useHandleLessons } from '../../hooks/useHandleLessons';
+import { useHandleQuizzes } from '../../hooks/useHandleQuizzes';
+import { useHandleQuestions } from '../../hooks/useHandleQuestions';
+import { useAuth } from '../../auth/components/authContext';
+import QuizDisplay from '../../utils/QuizDisplayModal';
+import QuestionModal from '../../utils/QuestionModal';
+import { useDarkMode } from '../../components/DarkModeContext'; // Import the useDarkMode hook
 
 const Course = () => {
   try {
     const { id } = useParams();
-    const { createAnnouncement, announcements, createdAnnouncements } = useHandleAnnouncements(id);
+    const { announcements, createdAnnouncements } = useHandleAnnouncements(id);
     const { addNewQuestion, questions, addReply, replies, getAllReplies } = useHandleQuestions(id);
     const { courses, enrollStudentInCourse, enrolledCourses, courseLimit } = useHandleCourses();
     const { lessons } = useHandleLessons(id);
@@ -44,25 +44,39 @@ const Course = () => {
     const [newReviewStars, setNewReviewStars] = useState(0);
     const [newReviewComment, setNewReviewComment] = useState('');
     const [selectedLectureId, setSelectedLectureId] = useState('');
-
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [uploadTitle, setUploadTitle] = useState('');
+    const [uploadDescription, setUploadDescription] = useState('');
+    const [uploadFile, setUploadFile] = useState(null);
+    const [uploadError, setUploadError] = useState('');
+    const [materials, setMaterials] = useState([]);
     const [expandedReplies, setExpandedReplies] = useState({});
     const [replyBoxes, setReplyBoxes] = useState({});
     const { darkMode } = useDarkMode(); // Use the useDarkMode hook
 
+    useEffect(() => {
+      const fetchMaterials = async () => {
+        // Fetch materials data from your backend or Firebase storage
+        const materialsData = await fetchMaterialsData(id);
+        setMaterials(materialsData);
+      };
 
+      fetchMaterials();
+    }, [id]);
 
 
     useEffect(() => {
-      if (
-        lessons &&
-        lessons.length > 0 &&
-        lessons[0].lectures &&
-        lessons[0].lectures.length > 0 &&
-        !selectedLecture
-      ) {
-        setSelectedLecture(lessons[0].lectures[0]);
-      }
-    }, [lessons, selectedLecture]);
+  if (
+    lessons &&
+    lessons.length > 0 &&
+    lessons[0].lectures &&
+    lessons[0].lectures.length > 0 &&
+    !selectedLecture
+  ) {
+    setSelectedLecture(lessons[0].lectures[0]);
+    setSelectedLectureId(lessons[0].lectures[0].id); // Set the selectedLectureId
+  }
+}, [lessons, selectedLecture]);
 
 
     useEffect(() => {
@@ -88,7 +102,6 @@ const Course = () => {
       checkEnrollment();
     }, [id, enrolledCourses, courses]);
 
-
     const handleConfirm = async () => {
       setIsEnrolling(true);
       await enrollStudentInCourse(course.id);
@@ -109,7 +122,6 @@ const Course = () => {
     const toggleDropdown = (id) => {
       setDropdownOpen(dropdownOpen === id ? null : id);
     };
-
 
     const handleEditSection = (sectionId) => {
       console.log('Editing section:', sectionId);
@@ -179,21 +191,65 @@ const Course = () => {
     };
 
     const handleQuestionSubmit = () => {
-      if (!question.trim()) {
-        setQuestionError('Question cannot be empty.');
+  if (!question.trim()) {
+    setQuestionError('Question cannot be empty.');
+    return;
+  }
+  if (!selectedLectureId) {
+    setQuestionError('Please select a lecture.');
+    return;
+  }
+  addNewQuestion(question, selectedLectureId);
+  setShowQuestionModal(false);
+  setQuestion('');
+  setQuestionError('');
+};
+
+
+    const handleLearningMaterialFileChange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.type.includes('pdf') || file.type.includes('video')) {
+          setUploadFile(file);
+          setUploadError('');
+        } else {
+          setUploadError('Please upload only PDF or video files');
+          setUploadFile(null);
+        }
+      }
+    };
+
+    const handleUploadLearningMaterial = async () => {
+      if (!uploadTitle || !uploadDescription || !uploadFile) {
+        setUploadError('Please fill in all fields and select a file');
         return;
       }
-      addNewQuestion(question, selectedLectureId);
-      addNewQuestion(question, selectedLectureId);
-      setShowQuestionModal(false);
-      setQuestion('');
-      setQuestionError('');
+      try {
+        const success = await uploadLearningMaterial(
+          uploadFile,
+          uploadTitle,
+          uploadDescription,
+        );
+        if (success) {
+          console.log('Learning material uploaded successfully');
+          setUploadTitle('');
+          setUploadDescription('');
+          setUploadFile(null);
+          setShowUploadModal(false);
+          setUploadError('');
+        } else {
+          setUploadError('Failed to upload learning material');
+        }
+      } catch (error) {
+        console.error('Error uploading learning material:', error);
+        setUploadError(error.message || 'Failed to upload learning material');
+      }
     };
 
     const course = courses?.find(c => c.id === id) || null;
 
     if (loading || course === null) {
-      return <div className="p-6 text-center text-gray-700">Loading...</div>;
+      return <div className="p-6 text-center text-gray-700"></div>;
     }
 
     if (isEnrolling) {
@@ -268,7 +324,6 @@ const Course = () => {
             </div>
           </div>
         </section>
-
       );
     }
 
@@ -331,8 +386,7 @@ const Course = () => {
       );
     }
 
-
-    const tabs = ['Overview', 'Announcements', 'Notes', 'Q&A', 'Reviews', 'Assessment', 'Quizzes', 'Learning tools'];
+    const tabs = ['Overview', 'Announcements', 'Notes', 'Q&A', 'Reviews', 'Assessment', 'Quizzes', 'Materials'];
 
     const renderTabContent = () => {
       switch (activeTab) {
@@ -342,7 +396,7 @@ const Course = () => {
               {selectedLecture ? (
                 <>
                   <h2 className={`text-xl mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {selectedLecture.title || 'Loading...'}
+                    {selectedLecture.title || <Loading />}
                   </h2>
                   <p
                     className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm mb-4`}
@@ -375,10 +429,10 @@ const Course = () => {
               ) : (
                 <div>
                   <h2 className={`text-xl mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {course?.course || 'Loading...'}
+                    {course?.course || <Loading />}
                   </h2>
                   <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm mb-4`}>
-                    {course?.description || 'Loading...'}
+                    {course?.description || <Loading />}
                   </p>
                 </div>
               )}
@@ -424,7 +478,7 @@ const Course = () => {
                 <div className="space-y-3">
                   {comments.length === 0 && (
                     <div className={`text-center py-6 rounded-md border shadow-sm
-              ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+              ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                       <i className={`bi bi-chat-square-text text-2xl mb-2 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}></i>
                       <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-xs`}>
                         No comments yet. Be the first to share your thoughts!
@@ -463,8 +517,7 @@ const Course = () => {
                             ? 'bg-red-50 text-red-600 hover:bg-red-100'
                             : darkMode
                               ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                              : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                            }`}
+                              : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
                         >
                           <i className={`bi ${comment.isLiked ? 'bi-heart-fill' : 'bi-heart'}`}></i>
                           <span>{comment.likes}</span>
@@ -489,7 +542,7 @@ const Course = () => {
                               placeholder="Share your thoughts..."
                               className={`w-full p-2.5 border rounded-md focus:ring-2 focus:border-blue-500 transition text-sm resize-none min-h-[60px] shadow-sm
                         ${darkMode
-                                  ? 'bg-gray-800  border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-blue-400'
+                                  ? 'bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-blue-400'
                                   : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'}`}
                             />
                             <div className="flex justify-end gap-2">
@@ -500,8 +553,7 @@ const Course = () => {
                                 }}
                                 className={`px-2.5 py-1 rounded-md font-medium text-xs transition-all duration-200 ${darkMode
                                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                  }`}
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                               >
                                 Cancel
                               </button>
@@ -510,8 +562,7 @@ const Course = () => {
                                 disabled={!replyText.trim()}
                                 className={`px-2.5 py-1 rounded-md font-medium text-xs transition-all duration-200 ${darkMode
                                   ? 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                                  : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                                  }`}
+                                  : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'}`}
                               >
                                 <i className="bi bi-send text-xs"></i>Reply
                               </button>
@@ -524,8 +575,7 @@ const Course = () => {
                           {comment.replies.map((reply) => (
                             <div
                               key={reply.id}
-                              className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-800'
-                                }`}
+                              className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-800'}`}
                             >
                               <div className="flex items-center gap-2 mb-1">
                                 <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-xs">
@@ -553,7 +603,6 @@ const Course = () => {
               </div>
             </div>
           );
-
 
         case 'Announcements':
           return (
@@ -665,7 +714,7 @@ const Course = () => {
                     maxLength={300}
                     className={`w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500 transition text-sm  shadow-sm
                         ${darkMode
-                        ? 'bg-gray-800  border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-blue-400'
+                        ? 'bg-[#242526]  border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-blue-400'
                         : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'}`}
                     placeholder="Write your review here..."
                   />
@@ -749,7 +798,6 @@ const Course = () => {
                     ))
                 )}
               </div>
-
             </div>
           );
 
@@ -816,14 +864,13 @@ const Course = () => {
                       {a.type}
                     </div>
                     <div
-                      className={`text-sm mb-2 ${darkMode ? "text-gray-300" : "text-gray-500"
+                      className={`text-sm mb-2 ${darkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                     >
                       {a.description}
                     </div>
 
                     {/* Status Badge */}
-
                   </div>
                 ))}
               </div>
@@ -851,7 +898,7 @@ const Course = () => {
                     className={`w-full p-3 border rounded-lg shadow-sm text-sm resize-none min-h-[80px] transition
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
         ${darkMode
-                        ? "bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400"
+                        ? "bg-[#242526] border-gray-600 text-gray-200 placeholder-gray-400"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                       }
       `}
@@ -871,7 +918,6 @@ const Course = () => {
                   </button>
                 </div>
               </div>
-
             </div>
           );
 
@@ -932,19 +978,20 @@ const Course = () => {
 
               {/* Question Modal */}
               <QuestionModal
-                showModal={showQuestionModal}
-                onClose={() => {
-                  setShowQuestionModal(false);
-                  setQuestionError('');
-                }}
-                question={question}
-                setQuestion={setQuestion}
-                onSubmit={handleQuestionSubmit}
-                error={questionError}
-                lessons={lessons}
-                selectedLectureId={selectedLectureId}
-                setSelectedLectureId={setSelectedLectureId}
-              />
+  showModal={showQuestionModal}
+  onClose={() => {
+    setShowQuestionModal(false);
+    setQuestionError('');
+  }}
+  question={question}
+  setQuestion={setQuestion}
+  onSubmit={handleQuestionSubmit}
+  error={questionError}
+  lessons={lessons}
+  selectedLectureId={selectedLectureId}
+  setSelectedLectureId={setSelectedLectureId}
+/>
+
 
               {/* List of Questions */}
               <div className="space-y-6">
@@ -996,7 +1043,7 @@ const Course = () => {
                               onChange={(e) => setReplyText(e.target.value)}
                               placeholder="Write your reply..."
                               className={`w-full rounded-md px-3 py-2 text-sm border focus:outline-none focus:ring-2 transition ${darkMode
-                                ? "bg-gray-900 text-gray-200 border-gray-700 focus:ring-blue-500"
+                                ? "bg-gray-800 text-gray-200 border-gray-700 focus:ring-blue-500"
                                 : "bg-white text-gray-900 border-gray-300 focus:ring-blue-500"
                                 }`}
                             />
@@ -1047,7 +1094,6 @@ const Course = () => {
               </div>
             </div>
           );
-
 
         case 'Quizzes':
           return (
@@ -1168,24 +1214,136 @@ const Course = () => {
             </div>
           );
 
-        case 'Learning tools':
+        case 'Materials':
           return (
             <div className="space-y-6">
-              <p>Learning tools for premium users - self-made flashcards etc. for reviewing</p>
+              <div>
+               
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {course?.learningMaterials?.map((material, index) => (
+                    <div key={index} className={`p-4 rounded-lg shadow-sm ${darkMode ? 'bg-gray-700' : 'bg-white'}`}>
+                      <div className="flex items-center gap-3">
+                        <i className={`bi ${material.fileType === 'application/pdf' ? 'bi-file-pdf' : 'bi-file-play'} text-2xl ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}></i>
+                        <span className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{material.fileName}</span>
+                      </div>
+                      <div>
+                        <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{material.fileTitle}</p>
+                        <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{material.description}</p>
+                      </div>
+                      <a
+                        href={material.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`mt-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2
+                          ${darkMode ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+                      >
+                        <i className="bi bi-eye"></i>
+                        View
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {showUploadModal && (
+                <div className="modal-overlay">
+                  <div className={`p-6 rounded-xl shadow-xl w-[90%] max-w-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className={`text-xl font-medium ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Upload Learning Material</h2>
+                      <button
+                        onClick={() => {
+                          setShowUploadModal(false);
+                          setUploadTitle('');
+                          setUploadDescription('');
+                          setUploadFile(null);
+                          setUploadError('');
+                        }}
+                        className={`text-gray-500 hover:text-gray-700 ${darkMode ? 'hover:text-gray-300' : ''}`}
+                      >
+                        <i className="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                    {uploadError && (
+                      <div className="mb-4 p-4 rounded-lg border">
+                        <p className={`text-sm flex items-center gap-2 ${darkMode ? 'bg-gray-700 text-red-400 border-gray-600' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                          <i className="bi bi-exclamation-circle"></i>
+                          {uploadError}
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-4">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Material Title"
+                          value={uploadTitle}
+                          onChange={(e) => setUploadTitle(e.target.value)}
+                          className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pl-5
+                            ${darkMode ? 'bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800'}`}
+                        />
+                      </div>
+                      <div className="relative">
+                        <textarea
+                          placeholder="Material Description"
+                          rows={3}
+                          value={uploadDescription}
+                          onChange={(e) => setUploadDescription(e.target.value)}
+                          className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none pl-5
+                            ${darkMode ? 'bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800'}`}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <label className={`cursor-pointer border-2 rounded-lg transition-all duration-200 flex items-center gap-2 font-medium px-6 py-2
+                          ${darkMode ? 'border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white' : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'}`}>
+                          <i className="bi bi-upload"></i>
+                          <span>Select File (PDF/Video)</span>
+                          <input type="file" accept=".pdf,video/*" onChange={handleLearningMaterialFileChange} className="hidden" />
+                        </label>
+                        <button
+                          onClick={handleUploadLearningMaterial}
+                          disabled={!uploadTitle || !uploadDescription || !uploadFile}
+                          className={`py-2 px-8 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium
+                            ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'}`}
+                        >
+                          <i className="bi bi-cloud-upload"></i>Upload Material
+                        </button>
+                      </div>
+                      {uploadFile && (
+                        <div className={`p-5 rounded-lg border-2 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                          <div className='flex justify-between w-full items-center'>
+                            <div className="flex items-center gap-3">
+                              <i className={`bi ${uploadFile.type.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-2xl ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}></i>
+                              <span className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{uploadFile.name}</span>
+                            </div>
+                            <button
+                              onClick={() => setUploadFile(null)}
+                              className={`text-sm font-medium flex items-center gap-2 ${darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-800'}`}
+                            >
+                              <i className="bi bi-trash"></i>
+                              <span>Remove</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           );
+
         default:
           return null;
       }
     };
 
     return (
-      <section className={darkMode ? ' text-white' : 'bg-white text-gray-900'}>
+      <section className='min-h-screen'>
         <div className="mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-5">
             <div className="flex flex-col w-full lg:col-span-4">
               <div className="flex flex-col">
-                <div className={`bg-black ${selectedLecture?.fileData?.fileType?.startsWith('video/') ? 'p-0' : 'p-0'}`}>
+            <div className={`bg-black ${ selectedLecture?.fileData?.fileType?.startsWith('video/') ? 'p-0' : 'p-0'}`}>
                   {selectedLecture ? (
                     <div className="space-y-4">
                       {selectedLecture.fileData && (() => {
@@ -1233,50 +1391,32 @@ const Course = () => {
                       })()}
                     </div>
                   ) : (
-                    <div className="text-center py-50">
-                      <i className="bi bi-journal-text text-4xl text-gray-400 mb-3"></i>
-                      <p className="text-gray-500">
-                        {lessons.length === 0
-                          ? <>
-                            No lessons available yet.{' '}
-                            <span
-                              onClick={() => setShowAddSectionModal(true)}
-                              className='text-gray-400 hover:text-gray-500 cursor-pointer'
-                            >
-                              Create a lesson first?
-                            </span>
-                          </>
-                          : 'No lecture selected.'}
+                   <div className="text-center py-50">
+                      <i className={`bi bi-journal-text text-4xl mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
+                      <p className={`text-gray-500 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Looks like there are no lessons or lectures yet.
                       </p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className={`p-2  transition-all duration-200 ${darkMode
-                ? 'bg-[#1e1e1e] border border-[#3E4042] text-gray-100'
-                : 'bg-white shadow-lg border border-gray-100 text-gray-800'
-                }`}>
-                <div className={`border-b flex gap-2 ${darkMode ? 'border-[#3E4042]' : 'border-gray-200'
-                  }`}>
+              <div className={`transition-all duration-200 ${darkMode ? 'bg-[#242526] border-r border-gray-700' : 'bg-[#f5f5f5] shadow-lg border-r border-gray-200'}`}>
+                <div className={`border-b flex gap-2 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                   {tabs.map(tab => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors duration-150 ${activeTab === tab
-                        ? darkMode
-                          ? 'border-blue-400 text-blue-300'
-                          : 'border-blue-600 text-blue-700'
-                        : darkMode
-                          ? 'border-transparent text-gray-400 hover:text-blue-300'
-                          : 'border-transparent text-gray-600 hover:text-blue-700'
-                        }`}
+                      className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors duration-150
+                        ${activeTab === tab
+                          ? darkMode ? 'border-blue-400 text-blue-400' : 'border-blue-600 text-blue-700'
+                          : darkMode ? 'border-transparent text-gray-400 hover:text-blue-400' : 'border-transparent text-gray-600 hover:text-blue-700'}`}
                     >
                       {tab}
                     </button>
                   ))}
                 </div>
-                <div className={`min-h-[200px] p-4 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                <div className={`min-h-screen p-5 ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>
                   {renderTabContent()}
                 </div>
               </div>
@@ -1284,10 +1424,10 @@ const Course = () => {
             </div>
 
             <div className="flex flex-col w-full gap-4 bg-gray-50">
-              <div className={darkMode ? 'p-4 border border-[#3E4042] h-full overflow-y-auto bg-[#1e1e1e]' : 'p-4 bg-white shadow-lg border border-gray-100 text-gray-800 h-full overflow-y-auto'}>
+                <div className={`p-4 min-h-screen ${darkMode ? 'bg-[#242526]' : 'bg-[#f5f5f5]'}`}>
                 <div className="mb-4 grd-bg2 text-white p-4 rounded-lg shadow-sm">
                   <h2 className="text-2xl font-semibold flex items-center gap-2">
-                    {course?.course || 'Loading...'}
+                    {course?.course || <Loading />}
                   </h2>
                   <p>{course?.description}</p>
                   <p className='text-sm mt-2 text-gray-400'>
@@ -1393,7 +1533,7 @@ const Course = () => {
                                 </li>
                               ))
                             ) : (
-                              <li className={`italic text-center py-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                              <li className={`italic text-center py-2 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                                 No lectures yet in this lesson
                               </li>
                             )}

@@ -1,13 +1,11 @@
-import '../../../index.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
-import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../../auth/components/authContext';
+import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../../auth/components/authContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { authControl } from '../../../auth/components/authControl';
-import ReviewHubLogo from '../../../assets/ReviewHub.png';
-import { useDarkMode } from '../../../components/DarkModeContext';
+import { authControl } from '../../auth/components/authControl';
+import ReviewHubLogo from '../../assets/ReviewHub.png';
+import { useDarkMode } from '../../components/DarkModeContext';
 
-export default function InstructorHeader() {
+export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -17,6 +15,7 @@ export default function InstructorHeader() {
   const { logout } = authControl();
   const { darkMode, toggleDarkMode } = useDarkMode();
 
+  // Helper to get initials
   const getInitials = (firstName, lastName) => {
     if (!firstName && !lastName) return '';
     if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
@@ -27,6 +26,7 @@ export default function InstructorHeader() {
   const name = userData ? `${userData.firstName} ${userData.lastName}` : 'Loading...';
   const email = userData ? userData.email : currentUser ? currentUser.email : 'Loading...';
 
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -42,9 +42,10 @@ export default function InstructorHeader() {
     };
   }, []);
 
+  // Dummy notifications for demonstration
   const notifications = [
-    { id: 1, text: 'New student enrolled in your course.' },
-    { id: 2, text: 'Your course was approved.' },
+    { id: 1, text: 'New course available for you.' },
+    { id: 2, text: 'Your certification is ready.' },
     { id: 3, text: 'You have a new message.' },
   ];
 
@@ -58,13 +59,11 @@ export default function InstructorHeader() {
   };
 
   return (
-    <header className={`w-full h-[60px] flex items-center justify-between border-b px-5 fixed top-0 left-0 z-50
-      ${darkMode ? 'bg-[#18191A] border-gray-700' : 'bg-white border-gray-200'}`}>
+    <header className={`w-full h-[60px] flex items-center justify-between border-b px-5 fixed top-0 left-0 z-50 ${darkMode ? 'bg-[#242526] border-gray-500' : 'bg-[#f5f5f5] border-gray-300'}`}>
       {/* Left: Logo */}
       <div className="flex items-center gap-[18px]">
         <Link to="/dashboard" className="no-underline">
-          <span className={`font-bold text-3xl font-sans tracking-[-2px] flex items-center cursor-pointer
-            ${darkMode ? 'text-white' : 'text-[#2d2f31]'}`}>
+          <span className="font-bold text-3xl text-[#2d2f31] font-sans tracking-[-2px]  flex items-center cursor-pointer">
             <img src={ReviewHubLogo} alt="Logo" className="w-40 mb-2" />
           </span>
         </Link>
@@ -73,37 +72,35 @@ export default function InstructorHeader() {
       {/* Center: Search Bar */}
       <div className="flex-1 flex justify-center items-center">
         <div className="relative w-[60%] max-w-[600px]">
-          <i className={`bi bi-search absolute left-[18px] top-1/2 -translate-y-1/2 text-lg
-            ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}></i>
+          <i className="bi bi-search absolute left-[18px] top-1/2 -translate-y-1/2 text-gray-500 text-lg"></i>
           <input
             type="text"
             placeholder="Find expert-led courses to boost your career"
-            className={`w-full py-2 px-[18px] pl-11 rounded-xl border text-sm outline-none transition-colors duration-200
-              ${darkMode ? 'border-gray-600 bg-[#242526] text-white placeholder-gray-400' : 'border-[#d1d7dc] bg-[#f7f9fa] text-black placeholder-gray-500'}`}
+            className={`w-full py-2 px-[18px] pl-11 rounded-xl border ${darkMode ? 'bg-[#2b2b2b] border-gray-600 text-white' : 'bg-[#f7f9fa] border-[#d1d7dc] text-gray-900'} outline-none transition-colors duration-200`}
           />
         </div>
       </div>
 
       {/* Right: Icons and Dropdowns */}
       <div className="flex items-center gap-[18px]">
+        {/* Dark Mode Toggle Button */}
+        {/* Dark Mode Switch */}
+   
+
         {/* Notification Bell */}
         <div ref={notifRef} className="relative">
           <i
-            className={`bi bi-bell text-2xl cursor-pointer
-              ${darkMode ? 'text-white' : 'text-[#2d2f31]'}`}
+            className={`bi bi-bell text-2xl ${darkMode ? 'text-white' : 'text-[#2d2f31]'} cursor-pointer`}
             onClick={() => setNotifOpen((open) => !open)}
           ></i>
           {notifOpen && (
-            <div className={`absolute right-0 mt-2 w-80 rounded-lg shadow-lg z-50 border py-3
-              ${darkMode ? 'border-gray-600 bg-[#242526] text-white' : 'border-gray-100 bg-white text-[#2d2f31]'}`}>
-              <div className={`font-semibold px-[18px] pb-2 border-b
-                ${darkMode ? 'border-gray-600' : 'border-gray-100'}`}>Notifications</div>
+            <div className={`absolute right-0 mt-2 w-80 rounded-lg shadow-lg z-50 border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-[#2d2f31]'} ${!darkMode && 'border border-gray-300'}`}>
+            <div className={`font-semibold px-[18px] py-3 border-b ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>Notifications</div>
               {notifications.length === 0 ? (
-                <div className={`p-[18px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No notifications</div>
+                <div className="p-[18px] text-gray-500">No notifications</div>
               ) : (
                 notifications.map(n => (
-                  <div key={n.id} className={`p-[10px] px-[18px] text-[15px] border-b
-                    ${darkMode ? 'border-gray-600 text-white' : 'border-gray-100 text-[#2d2f31]'}`}>{n.text}</div>
+                  <div key={n.id} className={`p-[10px] px-[18px] text-[15px] border-b  ${darkMode ? 'text-white border-gray-600' : 'border-gray-200 text-[#2d2f31]'}`}>{n.text}</div>
                 ))
               )}
             </div>
@@ -112,35 +109,37 @@ export default function InstructorHeader() {
 
         {/* User Dropdown */}
         <div className="relative" ref={dropdownRef}>
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setDropdownOpen((open) => !open)}>
-            <div className="flex items-center justify-center bg-[#a435f0] text-white rounded-full w-9 h-9 font-bold text-lg">
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => setDropdownOpen((open) => !open)}
+          >
+            <div
+              className="flex items-center justify-center bg-[#2374E1] text-white rounded-full w-9 h-9 font-bold text-lg"
+            >
               {initials || 'U'}
             </div>
-            <div className="flex items-center gap-1">
-              <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-[#2d2f31]'}`}>{name}</span>
-              <i className={`bi bi-chevron-down text-sm transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}
-                ${darkMode ? 'text-white' : 'text-[#2d2f31]'}`}></i>
+            <div className="hidden md:flex items-center gap-1">
+              <span className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-[#2d2f31]'}`}>{name}</span>
+              <i className={`bi bi-chevron-right transition-transform duration-200 ${dropdownOpen ? 'rotate-90' : ''} ${darkMode ? 'text-white' : 'text-[#2d2f31]'}`}></i>
             </div>
           </div>
           {dropdownOpen && (
-            <div className={`absolute right-0 mt-2 w-[280px] rounded-lg shadow-lg z-50 border
-              ${darkMode ? 'border-gray-600 bg-[#242526] text-white' : 'border-gray-100 bg-white text-[#2d2f31]'}`}>
-              <div className={`flex items-center p-4 border-b
-                ${darkMode ? 'border-gray-600' : 'border-gray-100'}`}>
-                <div className="bg-[#a435f0] text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-[22px] mr-3">
+            <div className={`absolute right-0 mt-2 w-70 rounded-lg shadow-lg z-50 border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 text-[#2d2f31]'}`}>
+            <div className={`flex items-center p-4 border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}> 
+                <div className="bg-[#2374E1] text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-[22px] mr-3">
                   {initials || 'U'}
                 </div>
                 <div>
-                  <div className="font-semibold">{name}</div>
+                  <div className="font-medium">{name}</div>
                   <div className="text-sm text-gray-500">{email}</div>
                 </div>
               </div>
               <ul className="m-0 p-0 list-none">
-                <li className={`p-[10px] px-[18px] cursor-pointer font-medium border-b
-                  ${darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-200'}`}>
+                {/* Dark Mode Switch in Dropdown */}
+              <li className={`px-4 py-3 flex items-center justify-between border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                  <span className="text-sm font-medium">Dark mode</span>
                   <label className="flex items-center cursor-pointer">
-                    <span className="text-sm font-medium">Dark mode</span>
-                    <div className="relative ml-2">
+                    <div className="relative">
                       <input
                         type="checkbox"
                         checked={darkMode}
@@ -181,18 +180,31 @@ export default function InstructorHeader() {
                     </div>
                   </label>
                 </li>
-                <li className={`p-[10px] px-[18px] cursor-pointer font-medium border-b
-                  ${darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-200'}`}>
-                  <Link to="/instructor/settings" className="no-underline flex items-center">
-                    <i className='bi bi-gear-fill mr-2'></i><span>Settings</span>
-                  </Link>
-                </li>
-                <li
-                  onClick={handleLogout}
-                  className={`px-[18px] py-2.5 cursor-pointer font-medium transition-colors duration-200
-                    ${darkMode ? 'hover:bg-gray-700 text-red-500 rounded-b-lg' : 'hover:bg-gray-200 text-red-500'}`}
-                >
-                  <i className="bi bi-box-arrow-right mr-2"></i><span>Sign out</span>
+                <Link to="/certification" className="no-underline">
+                  <li className={`px-[18px] py-2.5 cursor-pointer text-sm font-medium border-b ${darkMode ? 'border-gray-600 hover:bg-gray-700 text-white' : 'border-gray-300 hover:bg-gray-100 text-[#2d2f31]'} transition-colors duration-200`}>
+                    <i className='bi bi-patch-check-fill mr-2'></i>
+                    <span>Certificaiton</span>
+                  </li>
+                </Link>
+                <Link to="/support" className="no-underline">
+                  <li className={`px-[18px] py-2.5 cursor-pointer text-sm font-medium border-b ${darkMode ? 'border-gray-600 hover:bg-gray-700 text-white' : 'border-gray-300 hover:bg-gray-100 text-[#2d2f31]'} transition-colors duration-200`}>
+                    <i className='bi bi-question-circle-fill mr-2'></i>
+                    <span>Support</span>
+                  </li>
+                </Link>
+                <Link to="/account" className="no-underline">
+                  <li className={`px-[18px] py-2.5 cursor-pointer text-sm font-medium border-b ${darkMode ? 'border-gray-600 hover:bg-gray-700 text-white' : 'border-gray-300 hover:bg-gray-100 text-[#2d2f31]'} transition-colors duration-200`}>
+                    <i className='bi bi-person-fill mr-2'></i>
+                    <span>Account</span>
+                  </li>
+                </Link>
+                <li>
+                  <button
+                    onClick={handleLogout}
+                    className={`w-full text-left px-4 py-3 text-sm hover:rounded-b-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
+                  >
+                    <i className="bi bi-box-arrow-right mr-2"></i><span>Logout</span>
+                  </button>
                 </li>
               </ul>
             </div>

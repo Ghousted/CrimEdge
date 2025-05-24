@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useHandleAnnouncements } from '../hooks/useHandleAnnouncements';
-import { useHandleCourses } from '../hooks/useHandleCourses';
-import { auth, db } from '../../firebase'; // Import Firebase configuration
+import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
+import { useHandleCourses } from '../../hooks/useHandleCourses';
+import { auth, db } from '../../../firebase'; // Import Firebase configuration
 import { onAuthStateChanged } from 'firebase/auth'; // Import Firebase Auth functions
 import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
-import { useHandleStorage } from '../hooks/useHandleStorage';
+import { useHandleStorage } from '../../hooks/useHandleStorage';
 import { motion, AnimatePresence } from 'framer-motion'; // Add framer-motion for animations
-import Loading from '../components/Loading'; // Import Loading component
+import Loading from '../../components/Loading'; // Import Loading component
 
 
-import { useDarkMode } from '../components/DarkModeContext';
+import { useDarkMode } from '../../components/DarkModeContext';
 
 const Dashboard = () => {
   const { courses, enrolledCourses } = useHandleCourses();

@@ -1,19 +1,20 @@
+// App.js
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 // Layouts
-import Layout from './components/Layout';
-import AdminLayout from './pages/admin/components/AdminLayout';
-import InstructorLayout from './pages/instructor/components/InstructorLayout';
+import Layout from './layout/users/Layout';
+import AdminLayout from './layout/admin/AdminLayout';
+import InstructorLayout from './layout/instructor/InstructorLayout';
 
 // Pages
-import Dashboard from './pages/Dashboard';
-import Course from './pages/Course';
-import Certification from './pages/Certification';
-import Support from './pages/Support';
-import Account from './pages/Account';
+import Dashboard from './pages/users/Dashboard';
+import Course from './pages/users/Course';
+import Certification from './pages/users/Certification';
+import Support from './pages/users/Support';
+import Account from './pages/users/Account';
 
 // Auth
 import Landing from './auth/Landing';
@@ -42,8 +43,9 @@ import Assessment from './pages/instructor/AssessmentPage';
 import PublicRoute from '../src/auth/components/PublicRoute';
 import PrivateRoute from '../src/auth/components/PrivateRoute';
 
-// Dark Mode Context
+// Components
 import { DarkModeProvider, useDarkMode } from './components/DarkModeContext';
+import Loading from './components/Loading'; // Import the Loading component
 
 const AppContent = () => {
   const { darkMode } = useDarkMode();

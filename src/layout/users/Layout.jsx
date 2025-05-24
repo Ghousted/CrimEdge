@@ -1,7 +1,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from './Header';
-import Loading from './Loading';
+import Loading from '../../components/Loading';
 
 // Create a loading context
 export const LoadingContext = createContext({

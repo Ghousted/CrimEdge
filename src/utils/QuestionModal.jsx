@@ -53,7 +53,7 @@ export default function QuestionModal({
               className={`w-full p-2 rounded-md transition
                 border
                 ${darkMode
-                  ? 'bg-[#3A3B3C] border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500'
+                  ? 'resize-none border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500'
                   : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500'
                 }`}
               placeholder="Type your question here..."
@@ -64,22 +64,28 @@ export default function QuestionModal({
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Select Lecture</label>
-            <select
-              className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-gray-50 text-sm"
-              value={selectedLectureId}
-              onChange={(e) => setSelectedLectureId(e.target.value)}
-            >
-              <option value="" disabled>Select a lecture</option>
-              {lessons?.map((lesson) => (
-                <optgroup key={lesson.id} label={lesson.title}>
-                  {lesson.lectures?.map((lecture) => (
-                    <option key={lecture.id} value={lecture.id}>
-                      {lecture.title}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+           <select
+  className={`w-full p-2 rounded-md text-sm transition
+    focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+    ${darkMode
+      ? 'bg-[#3A3B3C] border-gray-600 text-gray-200 placeholder-gray-400'
+      : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-400'
+    }`}
+  value={selectedLectureId}
+  onChange={(e) => setSelectedLectureId(e.target.value)}
+>
+  <option value="" disabled>Select a lecture</option>
+  {lessons?.map((lesson) => (
+    <optgroup key={lesson.id} label={lesson.title}>
+      {lesson.lectures?.map((lecture) => (
+        <option key={lecture.id} value={lecture.id}>
+          {lecture.title}
+        </option>
+      ))}
+    </optgroup>
+  ))}
+</select>
+
           </div>
           <div className="flex justify-end gap-3">
             <button

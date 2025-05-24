@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { useDarkMode } from '../components/DarkModeContext'; // Import the useDarkMode hook
 
 export default function QuizCreator({ onCreateQuiz }) {
     const [topic, setTopic] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    const { darkMode } = useDarkMode(); // Use the useDarkMode hook
+
     const generateQuiz = async (e) => {
         e.preventDefault();
         e.stopPropagation();
         setError('');
-        
+
         if (!topic.trim()) {
             setError('Please enter a topic');
             return;
@@ -21,7 +24,7 @@ export default function QuizCreator({ onCreateQuiz }) {
             const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({ model: "learnlm-2.0-flash-experimental" });
 
-            const prompt = `Create a multiple choice quiz about ${topic} with 10 questions. 
+            const prompt = `Create a multiple choice quiz about ${topic} with 10 questions.
             Format the response as a JSON object with the following structure:
             {
                 "title": "Quiz Title",
@@ -40,15 +43,15 @@ export default function QuizCreator({ onCreateQuiz }) {
             const result = await model.generateContent(prompt);
             const response = await result.response;
             const text = response.text();
-            
+
             // Extract JSON from the response
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {
                 throw new Error('No valid JSON found in the response');
             }
-            
+
             const quizData = JSON.parse(jsonMatch[0]);
-            
+
             // Validate the quiz data structure
             if (!quizData.title || !quizData.topic || !Array.isArray(quizData.questions)) {
                 throw new Error('Invalid quiz data structure');
@@ -59,7 +62,7 @@ export default function QuizCreator({ onCreateQuiz }) {
                 if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || !q.correctAnswer) {
                     throw new Error(`Invalid question structure at index ${index}`);
                 }
-                
+
                 // Verify that the correct answer is one of the options
                 if (!q.options.includes(q.correctAnswer)) {
                     throw new Error(`Correct answer "${q.correctAnswer}" not found in options for question ${index + 1}`);
@@ -87,17 +90,19 @@ export default function QuizCreator({ onCreateQuiz }) {
 
     return (
         <div className="">
-          
-            <form onSubmit={generateQuiz} className="flex flex-col gap-4">
-                <div>
-                   
+            <form onSubmit={generateQuiz} className="flex gap-4">
+                <div className='flex-1'>
                     <input
                         type="text"
                         id="topic"
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                         placeholder="Enter a topic for your quiz"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className={`w-full p-2 border rounded-lg transition
+                            ${darkMode
+                                ? "border-[gray-600 ]focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-[#242526] text-gray-100"
+                                : "border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500  text-gray-900"
+                            }`}
                         disabled={loading}
                     />
                 </div>
@@ -107,7 +112,7 @@ export default function QuizCreator({ onCreateQuiz }) {
                 <button
                     type="submit"
                     disabled={loading || !topic.trim()}
-                    className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="bg-blue-600 text-white py-2 px-5 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {loading ? (
                         <>
@@ -124,4 +129,4 @@ export default function QuizCreator({ onCreateQuiz }) {
             </form>
         </div>
     );
-} 
+}

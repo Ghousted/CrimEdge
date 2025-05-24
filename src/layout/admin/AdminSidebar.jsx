@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useDarkMode } from '../../../components/DarkModeContext';
+import { useDarkMode } from '../../components/DarkModeContext';
 
 export default function AdminSidebar({ collapsed }) {
   const { darkMode } = useDarkMode();

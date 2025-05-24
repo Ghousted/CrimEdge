@@ -340,11 +340,11 @@ export default function InstructorDashboard() {
                 Your Courses
               </h2>
               {coursesLoading ? (
-                <div className="flex justify-center items-center py-8">
+<div className={`flex justify-center items-center py-8 rounded-xl shadow-sm border ${darkMode ? 'bg-[#242526] border-gray-700' : 'bg-white/80 border-gray-100/50'}`}>
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : coursesWithImages.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
+<div className={`text-center py-8 rounded-lg transition-colors duration-300 ${darkMode ? 'bg-[#242526] text-white' : 'bg-gray-50 text-gray-900'}`}>
                   <i className="bi bi-book text-4xl text-gray-400 mb-3"></i>
                   <p className="text-gray-500">You have not created any courses yet.</p>
                 </div>
@@ -433,7 +433,7 @@ export default function InstructorDashboard() {
 
               <div className="mb-4">
                 <textarea
-                  className={`w-full p-2 h-20 border rounded-lg resize-none mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
+                  className={`w-full p-2 h-20 border rounded-lg resize-none mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm ${darkMode ? 'border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
                   placeholder="Write your announcement here..."
                   value={announcement}
                   onChange={(e) => setAnnouncement(e.target.value)}
@@ -442,15 +442,20 @@ export default function InstructorDashboard() {
                 <div className="mb-4">
                   <label className={`block mb-1 text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Target Audience</label>
                   <select
-                    className={`w-full p-1.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
-                    value={target}
-                    onChange={(e) => setTarget(e.target.value)}
-                  >
-                    <option value="All">All</option>
-                    <option value="Free">Free</option>
-                    <option value="Basic Plan">Basic Plan</option>
-                    <option value="Premium Plan">Premium Plan</option>
-                  </select>
+  className={`w-full p-1.5 rounded-lg text-sm transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+    ${darkMode
+      ? 'bg-[#3A3B3C] border-gray-600 text-white placeholder-gray-400'
+      : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-400'
+    }`}
+  value={target}
+  onChange={(e) => setTarget(e.target.value)}
+>
+  <option value="All">All</option>
+  <option value="Free">Free</option>
+  <option value="Basic Plan">Basic Plan</option>
+  <option value="Premium Plan">Premium Plan</option>
+</select>
+
                 </div>
                 <button
                   onClick={handleAddAnnouncement}

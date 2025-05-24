@@ -4,35 +4,62 @@ import { useHandleCourses } from '../../hooks/useHandleCourses';
 import { useHandleStorage } from '../../hooks/useHandleStorage';
 import { useHandleLessons } from '../../hooks/useHandleLessons';
 import { useHandleAnnouncements } from '../../hooks/useHandleAnnouncements';
+import { useHandleQuestions } from '../../hooks/useHandleQuestions';
 import QuizCreator from '../../components/QuizCreator';
-import QuizDisplay from '../../utils/QuizDisplayModal';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../../firebase';
 import SectionModal from '../../utils/SectionModal';
 import LessonModal from '../../utils/LessonModal';
-import { useDarkMode } from '../../components/DarkModeContext'; // Import the useDarkMode hook
+import { useDarkMode } from '../../components/DarkModeContext';
 
 export default function CoursePage() {
   try {
     const [activeTab, setActiveTab] = useState('Overview');
-    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [expandedSections, setExpandedSections] = useState({});
     const [dropdownOpen, setDropdownOpen] = useState(null);
     const [showAddSectionModal, setShowAddSectionModal] = useState(false);
     const [newSectionTitle, setNewSectionTitle] = useState('');
     const [newSectionDescription, setNewSectionDescription] = useState('');
     const [courseDetails, setCourseDetails] = useState(null);
-    const [courseImage, setCourseImage] = useState(null);
     const [comments, setComments] = useState([]);
-    const [newComment, setNewComment] = useState('');
-    const [replyingTo, setReplyingTo] = useState(null);
-    const [replyText, setReplyText] = useState('');
+
     const [lessonId, setLessonId] = useState(null);
     const [selectedAssessmentType, setSelectedAssessmentType] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('submittedAt');
     const [sortOrder, setSortOrder] = useState('desc');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [showAddLessonModal, setShowAddLessonModal] = useState(false);
+    const [lessonTitle, setLessonTitle] = useState('');
+    const [lessonDescription, setLessonDescription] = useState('');
+    const [lessonFile, setLessonFile] = useState(null);
+    const [lessonsError, setLessonsError] = useState('');
+    const [setActiveSection] = useState(null);
+    const [selectedLecture, setSelectedLecture] = useState(null);
+    const [announcementText, setAnnouncementText] = useState('');
+    const [announcementFiles, setAnnouncementFiles] = useState([]);
+    const [quizzes, setQuizzes] = useState([]);
+    const [setCurrentQuiz] = useState(null);
+    const [setQuizResults] = useState({});
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [uploadTitle, setUploadTitle] = useState('');
+    const [uploadDescription, setUploadDescription] = useState('');
+    const [uploadFile, setUploadFile] = useState(null);
+    const [uploadError, setUploadError] = useState('');
+    const { id } = useParams();
+    const courseId = id;
+    const { courses } = useHandleCourses();
+    const { addNewSection, uploadLearningMaterial, lessons = [], error } = useHandleLessons(courseId);
+    const { createAnnouncement, announcements: courseAnnouncements } = useHandleAnnouncements(courseId);
+    const course = courses.find(c => c.id === courseId);
+    const navigate = useNavigate();
+    const { darkMode } = useDarkMode();
+    const { addNewQuestion, addReply, getAllReplies, questions, replies } = useHandleQuestions(courseId);
+   const [newComment, setNewComment] = useState('');
+const [replyingTo, setReplyingTo] = useState(null);
+const [replyText, setReplyText] = useState('');
+const [expandedReplies, setExpandedReplies] = useState({});
+const [replyBoxes, setReplyBoxes] = useState({});
+
 
     const dummyResults = [
       {
@@ -101,38 +128,11 @@ export default function CoursePage() {
             return 0;
         }
       });
-
-    const [showAddLessonModal, setShowAddLessonModal] = useState(false);
-    const [lessonTitle, setLessonTitle] = useState('');
-    const [lessonDescription, setLessonDescription] = useState('');
-    const [lessonFile, setLessonFile] = useState(null);
-    const [lessonsError, setLessonsError] = useState('');
-    const [activeSection, setActiveSection] = useState(null);
-    const [selectedLecture, setSelectedLecture] = useState(null);
-    const [announcementText, setAnnouncementText] = useState('');
-    const [announcementFiles, setAnnouncementFiles] = useState([]);
-    const [quizzes, setQuizzes] = useState([]);
-    const [currentQuiz, setCurrentQuiz] = useState(null);
-    const [quizResults, setQuizResults] = useState({});
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [showUploadModal, setShowUploadModal] = useState(false);
-    const [uploadTitle, setUploadTitle] = useState('');
-    const [uploadDescription, setUploadDescription] = useState('');
-    const [uploadFile, setUploadFile] = useState(null);
-    const [uploadError, setUploadError] = useState('');
-    const { id } = useParams();
-    const courseId = id;
-    const { courses, getCourses } = useHandleCourses();
-    const { fetchCourseImages } = useHandleStorage();
-    const { addNewSection, addNewLecture, uploadLearningMaterial, uploadLessonFile, lessons = [] } = useHandleLessons(courseId);
-    const { createAnnouncement, announcements: courseAnnouncements, loading: announcementsLoading } = useHandleAnnouncements(courseId);
-    const course = courses.find(c => c.id === courseId);
-    const navigate = useNavigate();
-    const { darkMode } = useDarkMode(); // Use the useDarkMode hook
-
     useEffect(() => {
       if (course) {
         setCourseDetails(course);
+        console.log("Course Details:", course);
+        console.log("Learning Materials:", course.learningMaterials);
       }
     }, [course]);
 
@@ -146,10 +146,15 @@ export default function CoursePage() {
       }
     }, [lessons]);
 
+    if (!courseDetails) {
+      return <Loading />;
+    }
+
     console.log('Found course:', course);
     console.log('Course ID:', courseId);
     console.log(courseDetails);
-    const tabs = ['Overview', 'Q&A', 'Announcements', 'Reviews', 'Assessment', 'Learning tools', 'Quizzes'];
+
+    const tabs = ['Overview', 'Q&A', 'Announcements', 'Reviews', 'Assessment', 'Materials', 'Quizzes'];
 
     const toggleSection = (sectionIndex) => {
       setExpandedSections(prev => ({
@@ -172,83 +177,35 @@ export default function CoursePage() {
 
     const handleEditSection = (sectionId) => {
       console.log('Editing section:', sectionId);
-      setDropdownOpen(null); // Close the dropdown
+      setDropdownOpen(null);
     };
 
     const handleDeleteSection = (sectionId) => {
       console.log('Deleting section:', sectionId);
-      setDropdownOpen(null); // Close the dropdown
+      setDropdownOpen(null);
     };
 
-    const handleAddComment = (e) => {
-      e.preventDefault();
-      if (newComment.trim()) {
-        setComments([
-          ...comments,
-          {
-            id: Date.now(),
-            text: newComment,
-            author: 'Current User',
-            timestamp: new Date().toISOString(),
-            replies: [],
-            likes: 0,
-            isLiked: false
-          },
-        ]);
-        setNewComment('');
-      }
-    };
+   
+ const handleAddComment = (e) => {
+  e.preventDefault();
+  if (newComment.trim()) {
+    addNewQuestion(newComment, selectedLectureId);
+    setNewComment('');
+  }
+};
 
-    const handleAddReply = (commentId) => {
-      if (replyText.trim()) {
-        setComments(comments.map(comment => {
-          if (comment.id === commentId) {
-            return {
-              ...comment,
-              replies: [...comment.replies, {
-                id: Date.now(),
-                text: replyText,
-                author: 'Current User',
-                timestamp: new Date().toISOString(),
-                likes: 0,
-                isLiked: false
-              }]
-            };
-          }
-          return comment;
-        }));
-        setReplyText('');
-        setReplyingTo(null);
-      }
-    };
+const handleAddReply = (questionId) => {
+  if (replyText.trim()) {
+    addReply(questionId, replyText);
+    setReplyText('');
+    setReplyingTo(null);
+  }
+};
 
-    const handleLike = (commentId, isReply = false, replyId = null) => {
-      setComments(comments.map(comment => {
-        if (isReply && comment.id === commentId) {
-          return {
-            ...comment,
-            replies: comment.replies.map(reply => {
-              if (reply.id === replyId) {
-                return {
-                  ...reply,
-                  likes: reply.isLiked ? reply.likes - 1 : reply.likes + 1,
-                  isLiked: !reply.isLiked
-                };
-              }
-              return reply;
-            })
-          };
-        }
-        if (!isReply && comment.id === commentId) {
-          return {
-            ...comment,
-            likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
-            isLiked: !comment.isLiked
-          };
-        }
-        return comment;
-      }));
-    };
+
+
+
+    
 
     const handleLessonFileChange = (e) => {
       const file = e.target.files[0];
@@ -280,7 +237,6 @@ export default function CoursePage() {
 
         if (success) {
           console.log('Lecture created successfully');
-          // Reset form
           setLessonTitle('');
           setLessonDescription('');
           setLessonFile(null);
@@ -317,7 +273,7 @@ export default function CoursePage() {
         const correctIndex = q.options.indexOf(q.correctAnswer);
         return {
           ...q,
-          correctAnswer: String.fromCharCode(65 + correctIndex) // Convert to A, B, C, or D
+          correctAnswer: String.fromCharCode(65 + correctIndex)
         };
       });
 
@@ -337,7 +293,7 @@ export default function CoursePage() {
           questionNumber: index + 1,
           question: q.question,
           options: q.options,
-          correctAnswer: q.correctAnswer // Now shows A, B, C, or D
+          correctAnswer: q.correctAnswer
         }))
       });
 
@@ -466,7 +422,7 @@ export default function CoursePage() {
               {selectedLecture ? (
                 <>
                   <h2 className={`text-xl mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {selectedLecture.title || 'Loading...'}
+                    {selectedLecture.title || <Loading />}
                   </h2>
                   <p
                     className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm mb-4`}
@@ -514,7 +470,7 @@ export default function CoursePage() {
                           className={`w-full p-2.5 border rounded-md focus:ring-2 focus:border-blue-500 transition text-sm resize-none min-h-[60px] shadow-sm
                             ${darkMode
                               ? 'bg-[#242526] border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-blue-400'
-                              : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'}`}
+                              : ' border-gray-300 text-gray-900 placeholder-gray-500'}`}
                         />
                         <div className="flex justify-end">
                           <button
@@ -572,8 +528,7 @@ export default function CoursePage() {
                                 ? 'bg-red-50 text-red-600 hover:bg-red-100'
                                 : darkMode
                                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                }`}
+                                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
                             >
                               <i className={`bi ${comment.isLiked ? 'bi-heart-fill' : 'bi-heart'}`}></i>
                               <span>{comment.likes}</span>
@@ -607,9 +562,10 @@ export default function CoursePage() {
                                       setReplyingTo(null);
                                       setReplyText('');
                                     }}
-                                    className={`px-2.5 py-1 rounded-md font-medium text-xs transition-all duration-200 ${darkMode
-                                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    className={`px-2.5 py-1 rounded-md font-medium text-xs transition-all duration-200
+                                      ${darkMode
+                                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                   >
                                     Cancel
                                   </button>
@@ -661,15 +617,143 @@ export default function CoursePage() {
               ) : (
                 <div>
                   <h2 className={`text-xl mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {courseDetails?.course || 'Loading...'}
+                    {courseDetails?.course || <Loading />}
                   </h2>
                   <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm mb-4`}>
-                    {courseDetails?.description || 'Loading...'}
+                    {courseDetails?.description || <Loading />}
                   </p>
                 </div>
               )}
             </div>
           );
+
+      case 'Q&A':
+      return (
+        <div>
+          {/* Search and filter UI */}
+        
+
+          {/* Filters and Ask Button */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className={`text-sm font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                Filters:
+              </span>
+              {['All lectures', 'Sort by recommended', 'Filter questions'].map((label, idx) => (
+                <button
+                  key={idx}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm rounded-md border transition ${darkMode
+                    ? "border-gray-700 text-gray-200 hover:border-blue-500"
+                    : "border-gray-300 bg-white text-gray-800 hover:border-blue-600"
+                    }`}
+                >
+                  {label} <i className="bi bi-chevron-down" />
+                </button>
+              ))}
+            </div>
+
+          
+          </div>
+          <div className="space-y-6">
+            {questions.map((q) => {
+              const flatLectures = lessons.flatMap((lesson) => lesson.lectures || []);
+              const lecture = flatLectures.find((lec) => lec.id === q.lectureId);
+              const ts = q.createdAt?.toDate ? q.createdAt.toDate() : new Date(q.createdAt);
+              const formatted = ts.toLocaleDateString('en-US', { day: '2-digit', year: 'numeric', month: 'long' });
+              const isRepliesShown = expandedReplies[q.id];
+              const isReplyBoxShown = replyBoxes[q.id];
+
+              return (
+                <div
+                  key={q.id}
+                  className={`rounded-lg border shadow-sm transition ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"
+                    }`}
+                >
+                  <div className={`px-4 py-2 rounded-t-lg ${darkMode ? "bg-gray-900" : "bg-gray-100"}`}>
+                    <h4 className={`text-base font-semibold ${darkMode ? "text-blue-300" : "text-blue-800"}`}>
+                      {lecture ? lecture.title : "Unknown Lecture"}
+                    </h4>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="flex justify-between mb-1">
+                      <span className={darkMode ? "text-gray-400 text-sm" : "text-gray-500 text-sm"}>{q.createdBy}</span>
+                      <span className={darkMode ? "text-gray-400 text-xs" : "text-gray-500 text-xs"}>{formatted}</span>
+                    </div>
+
+                    <p className={`mb-3 text-sm ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{q.question}</p>
+
+                    <div className={`flex gap-4 text-sm ${darkMode ? "text-blue-400" : "text-blue-600"}`}>
+                      <button onClick={() => setReplyBoxes((prev) => ({ ...prev, [q.id]: !prev[q.id] }))} className="hover:underline">
+                        Reply
+                      </button>
+                      <button
+                        onClick={() => setExpandedReplies((prev) => ({ ...prev, [q.id]: !prev[q.id] }))}
+                        className="hover:underline"
+                      >
+                        {isRepliesShown ? "Hide replies" : `View replies (${replies[q.id]?.length || 0})`}
+                      </button>
+                    </div>
+
+                    {isReplyBoxShown && (
+                      <div className="mt-4">
+                        <textarea
+                          value={replyText}
+                          rows="2"
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Write your reply..."
+                          className={`w-full rounded-md px-3 py-2 text-sm border focus:outline-none focus:ring-2 transition ${darkMode
+                            ? "bg-gray-800 text-gray-200 border-gray-700 focus:ring-blue-500"
+                            : "bg-white text-gray-900 border-gray-300 focus:ring-blue-500"
+                            }`}
+                        />
+                        <div className="flex justify-end gap-2 mt-2">
+                          <button
+                            onClick={() => setReplyBoxes((prev) => ({ ...prev, [q.id]: false }))}
+                            className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"} hover:underline`}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleAddReply(q.id)}
+                            className="text-sm px-4 py-1 rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                          >
+                            Post
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {isRepliesShown && (
+                      <div className={`mt-5 space-y-4 border-l-2 pl-4 ${darkMode ? "border-gray-700" : "border-gray-300"}`}>
+                        {replies[q.id]?.map((r, index) => {
+                          const replyDate = r.createdAt?.toDate?.().toLocaleString?.() ?? "Unknown date";
+                          const replyDateFormatted = new Date(replyDate).toLocaleDateString('en-US', {
+                            day: '2-digit',
+                            year: 'numeric',
+                            month: 'long',
+                          });
+                          return (
+                            <div key={index} className="text-sm">
+                              <div className="flex justify-between mb-1 items-center">
+                                <p className={darkMode ? "text-gray-400 text-sm" : "text-gray-500 text-sm"}>
+                                  {r.createdBy}
+                                </p>
+                                <p className={darkMode ? "text-gray-400 text-xs" : "text-gray-500 text-xs"}>{replyDateFormatted}</p>
+                              </div>
+                              <p className={`mb-3 text-sm ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{r.reply}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
         case 'Announcements':
           return (
             <div>
@@ -677,29 +761,19 @@ export default function CoursePage() {
               <form onSubmit={handleAddAnnouncement} className="mb-6">
                 <textarea
                   value={announcementText}
-                  rows={3}
+                  rows={2}
                   onChange={e => setAnnouncementText(e.target.value)}
                   placeholder="Write your announcement here..."
-                  className={`w-full p-3 border rounded-lg shadow-sm text-sm resize-none min-h-[80px] transition
+                  className={`w-full p-3 border rounded-lg shadow-sm text-sm resize-none transition
                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                     ${darkMode
                       ? "bg-[#242526] border-gray-600 text-gray-200 placeholder-gray-400"
-                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                      : " border-gray-300 text-gray-900 placeholder-gray-500"
                     }
                   `}
                 />
-                <div className="flex items-center justify-between">
-                  <label className="inline-block">
-                    <span className="sr-only">Upload files</span>
-                    <input type="file" multiple className="hidden" onChange={handleAnnouncementFileChange} />
-                    <span className={`px-4 py-1.5 border rounded-md cursor-pointer transition-all duration-200 text-sm font-medium
-                      ${darkMode
-                        ? 'border-gray-600 text-gray-200 hover:text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-400'
-                        : 'border-blue-600 text-blue-700 hover:text-white hover:bg-blue-700'
-                      }`}>
-                      Upload Files
-                    </span>
-                  </label>
+                <div className="flex items-center justify-end">
+               
                   <button
                     type="submit"
                     disabled={!announcementText.trim()}
@@ -712,7 +786,7 @@ export default function CoursePage() {
                   </button>
                 </div>
                 {announcementFiles.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-2 grid ">
                     {announcementFiles.map((file, idx) => (
                       <span key={idx} className={`px-2 py-1 rounded text-xs border
                         ${darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
@@ -722,7 +796,7 @@ export default function CoursePage() {
                   </div>
                 )}
               </form>
-              <div className="space-y-4">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {announcementsLoading ? (
                   <div className="flex justify-center items-center py-8">
                     <div className={`animate-spin rounded-full h-8 w-8 border-2 ${darkMode ? 'border-blue-400 border-t-transparent' : 'border-blue-600 border-t-transparent'}`}></div>
@@ -737,7 +811,7 @@ export default function CoursePage() {
                     .filter(a => a.courseId === courseId)
                     .sort((a, b) => b.createdAt.seconds - a.createdAt.seconds)
                     .map(announcement => (
-                      <div key={announcement.id} className={`p-3 rounded-md border shadow-sm ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                      <div key={announcement.id} className={`p-5 rounded-md border shadow-sm ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${darkMode ? 'bg-gray-700 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
@@ -1009,226 +1083,167 @@ export default function CoursePage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className={`text-xl mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Generate Quiz</h2>
-                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Quiz per lecture will be generated automatically -- select a lecture to generate a quiz -- comment ito</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <select
                     defaultValue=""
                     className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm
-                      ${darkMode ? 'bg-gray-800 border-gray-600 text-gray-200' : 'bg-white border-gray-300 text-gray-800'}`}
+                      ${darkMode ? 'bg-[#242526] border-gray-600 text-gray-200' : ' border-gray-300 text-gray-800'}`}
                   >
-                    <option value="" disabled>Select a lecture</option>
-                    <option value="intro">Introduction to Criminal Law</option>
-                    <option value="elements">Elements of a Crime</option>
-                    <option value="defenses">Criminal Defenses</option>
-                    <option value="procedure">Criminal Procedure</option>
-                    <option value="evidence">Rules of Evidence</option>
+                    <option value="" disabled className={`mb-2 ${darkMode ? 'bg-[#242526] text-gray-300' : 'text-gray-800'}`}>Select a lecture</option>
+                    
                   </select>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium
-                    ${darkMode ? 'bg-gray-700 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                    <i className="bi bi-lightning-charge-fill mr-1"></i>Powered by AI
-                  </span>
+                
                 </div>
               </div>
-              <div className={`rounded-xl p-6 ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-blue-50 to-purple-50'}`}>
+              <div className={`${darkMode ? 'text-white' : ''}`}>
                 <QuizCreator onCreateQuiz={handleCreateQuiz} />
               </div>
             </div>
           );
-        case 'Learning tools':
-          return (
+        case 'Materials':
+          
+      return (
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-2xl font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Learning Materials Library</h2>
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className={`px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center gap-2
+                  ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'}`}
+              >
+                <i className="bi bi-upload"></i>
+                Upload Material
+              </button>
+            </div>
 
-            <div className="space-y-6">
-              <div className={`rounded-lg shadow p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className={`text-2xl font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Learning Materials Library</h2>
-                  <button
-                    onClick={() => setShowUploadModal(true)}
-                    className={`px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center gap-2
-        ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'}`}
+         
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {courseDetails?.learningMaterials?.map((material, index) => (
+                <div key={index} className={`p-4 rounded-lg shadow-sm ${darkMode ? 'bg-gray-700' : 'bg-white'}`}>
+                  <div className="flex items-center gap-3">
+                    <i className={`bi ${material.fileType === 'application/pdf' ? 'bi-file-pdf' : 'bi-file-play'} text-2xl ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}></i>
+                    <span className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{material.fileName}</span>
+                  </div>
+                  <div>
+                    <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{material.fileTitle}</p>
+                    <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{material.escription}</p>
+                  </div>
+                  <a
+                    href={material.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`mt-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2
+                      ${darkMode ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
                   >
-                    <i className="bi bi-upload"></i>
-                    Upload Material
+                    <i className="bi bi-eye"></i>
+                    View
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {showUploadModal && (
+            <div className="modal-overlay">
+              <div className={`p-6 rounded-xl shadow-xl w-[90%] max-w-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className={`text-xl font-medium ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Upload Learning Material</h2>
+                  <button
+                    onClick={() => {
+                      setShowUploadModal(false);
+                      setUploadTitle('');
+                      setUploadDescription('');
+                      setUploadFile(null);
+                      setUploadError('');
+                    }}
+                    className={`text-gray-500 hover:text-gray-700 ${darkMode ? 'hover:text-gray-300' : ''}`}
+                  >
+                    <i className="bi bi-x-lg"></i>
                   </button>
                 </div>
-
-                <div className="flex items-center gap-4 mb-6">
-                  {['all', 'pdf', 'video'].map(tab => (
+                {uploadError && (
+                  <div className="mb-4 p-4 rounded-lg border">
+                    <p className={`text-sm flex items-center gap-2 ${darkMode ? 'bg-gray-700 text-red-400 border-gray-600' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                      <i className="bi bi-exclamation-circle"></i>
+                      {uploadError}
+                    </p>
+                  </div>
+                )}
+                <div className="flex flex-col gap-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Material Title"
+                      value={uploadTitle}
+                      onChange={(e) => setUploadTitle(e.target.value)}
+                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pl-5
+                        ${darkMode ? 'bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800'}`}
+                    />
+                  </div>
+                  <div className="relative">
+                    <textarea
+                      placeholder="Material Description"
+                      rows={3}
+                      value={uploadDescription}
+                      onChange={(e) => setUploadDescription(e.target.value)}
+                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none pl-5
+                        ${darkMode ? 'bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800'}`}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <label className={`cursor-pointer border-2 rounded-lg transition-all duration-200 flex items-center gap-2 font-medium px-6 py-2
+                      ${darkMode ? 'border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white' : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'}`}>
+                      <i className="bi bi-upload"></i>
+                      <span>Select File (PDF/Video)</span>
+                      <input type="file" accept=".pdf,video/*" onChange={handleLearningMaterialFileChange} className="hidden" />
+                    </label>
                     <button
-                      key={tab}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${activeTab === tab
-                        ? darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700'
-                        : darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      onClick={() => {setActiveTab(tab); console.log(activeTab)}}
+                      onClick={handleUploadLearningMaterial}
+                      disabled={!uploadTitle || !uploadDescription || !uploadFile}
+                      className={`py-2 px-8 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium
+                        ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'}`}
                     >
-                      {tab === 'all' ? 'All Materials' : tab === 'pdf' ? 'PDFs' : 'Videos'}
+                      <i className="bi bi-cloud-upload"></i>Upload Material
                     </button>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {course.learningMaterials?.filter(file =>
-                    activeTab === 'all' ||
-                    (activeTab === 'pdf' && file.fileType?.toLowerCase().includes('pdf')) ||
-                    (activeTab === 'video' && file.fileType?.toLowerCase().startsWith('video/'))
-                  )
-                    .map((file, index) => (
-                      <div key={index}
-                        className={`rounded-lg p-4 hover:shadow-md transition-shadow duration-200 border
-            ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-lg ${file.fileType === 'application/pdf'
-                            ? darkMode ? 'bg-red-900 text-red-400' : 'bg-red-100 text-red-600'
-                            : darkMode ? 'bg-blue-900 text-blue-400' : 'bg-blue-100 text-blue-600'
-                            }`}>
-                            <i className={`bi ${file.fileType === 'application/pdf' ? 'bi-file-pdf' : 'bi-file-play'} text-xl`}></i>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className={`font-medium mb-1 truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                              {file.fileName}
-                            </h3>
-                            <p className={`text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                              {file.fileTitle}
-                            </p>
-                            <p className={`text-xs mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-600'}`}>
-                              {file.fileDescription}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleFileSelect(file)}
-                                className={`text-sm font-medium flex items-center gap-1
-                    ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
-                              >
-                                <i className="bi bi-eye"></i> View
-                              </button>
-                              <a
-                                href={file.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`text-sm font-medium flex items-center gap-1
-                    ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
-                              >
-                                <i className="bi bi-download"></i> Download
-                              </a>
-                            </div>
-                          </div>
+                  </div>
+                  {uploadFile && (
+                    <div className={`p-5 rounded-lg border-2 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className='flex justify-between w-full items-center'>
+                        <div className="flex items-center gap-3">
+                          <i className={`bi ${uploadFile.type.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-2xl ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}></i>
+                          <span className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{uploadFile.name}</span>
                         </div>
-                      </div>
-                    ))}
-                </div>
-
-                {(!course.learningMaterials || course.learningMaterials.length === 0 ||
-                  !course.learningMaterials.some(file =>
-                    activeTab === 'all' ||
-                    (activeTab === 'pdf' && file.fileType?.toLowerCase().includes('pdf')) ||
-                    (activeTab === 'video' && file.fileType?.toLowerCase().startsWith('video/'))
-                  )) && (
-                    <div className="text-center py-12">
-                      <i className={`bi bi-folder text-4xl mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
-                      <p className={`text-gray-500 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No learning materials found</p>
-                    </div>
-                  )}
-              </div>
-              {showUploadModal && (
-                <div className="modal-overlay">
-                  <div className={`p-6 rounded-xl shadow-xl w-[90%] max-w-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className={`text-xl font-medium ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Upload Learning Material</h2>
-                      <button
-                        onClick={() => {
-                          setShowUploadModal(false);
-                          setUploadTitle('');
-                          setUploadDescription('');
-                          setUploadFile(null);
-                          setUploadError('');
-                        }}
-                        className={`text-gray-500 hover:text-gray-700 ${darkMode ? 'hover:text-gray-300' : ''}`}
-                      >
-                        <i className="bi bi-x-lg"></i>
-                      </button>
-                    </div>
-                    {uploadError && (
-                      <div className="mb-4 p-4 rounded-lg border">
-                        <p className={`text-sm flex items-center gap-2 ${darkMode ? 'bg-gray-700 text-red-400 border-gray-600' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                          <i className="bi bi-exclamation-circle"></i>
-                          {uploadError}
-                        </p>
-                      </div>
-                    )}
-                    <div className="flex flex-col gap-4">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Material Title"
-                          value={uploadTitle}
-                          onChange={(e) => setUploadTitle(e.target.value)}
-                          className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pl-5
-                            ${darkMode ? 'bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800'}`}
-                        />
-                      </div>
-                      <div className="relative">
-                        <textarea
-                          placeholder="Material Description"
-                          rows={3}
-                          value={uploadDescription}
-                          onChange={(e) => setUploadDescription(e.target.value)}
-                          className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none pl-5
-                            ${darkMode ? 'bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800'}`}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <label className={`cursor-pointer border-2 rounded-lg transition-all duration-200 flex items-center gap-2 font-medium px-6 py-2
-                          ${darkMode ? 'border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white' : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'}`}>
-                          <i className="bi bi-upload"></i>
-                          <span>Select File (PDF/Video)</span>
-                          <input type="file" accept=".pdf,video/*" onChange={handleLearningMaterialFileChange} className="hidden" />
-                        </label>
                         <button
-                          onClick={handleUploadLearningMaterial}
-                          disabled={!uploadTitle || !uploadDescription || !uploadFile}
-                          className={`py-2 px-8 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium
-                            ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'}`}
+                          onClick={() => setUploadFile(null)}
+                          className={`text-sm font-medium flex items-center gap-2 ${darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-800'}`}
                         >
-                          <i className="bi bi-cloud-upload"></i>Upload Material
+                          <i className="bi bi-trash"></i>
+                          <span>Remove</span>
                         </button>
                       </div>
-                      {uploadFile && (
-                        <div className={`p-5 rounded-lg border-2 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-                          <div className='flex justify-between w-full items-center'>
-                            <div className="flex items-center gap-3">
-                              <i className={`bi ${uploadFile.type.includes('pdf') ? 'bi-file-pdf' : 'bi-file-play'} text-2xl ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}></i>
-                              <span className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{uploadFile.name}</span>
-                            </div>
-                            <button
-                              onClick={() => setUploadFile(null)}
-                              className={`text-sm font-medium flex items-center gap-2 ${darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-800'}`}
-                            >
-                              <i className="bi bi-trash"></i>
-                              <span>Remove</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-          );
+          )}
+        </div>
+      );
         default:
           return null;
       }
     };
 
     return (
-      <section >
-        <div className="mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-5">
-            <div className="flex flex-col w-full lg:col-span-4">
-              <div className="flex flex-col">
-                <div className={`bg-black ${selectedLecture?.fileData?.fileType?.startsWith('video/') ? 'p-0' : 'p-0'}`}>
+     <section className="min-h-screen">
+    <div className="mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-5 ">
+        <div className="flex flex-col w-full lg:col-span-4">
+          <div className="flex flex-col">
+            <div className={`bg-black ${ selectedLecture?.fileData?.fileType?.startsWith('video/') ? 'p-0' : 'p-0'}`}>
                   {selectedLecture ? (
                     <div className="space-y-4">
                       {selectedLecture.fileData && (() => {
@@ -1245,7 +1260,7 @@ export default function CoursePage() {
                         }
                         if (fileType === 'application/pdf') {
                           return (
-                            <div className="w-full mx-auto h-[600px] overflow-hidden shadow border">
+                            <div className="w-full mx-auto  overflow-hidden shadow ">
                               <iframe src={fileUrl} className="w-full h-full" title={fileName}>
                                 This browser does not support PDFs. Please download the file:
                                 <a href={fileUrl}>Download PDF</a>.
@@ -1268,7 +1283,7 @@ export default function CoursePage() {
                         );
                       })()}
                       {selectedFile && (
-                        <div className={`mt-6 border-t pt-4 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                        <div >
                           <div className="flex items-center justify-between mb-4">
                             <h3 className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Learning Material</h3>
                             <button
@@ -1295,8 +1310,8 @@ export default function CoursePage() {
                   )}
                 </div>
               </div>
-              <div className={`p-2 transition-all duration-200 ${darkMode ? 'bg-[#242526] border border-gray-700' : 'bg-white shadow-lg border border-gray-100'}`}>
-                <div className={`border-b flex gap-2 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <div className={`transition-all duration-200 ${darkMode ? 'bg-[#242526] border-r border-gray-700' : 'bg-[#F0F2F5] shadow-lg border-r border-gray-300'}`}>
+                <div className={`border-b flex px-6 gap-2 ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
                   {tabs.map(tab => (
                     <button
                       key={tab}
@@ -1310,21 +1325,21 @@ export default function CoursePage() {
                     </button>
                   ))}
                 </div>
-                <div className={`min-h-[200px] p-4 ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>
+                <div className={`min-h-screen py-4 px-6 `}>
                   {renderTabContent()}
                 </div>
               </div>
             </div>
             <div className="flex flex-col w-full gap-4 bg-gray-50">
-              <div className={`p-4 border h-full overflow-y-auto ${darkMode ? 'bg-[#242526] border-gray-700' : 'bg-white border-gray-100'}`}>
+                <div className={`p-4 min-h-screen ${darkMode ? 'bg-[#242526]' : 'bg-[#F0F2F5]'}`}>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className={`text-2xl font-semibold flex items-center gap-2 ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>
-                    {courseDetails?.course || 'Loading...'}
+                    {courseDetails?.course || <Loading />}
                   </h2>
                   <button
                     onClick={() => setShowAddSectionModal(true)}
                     className={`px-3 py-1.5 rounded-md transition-all duration-200 flex items-center gap-1.5 font-medium text-sm
-                      ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}
+                      ${darkMode ? 'bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}
                   >
                     <i className="bi bi-plus-circle"></i>Add Lesson
                   </button>
@@ -1338,11 +1353,11 @@ export default function CoursePage() {
                         <div
                           onClick={() => toggleSection(idx)}
                           className={`flex items-center justify-between p-2 cursor-pointer transition-colors duration-200
-                            ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
+                            ${darkMode ? 'bg-[#242526]  border-gray-700 hover:bg-gray-700' : 'bg-[#F0F2F5s] hover:bg-gray-200'}`}
                         >
                           <div className="flex items-center gap-1">
                             <i className={`bi ${expandedSections[idx] ? 'bi-chevron-down' : 'bi-chevron-right'} ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}></i>
-                            <h3 className={`font-bold text-sm ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>{lesson.title}</h3>
+                            <h3 className={`font-bold text-sm ${darkMode ? 'text-gray-300' : 'bg-[3text-gray-800'}`}>{lesson.title}</h3>
                           </div>
                           <button
                             className={`p-1 rounded-full transition-colors duration-200 relative z-50
@@ -1382,7 +1397,7 @@ export default function CoursePage() {
                                   key={lidx}
                                   className={`flex items-center gap-2 text-sm p-2 rounded-lg cursor-pointer transition-colors duration-200
                                     ${selectedLecture && selectedLecture.id === lec.id
-                                      ? darkMode ? 'bg-blue-900 text-blue-300 font-semibold' : 'bg-blue-100 text-blue-700 font-semibold'
+                                      ? darkMode ? 'bg-gray-800 text-gray-100 font-semibold' : 'bg-blue-100 text-blue-700 font-semibold'
                                       : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'}`}
                                   onClick={() => setSelectedLecture(lec)}
                                 >
@@ -1419,7 +1434,7 @@ export default function CoursePage() {
                                   setLessonId(lesson.id);
                                 }}
                                 className={`w-full text-sm font-medium flex items-center gap-2 p-2 hover:bg-blue-50 rounded-lg transition-colors duration-200
-                                    ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                                    ${darkMode ? 'text-blue-500 hover:text-gray-300 hover:bg-gray-800' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-100'}`}
                               >
                                 <i className="bi bi-plus-circle"></i>Add Lecture
                               </button>

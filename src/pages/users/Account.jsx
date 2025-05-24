@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from '../auth/components/authContext';
+import { useAuth } from '../../auth/components/authContext';
 import { useNavigate } from 'react-router-dom';
-import { useDarkMode } from '../components/DarkModeContext'; // Import dark mode hook
+import { useDarkMode } from '../../components/DarkModeContext'; // Import dark mode hook
 
 export default function Account() {
   const [activeTab, setActiveTab] = useState('profile'); // Default tab

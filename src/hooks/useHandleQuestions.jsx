@@ -13,17 +13,21 @@ export const useHandleQuestions = (courseId) => {
     const qaCollectionRef = collection(db, "q_and_a");
     const { currentUser, authRole, userData } = useAuth(); // Get authRole and userData from context
 
-    const addNewQuestion = async (question, lectureId) => {
+   const addNewQuestion = async (question, lectureId) => {
+  if (!lectureId) {
+    console.error('No lecture selected');
+    return;
+  }
+  addDoc(qaCollectionRef, {
+    question,
+    lectureId,
+    type: "question",
+    createdBy: currentUser ? userData.firstName + " " + userData.lastName : '', // Use user ID
+    createdAt: new Date(),
+    courseId: courseId,
+  });
+};
 
-        addDoc(qaCollectionRef, {
-            question,
-            lectureId,
-            type: "question",
-            createdBy: currentUser ? userData.firstName + " " + userData.lastName : '', // Use user ID
-            createdAt: new Date(),
-            courseId: courseId,
-        })
-    }
 
     const addReply = async (questionId, reply) => {
         const questionRef = doc(qaCollectionRef, questionId);
